@@ -1,4 +1,4 @@
-# ─── Flutter/Dart ───────────────────────────────
+# Flutter/Dart
 .dart_tool/
 .packages
 .pub-cache/
@@ -10,35 +10,33 @@ build/
 .idea/
 .vscode/
 
-# ─── Android ────────────────────────────────────
+# Android
 android/.gradle/
 android/captures/
 android/local.properties
-android/key.properties          # ← keystore info, NEVER commit
-android/app/keystore.jks        # ← signing key, NEVER commit
+android/key.properties
+android/app/keystore.jks
 android/app/upload-keystore.jks
 *.jks
 *.keystore
 android/app/release/
 
-# ─── Generated ──────────────────────────────────
-lib/generated/
+# Generated
+lib/l10n/generated/
 *.g.dart
 *.freezed.dart
 
-# ─── OS ─────────────────────────────────────────
+# OS
 .DS_Store
 Thumbs.db
 *.log
 *.swp
 
-# ─── Secrets ────────────────────────────────────
+# Secrets
 .env
 .env.local
 secrets.json
-google-services.json           # ← AdMob/Firebase config
-GoogleService-Info.plist
 
-# ─── Coverage ───────────────────────────────────
+# Coverage
 coverage/
 lcov.info
