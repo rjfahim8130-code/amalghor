@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 
 /// Semantic category of a timeline event.
 enum TimelineEventKind {
