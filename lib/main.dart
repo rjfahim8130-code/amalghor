@@ -2,29 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
 import 'core/constants.dart';
+import 'providers/settings_provider.dart';
 import 'services/notification_service.dart';
 
 /// Application entry point.
 ///
-/// Responsibilities:
-/// - Ensures Flutter bindings are ready
-/// - Locks portrait orientation
-/// - Initializes locale data for date formatting
-/// - Bootstraps the local notification subsystem
-/// - Boots the Riverpod provider container
+/// Initializes:
+///   - Flutter bindings
+///   - Portrait orientation lock
+///   - System UI styling
+///   - intl locale data
+///   - SharedPreferences (MUST be ready before ProviderScope)
+///   - Local notifications (non-fatal)
+///   - Riverpod container with SharedPreferences override
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Lock to portrait mode — this is a dashboard-style app.
+  // Lock to portrait mode.
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  // System UI style: transparent status bar, dark nav bar.
+  // System UI style.
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -37,6 +41,13 @@ Future<void> main() async {
   // Initialize locale data for intl-based date formatting.
   await initializeDateFormatting();
 
+  // ─────────────────────────────────────────────
+  // SharedPreferences — MUST resolve before runApp().
+  // Without this, sharedPreferencesProvider throws
+  // UnimplementedError and the app shows a blank screen.
+  // ─────────────────────────────────────────────
+  final prefs = await SharedPreferences.getInstance();
+
   // Bootstrap notifications (non-fatal if it fails).
   try {
     await NotificationService.instance.initialize();
@@ -45,8 +56,12 @@ Future<void> main() async {
   }
 
   runApp(
-    const ProviderScope(
-      child: AmalghorApp(),
+    ProviderScope(
+      overrides: [
+        // This override is what fixes the blank screen.
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ],
+      child: const AmalghorApp(),
     ),
   );
 }
