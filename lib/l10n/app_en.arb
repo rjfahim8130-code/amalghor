@@ -1,0 +1,170 @@
+{
+  "@@locale": "en",
+
+  "appName": "Amalghor",
+  "appTagline": "Live Islamic Time Dashboard",
+
+  "navHome": "Home",
+  "navPrayer": "Prayer",
+  "navQuran": "Quran",
+  "navRamadan": "Ramadan",
+  "navAmol": "Amol",
+
+  "loading": "Loading...",
+  "error": "Error",
+  "retry": "Retry",
+  "cancel": "Cancel",
+  "ok": "OK",
+  "save": "Save",
+  "close": "Close",
+  "yes": "Yes",
+  "no": "No",
+  "done": "Done",
+  "next": "Next",
+  "back": "Back",
+
+  "fajr": "Fajr",
+  "sunrise": "Sunrise",
+  "dhuhr": "Dhuhr",
+  "asr": "Asr",
+  "maghrib": "Maghrib",
+  "isha": "Isha",
+  "imsak": "Imsak (Sehri End)",
+  "solarNoon": "Solar Noon",
+  "midnight": "Islamic Midnight",
+  "lastThird": "Last Third of Night",
+  "ishraq": "Ishraq / Duha",
+  "tahajjud": "Tahajjud Time",
+  "iftar": "Iftar",
+  "sehri": "Sehri",
+
+  "prayerStarted": "{prayer} time is running",
+  "@prayerStarted": {
+    "placeholders": { "prayer": { "type": "String" } }
+  },
+  "timeRemaining": "Time remaining",
+  "nextPrayer": "Next: {prayer} — {time}",
+  "@nextPrayer": {
+    "placeholders": {
+      "prayer": { "type": "String" },
+      "time": { "type": "String" }
+    }
+  },
+  "nowRunning": "Now running",
+
+  "todaysSchedule": "Today's Schedule",
+  "monthlySchedule": "Monthly Schedule",
+
+  "generatePdf": "Generate Full Year Prayer Calendar",
+  "generatePdfShort": "Generate PDF",
+  "pdfTitle": "Prayer Calendar {year}",
+  "@pdfTitle": {
+    "placeholders": { "year": { "type": "int" } }
+  },
+  "pdfMode": "Calendar Mode",
+  "pdfModeFull": "Full 365 Days",
+  "pdfModeShort1Min": "Short (1 min cluster)",
+  "pdfModeShort30Sec": "Compact (30 sec cluster)",
+  "pdfCalendarPrimary": "Primary Calendar",
+  "pdfPrimaryEnglish": "English",
+  "pdfPrimaryBangla": "Bangla",
+  "pdfPrimaryHijri": "Hijri",
+  "pdfGenerating": "Generating PDF...",
+  "pdfSuccess": "PDF generated successfully",
+  "pdfFailed": "PDF generation failed",
+  "pdfShare": "Share",
+  "pdfPrint": "Print",
+  "pdfSave": "Save to device",
+
+  "location": "Location",
+  "locationAuto": "Auto (GPS)",
+  "locationManual": "Manual",
+  "locationFetching": "Fetching location...",
+  "locationPermissionDenied": "Location permission denied",
+  "locationPermissionPermanentlyDenied": "Location permission permanently denied. Please enable from settings.",
+  "locationServicesDisabled": "Location services are disabled",
+  "selectCountry": "Select Country",
+  "selectDistrict": "Select District",
+  "searchLocation": "Search location",
+
+  "settings": "Settings",
+  "settingsLocation": "Location Settings",
+  "settingsCalculation": "Calculation Method",
+  "settingsCalendar": "Primary Calendar",
+  "settingsNotifications": "Notifications",
+  "settingsAppearance": "Appearance",
+  "settingsLanguage": "Language",
+  "settingsAbout": "About",
+  "settingsPrivacy": "Privacy Policy",
+
+  "madhhab": "Madhhab",
+  "madhhabHanafi": "Hanafi",
+  "madhhabShafii": "Shafi'i / Maliki / Hanbali",
+  "calculationMethod": "Calculation Method",
+  "methodKarachi": "University of Islamic Sciences, Karachi",
+  "methodMWL": "Muslim World League",
+  "methodUmmAlQura": "Umm al-Qura, Makkah",
+  "methodEgyptian": "Egyptian General Authority",
+  "methodISNA": "ISNA (North America)",
+
+  "calendarEnglish": "English (Gregorian)",
+  "calendarBangla": "Bangla",
+  "calendarHijri": "Hijri",
+
+  "notificationFajr": "Fajr Reminder",
+  "notificationDhuhr": "Dhuhr Reminder",
+  "notificationAsr": "Asr Reminder",
+  "notificationMaghrib": "Maghrib Reminder",
+  "notificationIsha": "Isha Reminder",
+  "notificationSehri": "Sehri reminder (15 min before)",
+  "notificationIftar": "Iftar reminder (10 min before)",
+
+  "themeDark": "Dark AMOLED",
+  "themeLight": "Light",
+  "themeSystem": "System Default",
+
+  "languageEnglish": "English",
+  "languageBangla": "বাংলা",
+  "languageArabic": "العربية",
+
+  "quranTitle": "Al-Quran",
+  "quranSurah": "Surah",
+  "quranVerse": "Verse",
+  "quranJuz": "Juz",
+  "quranMakki": "Makki",
+  "quranMadani": "Madani",
+  "quranBookmark": "Bookmark",
+  "quranBookmarked": "Bookmarked",
+  "quranLastRead": "Last read",
+
+  "ramadanTitle": "Ramadan",
+  "ramadanSehriEnds": "Sehri ends at",
+  "ramadanIftarAt": "Iftar at",
+  "ramadanCountdown": "Countdown",
+  "ramadanDay": "Day {day}",
+  "@ramadanDay": {
+    "placeholders": { "day": { "type": "int" } }
+  },
+  "ramadanDaysRemaining": "{days} days remaining",
+  "@ramadanDaysRemaining": {
+    "placeholders": { "days": { "type": "int" } }
+  },
+
+  "amolTitle": "Daily Amol",
+  "amolTasbih": "Tasbih",
+  "amolDua": "Dua",
+  "amolDhikr": "Dhikr",
+  "amolTracker": "Daily Tracker",
+  "amolCompleted": "Completed",
+  "amolPending": "Pending",
+  "amolReset": "Reset",
+
+  "dateGregorian": "Gregorian",
+  "dateBangla": "Bangla",
+  "dateHijri": "Hijri",
+
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "tomorrow": "Tomorrow",
+  "thisMonth": "This Month"
+}
