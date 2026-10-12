@@ -14,15 +14,11 @@ class LocationException implements Exception {
   String toString() => 'LocationException($code): $message';
 }
 
-/// Service that resolves the user's current location via GPS,
-/// reverse-geocodes it to a human-readable place name, and picks up
-/// the device's IANA timezone identifier.
+/// Service that resolves the user's current location via GPS.
 class LocationService {
   const LocationService();
 
-  /// Resolve the current position + place + timezone in one call.
   Future<LocationModel> resolveCurrent() async {
-    // 1. Ensure location services are enabled.
     final servicesEnabled = await Geolocator.isLocationServiceEnabled();
     if (!servicesEnabled) {
       throw const LocationException(
@@ -31,7 +27,6 @@ class LocationService {
       );
     }
 
-    // 2. Check and request permission.
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -49,7 +44,6 @@ class LocationService {
       );
     }
 
-    // 3. Fetch the high-accuracy position.
     final position = await Geolocator.getCurrentPosition(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
@@ -57,7 +51,6 @@ class LocationService {
       ),
     );
 
-    // 4. Reverse-geocode to get city / country.
     String? city;
     String? district;
     String? country;
@@ -74,19 +67,14 @@ class LocationService {
         country = p.country;
         countryCode = p.isoCountryCode?.toUpperCase();
       }
-    } catch (_) {
-      // Geocoding failed — non-fatal.
-    }
+    } catch (_) {}
 
-    // 5. Determine the IANA timezone.
     String timezone = 'UTC';
     try {
       final tzInfo = await FlutterTimezone.getLocalTimezone();
-      // Newer versions return an object with `.name`; older return a String.
-      // The public API is `.identifier` in some versions and `.name` in others.
       timezone = tzInfo.identifier;
     } catch (_) {
-      // Fallback below.
+      timezone = 'UTC';
     }
 
     final displayName = _buildDisplayName(city, country);
@@ -104,7 +92,6 @@ class LocationService {
     );
   }
 
-  /// Compute the distance in km between two lat/lng pairs.
   double distanceKm(
     double lat1,
     double lng1,
@@ -114,10 +101,7 @@ class LocationService {
     return Geolocator.distanceBetween(lat1, lng1, lat2, lng2) / 1000.0;
   }
 
-  /// Open the OS location settings screen.
   Future<bool> openSettings() => Geolocator.openLocationSettings();
-
-  /// Open the app's permission settings.
   Future<bool> openAppSettings() => Geolocator.openAppSettings();
 
   String _buildDisplayName(String? city, String? country) {
