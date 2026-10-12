@@ -24,21 +24,18 @@ class LocationNotifier extends StateNotifier<LocationModel> {
   LocationNotifier(this._repo, this._service)
       : super(_repo.loadCurrent());
 
-  /// Refresh the location from GPS. Persists and updates state.
   Future<void> refreshFromGps() async {
     final loc = await _service.resolveCurrent();
     await _repo.saveCurrent(loc);
     state = loc;
   }
 
-  /// Set a location manually from the picker.
   Future<void> setManual(LocationModel loc) async {
     final manual = loc.copyWith(source: LocationSource.manual);
     await _repo.saveCurrent(manual);
     state = manual;
   }
 
-  /// Reset back to the shipped default (Dhaka, Bangladesh).
   Future<void> resetToDefault() async {
     await _repo.saveCurrent(LocationModel.fallback);
     state = LocationModel.fallback;
