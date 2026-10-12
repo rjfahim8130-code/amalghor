@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../features/amol/amol_screen.dart';
 import '../features/home/home_screen.dart';
+import '../features/location/location_picker_screen.dart';
 import '../features/prayer/prayer_screen.dart';
 import '../features/quran/quran_screen.dart';
 import '../features/ramadan/ramadan_screen.dart';
@@ -19,7 +20,7 @@ class Routes {
   static const String ramadan = '/ramadan';
   static const String amol = '/amol';
   static const String settings = '/settings';
-  static const String location = '/location';   // ← এই লাইনটা যোগ করুন
+  static const String location = '/location';
 }
 
 /// Riverpod-wrapped GoRouter.
@@ -59,12 +60,18 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
+
       // ─── Full-screen (no bottom nav) ───────────
       GoRoute(
         path: Routes.settings,
         builder: (context, state) => const SettingsScreen(),
       ),
+      GoRoute(
+        path: Routes.location,
+        builder: (context, state) => const LocationPickerScreen(),
+      ),
     ],
+
     errorBuilder: (context, state) => Scaffold(
       body: Center(
         child: Text('Route not found: ${state.uri}'),
