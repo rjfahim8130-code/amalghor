@@ -24,11 +24,12 @@ class QuranDatabase {
   static final QuranDatabase instance = QuranDatabase._();
 
   static const String _dbName = 'quran.db';
-  static const int _dbVersion = 1;
+  static const int _dbVersion = 2;
 
   static const String _tableSurahs = 'surahs';
   static const String _tableAyahs = 'ayahs';
   static const String _tableMeta = 'meta';
+  static const String _tableBookmarks = 'bookmarks';
 
   Database? _db;
 
@@ -50,6 +51,7 @@ class QuranDatabase {
       path,
       version: _dbVersion,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -91,6 +93,33 @@ class QuranDatabase {
         value TEXT NOT NULL
       )
     ''');
+
+    // Bookmarks
+    await _createBookmarksTable(db);
+  }
+
+  Future<void> _onUpgrade(Database db, int oldV, int newV) async {
+    // v1 → v2: add bookmarks table.
+    if (oldV < 2) {
+      await _createBookmarksTable(db);
+    }
+  }
+
+  Future<void> _createBookmarksTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $_tableBookmarks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        surah INTEGER NOT NULL,
+        ayah INTEGER NOT NULL,
+        createdAt TEXT NOT NULL,
+        note TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_bookmarks_surah
+      ON $_tableBookmarks (surah, ayah)
+    ''');
   }
 
   // ─────────────────────────────────────────────
@@ -122,7 +151,8 @@ class QuranDatabase {
       'assets/data/quran_metadata.json',
     );
     final metaJson = json.decode(metaRaw) as Map<String, dynamic>;
-    final surahsRaw = (metaJson['surahs'] as List).cast<Map<String, dynamic>>();
+    final surahsRaw =
+        (metaJson['surahs'] as List).cast<Map<String, dynamic>>();
     final surahs = surahsRaw.map(SurahMeta.fromMap).toList();
 
     // 2. Load three translation files.
@@ -203,7 +233,7 @@ class QuranDatabase {
     onProgress?.call('complete', 1.0);
   }
 
-    // ─────────────────────────────────────────────
+  // ─────────────────────────────────────────────
   // INTERNAL — FILE LOADER
   // ─────────────────────────────────────────────
 
@@ -320,6 +350,7 @@ class QuranDatabase {
     await db.delete(_tableSurahs);
     await db.delete(_tableAyahs);
     await db.delete(_tableMeta);
+    await db.delete(_tableBookmarks);
   }
 
   // ─────────────────────────────────────────────
