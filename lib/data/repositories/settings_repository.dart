@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart' show Locale, ThemeMode;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants.dart';
