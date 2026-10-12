@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 
 /// School of jurisprudence for Asr calculation.
 enum MadhhabType {
