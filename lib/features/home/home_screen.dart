@@ -26,7 +26,6 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
     final location = ref.watch(locationProvider);
     final prayerAsync = ref.watch(currentDayPrayerProvider);
 
