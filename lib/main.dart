@@ -1,53 +1,52 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import 'package:amalghor/core/services/app_settings_service.dart';
-import 'package:amalghor/core/theme/app_theme.dart';
-import 'package:amalghor/core/constants/app_constants.dart';
-import 'package:amalghor/features/home/presentation/main_shell.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-void main() async {
+import 'app.dart';
+import 'core/constants.dart';
+import 'services/notification_service.dart';
+
+/// Application entry point.
+///
+/// Responsibilities:
+/// - Ensures Flutter bindings are ready
+/// - Locks portrait orientation
+/// - Initializes locale data for date formatting
+/// - Bootstraps the local notification subsystem
+/// - Boots the Riverpod provider container
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Status bar style
+  // Lock to portrait mode — this is a dashboard-style app.
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
+  // Set preferred system UI style (dark status bar with light icons).
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF0A0A0A),
+      systemNavigationBarColor: AppConstants.amoledBlack,
       systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
 
-  final settings = AppSettingsService();
-  await settings.init();
+  // Initialize locale data for intl-based date formatting.
+  await initializeDateFormatting();
+
+  // Bootstrap notifications (non-blocking — failure is not fatal).
+  try {
+    await NotificationService.instance.initialize();
+  } catch (_) {
+    // Silently ignore — the app still works without notifications.
+  }
 
   runApp(
-    ChangeNotifierProvider.value(
-      value: settings,
-      child: const AmalghorApp(),
+    const ProviderScope(
+      child: AmalghorApp(),
     ),
   );
-}
-
-class AmalghorApp extends StatelessWidget {
-  const AmalghorApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<AppSettingsService>(
-      builder: (context, settings, _) {
-        return MaterialApp(
-          title: AppConstants.appName,
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: settings.themeMode == ThemeModeOption.dark
-              ? ThemeMode.dark
-              : ThemeMode.light,
-          home: const MainShell(),
-        );
-      },
-    );
-  }
 }
