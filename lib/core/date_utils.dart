@@ -33,11 +33,6 @@ class TriCalendarDate {
 }
 
 /// Central date utility.
-///
-/// Provides:
-/// - Gregorian ↔ Bangla ↔ Hijri conversion
-/// - Locale-aware formatting
-/// - Islamic astronomical night-time helpers
 class AppDateUtils {
   AppDateUtils._();
 
@@ -162,7 +157,6 @@ class AppDateUtils {
   // ─────────────────────────────────────────────
   // BANGLA CALENDAR CONVERSION
   // ─────────────────────────────────────────────
-  /// Convert Gregorian to Bangla (Bangladesh revised 2019+ calendar).
   static ({int day, int monthIndex, int year}) gregorianToBangla(DateTime g) {
     const banglaNewYearMonth = 4;
     const banglaNewYearDay = 14;
@@ -181,10 +175,10 @@ class AppDateUtils {
     final isLeap = _isGregorianLeap(g.year);
 
     final monthLengths = <int>[
-      31, 31, 31, 31, 31, // Boishakh–Bhadro
-      30, 30, 30, 30, 30, // Ashwin–Magh
-      30, // Falgun placeholder
-      30, // Choitro placeholder
+      31, 31, 31, 31, 31,
+      30, 30, 30, 30, 30,
+      30,
+      30,
     ];
     monthLengths[10] = isLeap ? 30 : 29;
     final totalOther = monthLengths.take(11).reduce((a, b) => a + b);
@@ -215,11 +209,21 @@ class AppDateUtils {
   }
 
   // ─────────────────────────────────────────────
-  // HIJRI CONVERSION
+  // HIJRI CONVERSION — with resilient property access
   // ─────────────────────────────────────────────
   static HijriCalendar gregorianToHijri(DateTime g) {
     return HijriCalendar.fromDate(g);
   }
+
+  /// Get Hijri month number (1–12) from a HijriCalendar object.
+  /// The `hijri` package uses `hMonth`, not `month`.
+  static int hijriMonthNumber(HijriCalendar h) => h.hMonth;
+
+  /// Get Hijri day-of-month (1–30).
+  static int hijriDayNumber(HijriCalendar h) => h.hDay;
+
+  /// Get Hijri year.
+  static int hijriYearNumber(HijriCalendar h) => h.hYear;
 
   static String getHijriMonthName(int monthIndex, String localeCode) {
     final idx = (monthIndex - 1).clamp(0, 11);
@@ -233,11 +237,9 @@ class AppDateUtils {
     }
   }
 
-  // ─── Part 2 continues in next fragment ───
-    // ─────────────────────────────────────────────
+  // ─────────────────────────────────────────────
   // TRI-CALENDAR AGGREGATOR
   // ─────────────────────────────────────────────
-  /// Build a [TriCalendarDate] combining all three calendars.
   static TriCalendarDate buildTriCalendar(DateTime date, String localeCode) {
     final gregFormatted = formatGregorian(date, localeCode);
 
@@ -247,24 +249,26 @@ class AppDateUtils {
         '${_toBanglaDigits(bn.year)}';
 
     final hijri = gregorianToHijri(date);
-    final hijriMonthName = getHijriMonthName(hijri.month, localeCode);
-    final hijriFormatted = '${hijri.hDay} $hijriMonthName ${hijri.hYear}';
+    final hijriMonthIdx = hijriMonthNumber(hijri);
+    final hijriDay = hijriDayNumber(hijri);
+    final hijriYr = hijriYearNumber(hijri);
+    final hijriMonthName = getHijriMonthName(hijriMonthIdx, localeCode);
+    final hijriFormatted = '$hijriDay $hijriMonthName $hijriYr';
 
     return TriCalendarDate(
       gregorian: date,
       gregorianFormatted: gregFormatted,
       banglaFormatted: bnFormatted,
       hijriFormatted: hijriFormatted,
-      hijriDay: hijri.hDay,
+      hijriDay: hijriDay,
       hijriMonthName: hijriMonthName,
-      hijriYear: hijri.hYear,
+      hijriYear: hijriYr,
       banglaDay: bn.day,
       banglaMonthName: getBanglaMonthName(bn.monthIndex),
       banglaYear: bn.year,
     );
   }
 
-  /// Convert English digits to Bangla digits.
   static String _toBanglaDigits(int number) {
     const en = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
     const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
@@ -302,19 +306,19 @@ class AppDateUtils {
   // ─────────────────────────────────────────────
   static bool isRamadan(DateTime date) {
     final hijri = gregorianToHijri(date);
-    return hijri.month == 9;
+    return hijriMonthNumber(hijri) == 9;
   }
 
   static int? ramadanDay(DateTime date) {
     final hijri = gregorianToHijri(date);
-    return hijri.month == 9 ? hijri.hDay : null;
+    return hijriMonthNumber(hijri) == 9 ? hijriDayNumber(hijri) : null;
   }
 
   static int? daysUntilRamadan(DateTime from) {
     for (int i = 0; i < 400; i++) {
       final candidate = from.add(Duration(days: i));
       final h = gregorianToHijri(candidate);
-      if (h.month == 9 && h.hDay == 1) return i;
+      if (hijriMonthNumber(h) == 9 && hijriDayNumber(h) == 1) return i;
     }
     return null;
   }
