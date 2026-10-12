@@ -15,7 +15,6 @@ class LiveClockCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
     final localeCode = Localizations.localeOf(context).languageCode;
     final asyncNow = ref.watch(clockProvider);
     final now = asyncNow.value ?? DateTime.now();
