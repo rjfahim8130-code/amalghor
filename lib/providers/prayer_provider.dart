@@ -62,7 +62,7 @@ class PrayerQuery {
 /// The query describing *today's* prayer times, derived from the
 /// current location and settings.
 final todayPrayerQueryProvider = Provider<PrayerQuery>((ref) {
-  final loc = ref.watch(locationProvider);
+  final loc = ref.watch(currentLocationProvider);
   final settings = ref.watch(settingsProvider);
   final now = DateTime.now();
   return PrayerQuery(
@@ -75,9 +75,6 @@ final todayPrayerQueryProvider = Provider<PrayerQuery>((ref) {
 });
 
 /// Future provider that resolves today's prayer times.
-///
-/// Cached by [PrayerQuery] — changing location/settings/madhhab
-/// invalidates the cache and recomputes.
 final todayPrayerProvider =
     FutureProvider.family<PrayerTimes, PrayerQuery>((ref, query) async {
   final repo = ref.watch(prayerRepositoryProvider);
@@ -96,11 +93,10 @@ final currentDayPrayerProvider = FutureProvider<PrayerTimes>((ref) async {
   return ref.watch(todayPrayerProvider(query).future);
 });
 
-/// Family provider: prayer times for any given [DateTime] on the
-/// currently selected location/settings.
+/// Family provider: prayer times for any given [DateTime].
 final prayerForDateProvider =
     FutureProvider.family<PrayerTimes, DateTime>((ref, date) async {
-  final loc = ref.watch(locationProvider);
+  final loc = ref.watch(currentLocationProvider);
   final settings = ref.watch(settingsProvider);
   final repo = ref.watch(prayerRepositoryProvider);
 
@@ -117,7 +113,7 @@ final prayerForDateProvider =
 final prayerForMonthProvider =
     FutureProvider.family<List<PrayerTimes>, ({int year, int month})>(
         (ref, args) async {
-  final loc = ref.watch(locationProvider);
+  final loc = ref.watch(currentLocationProvider);
   final settings = ref.watch(settingsProvider);
   final repo = ref.watch(prayerRepositoryProvider);
 
@@ -131,11 +127,10 @@ final prayerForMonthProvider =
   );
 });
 
-/// Family provider: whole year of prayer times. Used by the PDF
-/// generator and by the yearly planner.
+/// Family provider: whole year of prayer times.
 final prayerForYearProvider =
     FutureProvider.family<List<PrayerTimes>, int>((ref, year) async {
-  final loc = ref.watch(locationProvider);
+  final loc = ref.watch(currentLocationProvider);
   final settings = ref.watch(settingsProvider);
   final repo = ref.watch(prayerRepositoryProvider);
 
