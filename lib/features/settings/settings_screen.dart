@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
+import '../../core/router.dart';
 import '../../data/models/settings_model.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../providers/location_provider.dart';
 import '../../providers/settings_provider.dart';
 
-/// Settings screen with sections for language, theme, calculation
-/// method, madhhab, calendar, and notifications.
+/// Settings screen.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -16,6 +18,7 @@ class SettingsScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
+    final location = ref.watch(currentLocationProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settings)),
@@ -24,6 +27,74 @@ class SettingsScreen extends ConsumerWidget {
           vertical: AppConstants.spaceLg,
         ),
         children: [
+          // ─── Location ─────────────────────────
+          _SectionHeader(title: l10n.settingsLocation),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppConstants.spaceLg,
+              vertical: AppConstants.spaceSm,
+            ),
+            child: Material(
+              color: AppConstants.surfaceDark,
+              borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+              child: InkWell(
+                onTap: () => context.push(Routes.location),
+                borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+                child: Container(
+                  padding: const EdgeInsets.all(AppConstants.spaceLg),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+                    border: Border.all(
+                      color: AppConstants.emeraldPrimary.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on_outlined,
+                        color: AppConstants.emeraldPrimary,
+                        size: 22,
+                      ),
+                      const SizedBox(width: AppConstants.spaceMd),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              location.shortLabel,
+                              style: const TextStyle(
+                                color: AppConstants.textPrimary,
+                                fontSize: AppConstants.fontBody,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${location.latitude.toStringAsFixed(4)}°, '
+                              '${location.longitude.toStringAsFixed(4)}°',
+                              style: const TextStyle(
+                                color: AppConstants.textMuted,
+                                fontSize: AppConstants.fontCaption,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.chevron_right,
+                        color: AppConstants.textMuted,
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: AppConstants.spaceLg),
+
           // ─── Language ─────────────────────────
           _SectionHeader(title: l10n.settingsLanguage),
           _RadioTile<Locale>(
