@@ -1,0 +1,311 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../core/constants.dart';
+import '../../core/router.dart';
+import '../../data/models/location_model.dart';
+import '../../data/models/prayer_times.dart';
+import '../../l10n/generated/app_localizations.dart';
+import '../../providers/location_provider.dart';
+import '../../providers/prayer_provider.dart';
+import 'widgets/current_status_card.dart';
+import 'widgets/live_clock_card.dart';
+import 'widgets/quick_summary_card.dart';
+import 'widgets/tri_calendar_row.dart';
+
+/// The main dashboard. Shows:
+///   - header with location + settings shortcut
+///   - live clock card (ticks every second)
+///   - current prayer status + countdown
+///   - tri-calendar date line
+///   - today's quick prayer summary
+///   - a hero CTA to generate the yearly PDF
+class HomeScreen extends ConsumerWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final location = ref.watch(locationProvider);
+    final prayerAsync = ref.watch(currentDayPrayerProvider);
+
+    return Scaffold(
+      body: SafeArea(
+        child: RefreshIndicator(
+          color: AppConstants.emeraldPrimary,
+          backgroundColor: AppConstants.surfaceDark,
+          onRefresh: () async {
+            ref.invalidate(currentDayPrayerProvider);
+            await ref.read(currentDayPrayerProvider.future);
+          },
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+              AppConstants.spaceLg,
+              AppConstants.spaceLg,
+              AppConstants.spaceLg,
+              AppConstants.space2xl,
+            ),
+            children: [
+              _HomeHeader(location: location),
+              const SizedBox(height: AppConstants.spaceLg),
+
+              prayerAsync.when(
+                loading: () => const _HomeLoading(),
+                error: (e, _) => _HomeError(
+                  message: e.toString(),
+                  onRetry: () => ref.invalidate(currentDayPrayerProvider),
+                ),
+                data: (prayer) => _HomeBody(prayer: prayer),
+              ),
+
+              const SizedBox(height: AppConstants.spaceLg),
+              const _PdfHeroButton(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// HEADER
+// ─────────────────────────────────────────────
+class _HomeHeader extends StatelessWidget {
+  final LocationModel location;
+
+  const _HomeHeader({required this.location});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: AppConstants.emeraldPrimary.withValues(alpha: 0.15),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.location_on,
+            color: AppConstants.emeraldPrimary,
+            size: 20,
+          ),
+        ),
+        const SizedBox(width: AppConstants.spaceMd),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                location.shortLabel,
+                style: const TextStyle(
+                  color: AppConstants.textPrimary,
+                  fontSize: AppConstants.fontSubtitle,
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (location.country != null)
+                Text(
+                  location.country!,
+                  style: const TextStyle(
+                    color: AppConstants.textMuted,
+                    fontSize: AppConstants.fontCaption,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+            ],
+          ),
+        ),
+        IconButton(
+          tooltip: 'Settings',
+          onPressed: () => context.push(Routes.settings),
+          icon: const Icon(
+            Icons.settings_outlined,
+            color: AppConstants.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// BODY (data-ready)
+// ─────────────────────────────────────────────
+class _HomeBody extends StatelessWidget {
+  final PrayerTimes prayer;
+
+  const _HomeBody({required this.prayer});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        LiveClockCard(prayer: prayer),
+        const SizedBox(height: AppConstants.spaceLg),
+        CurrentStatusCard(prayer: prayer),
+        const SizedBox(height: AppConstants.spaceLg),
+        const TriCalendarRow(),
+        const SizedBox(height: AppConstants.spaceLg),
+        QuickSummaryCard(prayer: prayer),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// LOADING / ERROR
+// ─────────────────────────────────────────────
+class _HomeLoading extends StatelessWidget {
+  const _HomeLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 64),
+      child: Center(
+        child: CircularProgressIndicator(
+          color: AppConstants.emeraldPrimary,
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeError extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _HomeError({
+    required this.message,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.all(AppConstants.spaceXl),
+      decoration: BoxDecoration(
+        color: AppConstants.surfaceDark,
+        borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.error_outline,
+            color: Color(0xFFEF4444),
+            size: 40,
+          ),
+          const SizedBox(height: AppConstants.spaceMd),
+          Text(
+            l10n.error,
+            style: const TextStyle(
+              color: AppConstants.textPrimary,
+              fontSize: AppConstants.fontSubtitle,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: AppConstants.spaceXs),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppConstants.textMuted,
+              fontSize: AppConstants.fontCaption,
+            ),
+          ),
+          const SizedBox(height: AppConstants.spaceLg),
+          ElevatedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh),
+            label: Text(l10n.retry),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// PDF HERO BUTTON
+// ─────────────────────────────────────────────
+class _PdfHeroButton extends StatelessWidget {
+  const _PdfHeroButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppConstants.emeraldPrimary.withValues(alpha: 0.18),
+            AppConstants.emeraldPrimary.withValues(alpha: 0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+        border: Border.all(
+          color: AppConstants.emeraldPrimary.withValues(alpha: 0.35),
+        ),
+      ),
+      padding: const EdgeInsets.all(AppConstants.spaceLg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(AppConstants.spaceSm),
+                decoration: BoxDecoration(
+                  color: AppConstants.emeraldPrimary.withValues(alpha: 0.20),
+                  borderRadius: BorderRadius.circular(AppConstants.radiusSm),
+                ),
+                child: const Icon(
+                  Icons.picture_as_pdf_outlined,
+                  color: AppConstants.emeraldPrimary,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: AppConstants.spaceMd),
+              Expanded(
+                child: Text(
+                  l10n.generatePdf,
+                  style: const TextStyle(
+                    color: AppConstants.textPrimary,
+                    fontSize: AppConstants.fontBody,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppConstants.spaceMd),
+          SizedBox(
+            height: 48,
+            child: ElevatedButton.icon(
+              onPressed: () => _openPdfFlow(context),
+              icon: const Icon(Icons.download_rounded),
+              label: Text(l10n.generatePdfShort),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openPdfFlow(BuildContext context) {
+    // PDF flow will live in its own screen — placeholder for now.
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('PDF flow coming soon')),
+    );
+  }
+}
