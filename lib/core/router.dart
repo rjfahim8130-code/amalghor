@@ -19,6 +19,7 @@ class Routes {
   static const String ramadan = '/ramadan';
   static const String amol = '/amol';
   static const String settings = '/settings';
+  static const String location = '/location';   // ← এই লাইনটা যোগ করুন
 }
 
 /// Riverpod-wrapped GoRouter.
