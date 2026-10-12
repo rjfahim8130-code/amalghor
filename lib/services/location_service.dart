@@ -51,8 +51,10 @@ class LocationService {
 
     // 3. Fetch the high-accuracy position.
     final position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-      timeLimit: const Duration(seconds: 20),
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        timeLimit: Duration(seconds: 20),
+      ),
     );
 
     // 4. Reverse-geocode to get city / country.
@@ -73,13 +75,15 @@ class LocationService {
         countryCode = p.isoCountryCode?.toUpperCase();
       }
     } catch (_) {
-      // Geocoding failed — this is non-fatal, we still have lat/lng.
+      // Geocoding failed — non-fatal.
     }
 
     // 5. Determine the IANA timezone.
     String timezone = 'UTC';
     try {
       final tzInfo = await FlutterTimezone.getLocalTimezone();
+      // Newer versions return an object with `.name`; older return a String.
+      // The public API is `.identifier` in some versions and `.name` in others.
       timezone = tzInfo.identifier;
     } catch (_) {
       // Fallback below.
