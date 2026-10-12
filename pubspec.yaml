@@ -13,38 +13,38 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
-  # ─── State Management ───────────────────────────
+  # State Management
   flutter_riverpod: ^2.5.1
 
-  # ─── Routing ────────────────────────────────────
+  # Routing
   go_router: ^14.2.7
 
-  # ─── Prayer Time Calculation ────────────────────
+  # Prayer Time Calculation
   adhan: ^2.0.0
   hijri: ^3.0.0
   intl: ^0.19.0
 
-  # ─── Location ───────────────────────────────────
+  # Location
   geolocator: ^13.0.1
   flutter_timezone: ^3.0.1
   geocoding: ^3.0.0
   permission_handler: ^11.3.1
 
-  # ─── Storage ────────────────────────────────────
+  # Storage
   sqflite: ^2.3.3
   path: ^1.9.0
   path_provider: ^2.1.4
   shared_preferences: ^2.3.2
 
-  # ─── PDF Generation ─────────────────────────────
+  # PDF Generation
   pdf: ^3.11.1
   printing: ^5.13.2
 
-  # ─── Notifications ──────────────────────────────
+  # Notifications
   flutter_local_notifications: ^17.2.2
   timezone: ^0.9.4
 
-  # ─── UI ─────────────────────────────────────────
+  # UI
   google_fonts: ^6.2.1
   flutter_svg: ^2.0.10
   cupertino_icons: ^1.0.8
