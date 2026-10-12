@@ -1,4 +1,4 @@
-import 'package:adhan/adhan.dart';
+import 'package:adhan/adhan.dart' as adhan;
 
 import '../data/models/prayer_times.dart';
 import '../data/models/settings_model.dart';
@@ -13,9 +13,6 @@ class AdhanService {
   const AdhanService();
 
   /// Compute prayer times for [date] at the given coordinates.
-  ///
-  /// [madhhab] controls the Asr shadow factor (Hanafi = 2, others = 1).
-  /// [method] selects the Fajr/Isha angle standard.
   PrayerTimes calculate({
     required double latitude,
     required double longitude,
@@ -25,7 +22,7 @@ class AdhanService {
     double? fajrAngle,
     double? ishaAngle,
   }) {
-    final coordinates = Coordinates(latitude, longitude);
+    final coordinates = adhan.Coordinates(latitude, longitude);
     final params = _buildParameters(
       madhhab: madhhab,
       method: method,
@@ -33,12 +30,9 @@ class AdhanService {
       ishaAngle: ishaAngle,
     );
 
-    final dateComponents = DateComponents(date.year, date.month, date.day);
-    final raw = PrayerTimes(
-      coordinates,
-      dateComponents,
-      params,
-    );
+    final dateComponents =
+        adhan.DateComponents(date.year, date.month, date.day);
+    final raw = adhan.PrayerTimes(coordinates, dateComponents, params);
 
     return _mapToDomain(
       raw: raw,
@@ -48,7 +42,7 @@ class AdhanService {
     );
   }
 
-  /// Compute prayer times for an entire month (used by PDF generator).
+  /// Compute prayer times for an entire month.
   List<PrayerTimes> calculateMonth({
     required double latitude,
     required double longitude,
@@ -79,8 +73,7 @@ class AdhanService {
     CalcMethodType method = CalcMethodType.karachi,
   }) {
     final start = DateTime(year, 1, 1);
-    final isLeap = _isLeap(year);
-    final total = isLeap ? 366 : 365;
+    final total = _isLeap(year) ? 366 : 365;
     return List.generate(total, (i) {
       final date = start.add(Duration(days: i));
       return calculate(
@@ -96,41 +89,41 @@ class AdhanService {
   // ─────────────────────────────────────────────
   // INTERNAL
   // ─────────────────────────────────────────────
-  CalculationParameters _buildParameters({
+  adhan.CalculationParameters _buildParameters({
     required MadhhabType madhhab,
     required CalcMethodType method,
     double? fajrAngle,
     double? ishaAngle,
   }) {
-    CalculationParameters params;
+    adhan.CalculationParameters params;
     switch (method) {
       case CalcMethodType.karachi:
-        params = CalculationMethod.karachi.getParameters();
+        params = adhan.CalculationMethod.karachi.getParameters();
         break;
       case CalcMethodType.mwl:
-        params = CalculationMethod.muslim_world_league.getParameters();
+        params = adhan.CalculationMethod.muslim_world_league.getParameters();
         break;
       case CalcMethodType.ummAlQura:
-        params = CalculationMethod.umm_al_qura.getParameters();
+        params = adhan.CalculationMethod.umm_al_qura.getParameters();
         break;
       case CalcMethodType.egyptian:
-        params = CalculationMethod.egyptian.getParameters();
+        params = adhan.CalculationMethod.egyptian.getParameters();
         break;
       case CalcMethodType.isna:
-        params = CalculationMethod.north_america.getParameters();
+        params = adhan.CalculationMethod.north_america.getParameters();
         break;
       case CalcMethodType.tehran:
-        params = CalculationMethod.tehran.getParameters();
+        params = adhan.CalculationMethod.tehran.getParameters();
         break;
       case CalcMethodType.shiaIthnaAshari:
-        params = CalculationMethod.other.getParameters();
+        params = adhan.CalculationMethod.other.getParameters();
         params.fajrAngle = 16.0;
         params.ishaAngle = 14.0;
         break;
     }
 
     params.madhab =
-        madhhab == MadhhabType.hanafi ? Madhab.hanafi : Madhab.shafi;
+        madhhab == MadhhabType.hanafi ? adhan.Madhab.hanafi : adhan.Madhab.shafi;
 
     if (fajrAngle != null) params.fajrAngle = fajrAngle;
     if (ishaAngle != null) params.ishaAngle = ishaAngle;
@@ -139,22 +132,18 @@ class AdhanService {
   }
 
   PrayerTimes _mapToDomain({
-    required dynamic raw,
+    required adhan.PrayerTimes raw,
     required DateTime date,
     required double latitude,
     required double longitude,
   }) {
-    // `raw` is the adhan `PrayerTimes` object. We access it dynamically to
-    // avoid a naming clash with our own domain model of the same name.
-    final fajr = raw.fajr as DateTime;
-    final sunrise = raw.sunrise as DateTime;
-    final dhuhr = raw.dhuhr as DateTime;
-    final asr = raw.asr as DateTime;
-    final maghrib = raw.maghrib as DateTime;
-    final isha = raw.isha as DateTime;
+    final fajr = raw.fajr;
+    final sunrise = raw.sunrise;
+    final dhuhr = raw.dhuhr;
+    final asr = raw.asr;
+    final maghrib = raw.maghrib;
+    final isha = raw.isha;
 
-    // Solar noon — computed as the midpoint between sunrise and sunset
-    // (i.e. Maghrib when the sun has fully set).
     final sunset = maghrib;
     final solarNoon = sunrise.add(
       Duration(
@@ -162,7 +151,6 @@ class AdhanService {
       ),
     );
 
-    // Extended Islamic timings.
     final imsak = fajr.subtract(const Duration(minutes: 5));
     final nextFajr = fajr.add(const Duration(days: 1));
     final night = nextFajr.difference(maghrib);
@@ -177,7 +165,6 @@ class AdhanService {
       Duration(milliseconds: night.inMilliseconds ~/ 3),
     );
 
-    // Ishraq = sunrise + ~20 minutes (start of Duha prayer).
     final ishraq = sunrise.add(const Duration(minutes: 20));
 
     return PrayerTimes(
