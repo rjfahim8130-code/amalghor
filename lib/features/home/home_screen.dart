@@ -4,29 +4,22 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
 import '../../core/router.dart';
-import '../../data/models/location_model.dart';
 import '../../data/models/prayer_times.dart';
 import '../../l10n/generated/app_localizations.dart';
-import '../../providers/location_provider.dart';
 import '../../providers/prayer_provider.dart';
 import 'widgets/current_status_card.dart';
+import 'widgets/home_header.dart';
 import 'widgets/live_clock_card.dart';
 import 'widgets/quick_summary_card.dart';
 import 'widgets/tri_calendar_row.dart';
 
-/// The main dashboard. Shows:
-///   - header with location + settings shortcut
-///   - live clock card (ticks every second)
-///   - current prayer status + countdown
-///   - tri-calendar date line
-///   - today's quick prayer summary
-///   - a hero CTA to generate the yearly PDF
+/// Main dashboard.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final location = ref.watch(locationProvider);
+    final l10n = AppLocalizations.of(context);
     final prayerAsync = ref.watch(currentDayPrayerProvider);
 
     return Scaffold(
@@ -46,7 +39,7 @@ class HomeScreen extends ConsumerWidget {
               AppConstants.space2xl,
             ),
             children: [
-              _HomeHeader(location: location),
+              const HomeHeader(),
               const SizedBox(height: AppConstants.spaceLg),
 
               prayerAsync.when(
@@ -64,70 +57,6 @@ class HomeScreen extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// HEADER
-// ─────────────────────────────────────────────
-class _HomeHeader extends StatelessWidget {
-  final LocationModel location;
-
-  const _HomeHeader({required this.location});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: AppConstants.emeraldPrimary.withValues(alpha: 0.15),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.location_on,
-            color: AppConstants.emeraldPrimary,
-            size: 20,
-          ),
-        ),
-        const SizedBox(width: AppConstants.spaceMd),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                location.shortLabel,
-                style: const TextStyle(
-                  color: AppConstants.textPrimary,
-                  fontSize: AppConstants.fontSubtitle,
-                  fontWeight: FontWeight.w600,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (location.country != null)
-                Text(
-                  location.country!,
-                  style: const TextStyle(
-                    color: AppConstants.textMuted,
-                    fontSize: AppConstants.fontCaption,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-            ],
-          ),
-        ),
-        IconButton(
-          tooltip: 'Settings',
-          onPressed: () => context.push(Routes.settings),
-          icon: const Icon(
-            Icons.settings_outlined,
-            color: AppConstants.textPrimary,
-          ),
-        ),
-      ],
     );
   }
 }
@@ -302,7 +231,6 @@ class _PdfHeroButton extends StatelessWidget {
   }
 
   void _openPdfFlow(BuildContext context) {
-    // PDF flow will live in its own screen — placeholder for now.
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('PDF flow coming soon')),
     );
