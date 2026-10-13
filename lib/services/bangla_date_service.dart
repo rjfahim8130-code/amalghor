@@ -1,13 +1,5 @@
 /// Service for converting Gregorian dates to the Bangladeshi
-/// revised Bangla calendar (2019 reform).
-///
-/// Months and lengths:
-///   Boishakh–Bhadro  : 31 days each (5 × 31 = 155)
-///   Ashwin–Magh      : 30 days each (5 × 30 = 150)
-///   Falgun           : 29 days (30 in Gregorian leap years)
-///   Choitro          : 30 days (31 in Gregorian leap years)
-///
-/// The Bangla year always begins on 14 April (Gregorian).
+/// revised Bangla calendar.
 class BanglaDateService {
   const BanglaDateService();
 
@@ -41,9 +33,8 @@ class BanglaDateService {
     'Choitro',
   ];
 
-  /// Convert a Gregorian date to Bangla calendar components.
   ({int day, int monthIndex, int year}) convert(DateTime g) {
-    const newYearMonth = 4; // April
+    const newYearMonth = 4;
     const newYearDay = 14;
 
     int banglaYear = g.year - 593;
@@ -58,10 +49,10 @@ class BanglaDateService {
     final leap = _isGregorianLeap(g.year);
 
     final monthLengths = <int>[
-      31, 31, 31, 31, 31, // Boishakh–Bhadro
-      30, 30, 30, 30, 30, // Ashwin–Magh
-      leap ? 30 : 29,     // Falgun
-      leap ? 31 : 30,     // Choitro
+      31, 31, 31, 31, 31,
+      30, 30, 30, 30, 30,
+      leap ? 30 : 29,
+      leap ? 31 : 30,
     ];
 
     int remaining = daysSince;
@@ -78,26 +69,21 @@ class BanglaDateService {
     );
   }
 
-  /// Bangla month name for a 0-based month index.
   String monthName(int monthIndex) => _months[monthIndex.clamp(0, 11)];
 
-  /// English transliteration of the Bangla month name.
   String monthNameEn(int monthIndex) => _monthsEn[monthIndex.clamp(0, 11)];
 
-  /// Fully-formatted Bangla date, e.g. "১৪ বৈশাখ ১৪৩০".
   String format(DateTime date) {
     final c = convert(date);
     return '${toBanglaDigits(c.day)} ${monthName(c.monthIndex)} '
         '${toBanglaDigits(c.year)}';
   }
 
-  /// Fully-formatted Bangla date in English transliteration.
   String formatEn(DateTime date) {
     final c = convert(date);
     return '${c.day} ${monthNameEn(c.monthIndex)} ${c.year}';
   }
 
-  /// Convert western digits in a number to Bangla digits.
   String toBanglaDigits(int number) {
     const en = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
     const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
