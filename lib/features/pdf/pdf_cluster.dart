@@ -3,9 +3,6 @@ import 'package:flutter/foundation.dart';
 import '../../data/models/prayer_times.dart';
 
 /// Granularity options for the PDF calendar clustering.
-///
-/// A cluster groups consecutive days whose prayer times are identical
-/// when rounded to the selected granularity.
 enum ClusterGranularity {
   dayWise(minutes: 0, label: 'প্রতিদিন আলাদা (৩৬৫ দিন)'),
   tenSec(minutes: 0.1667, label: '১০ সেকেন্ডের গ্যাপ'),
@@ -28,11 +25,6 @@ enum ClusterGranularity {
   bool get isDayWise => this == ClusterGranularity.dayWise;
 }
 
-/// A single row in the clustered PDF calendar.
-///
-/// [startDate] and [endDate] define the day range covered by this
-/// row. In day-wise mode they are identical; in clustered mode they
-/// represent a multi-day span with identical prayer times.
 @immutable
 class ClusterRow {
   final DateTime startDate;
@@ -62,7 +54,6 @@ class ClusterRow {
   }
 }
 
-/// The full PDF calendar data for one year.
 @immutable
 class ClusterResult {
   final int year;
@@ -83,7 +74,6 @@ class ClusterResult {
       rows.fold<int>(0, (sum, r) => sum + r.dayCount);
 }
 
-/// Builds clusters for a full year of prayer times.
 ClusterResult buildClusters({
   required int year,
   required double latitude,
@@ -150,16 +140,9 @@ ClusterResult buildClusters({
   );
 }
 
-// ─────────────────────────────────────────────
-// INTERNAL
-// ─────────────────────────────────────────────
-
-/// Round all displayed prayer times to the nearest `granularity`
-/// minutes. Preserves seconds only when granularity is sub-minute.
 PrayerTimes _roundTimes(PrayerTimes t, double granularityMinutes) {
   DateTime roundTo(DateTime dt) {
     if (granularityMinutes >= 1.0) {
-      // Round to nearest whole minute.
       final totalMin = dt.hour * 60 + dt.minute;
       final rounded =
           (totalMin / granularityMinutes).round() * granularityMinutes;
@@ -168,9 +151,7 @@ PrayerTimes _roundTimes(PrayerTimes t, double granularityMinutes) {
       return DateTime(dt.year, dt.month, dt.day, h, m, 0);
     }
 
-    // Sub-minute granularity — keep seconds precision.
-    final totalSec =
-        dt.hour * 3600 + dt.minute * 60 + dt.second;
+    final totalSec = dt.hour * 3600 + dt.minute * 60 + dt.second;
     final granularitySec = (granularityMinutes * 60).round();
     final rounded =
         (totalSec / granularitySec).round() * granularitySec;
@@ -199,7 +180,6 @@ PrayerTimes _roundTimes(PrayerTimes t, double granularityMinutes) {
   );
 }
 
-/// Compare the display-relevant times with second-level precision.
 bool _timesEqual(PrayerTimes a, PrayerTimes b) {
   return _sameSecond(a.sehriSafety, b.sehriSafety) &&
       _sameSecond(a.sehriActual, b.sehriActual) &&
@@ -226,7 +206,6 @@ bool isLeapYear(int year) {
   return year % 4 == 0;
 }
 
-/// Whether a column should be included in the PDF.
 enum PdfColumn {
   date,
   tahajjud,
@@ -278,14 +257,12 @@ extension PdfColumnExt on PdfColumn {
   bool get requiresHanafi => this == PdfColumn.ishaMustahab;
 }
 
-/// User-selected columns for the PDF.
 @immutable
 class PdfColumnSelection {
   final Set<PdfColumn> columns;
 
   const PdfColumnSelection(this.columns);
 
-  /// Sensible default — everything except Hanafi-only columns.
   factory PdfColumnSelection.defaultSelection({
     required bool isHanafi,
   }) {
@@ -324,4 +301,7 @@ class PdfColumnSelection {
 
   bool get isEmpty => columns.isEmpty;
   int get length => columns.length;
+
+  Set<PdfColumn> get safeColumns =>
+      columns.isEmpty ? {PdfColumn.date} : columns;
 }
