@@ -1,25 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Location permissions -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
-    <!-- Notification permissions (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
-    <!-- Scheduled exact alarms for prayer times -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
-
-    <!-- Boot receiver so alarms survive reboot -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-
-    <!-- Internet only needed for geocoding fallback (optional) -->
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Qibla compass sensors (optional — app still works without) -->
     <uses-feature
         android:name="android.hardware.sensor.compass"
         android:required="false" />
@@ -31,7 +21,8 @@
         android:label="Amalghor"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:enableOnBackInvokedCallback="true">
+        android:enableOnBackInvokedCallback="true"
+        android:hardwareAccelerated="true">
 
         <activity
             android:name=".MainActivity"
@@ -53,7 +44,12 @@
             </intent-filter>
         </activity>
 
-        <!-- flutter_local_notifications receivers -->
+        <!-- Override the default Flutter launch meta-data to force our
+             AMOLED background instead of the default white. -->
+        <meta-data
+            android:name="io.flutter.embedding.android.SplashScreenDrawable"
+            android:resource="@drawable/launch_background" />
+
         <receiver
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"
             android:exported="false" />
