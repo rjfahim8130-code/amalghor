@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants.dart';
@@ -74,12 +75,11 @@ class _AyahCardState extends ConsumerState<AyahCard> {
             ),
 
           // ─── Bangla text ──────────────────────
-          if (display.showBangla && (widget.ayah.textBangla?.isNotEmpty ?? false))
+          if (display.showBangla &&
+              (widget.ayah.textBangla?.isNotEmpty ?? false))
             Padding(
               padding: EdgeInsets.only(
-                top: display.showArabic
-                    ? AppConstants.spaceLg
-                    : 0,
+                top: display.showArabic ? AppConstants.spaceLg : 0,
               ),
               child: _TranslatedText(
                 text: widget.ayah.textBangla!,
@@ -92,7 +92,8 @@ class _AyahCardState extends ConsumerState<AyahCard> {
             ),
 
           // ─── English text ─────────────────────
-          if (display.showEnglish && (widget.ayah.textEnglish?.isNotEmpty ?? false))
+          if (display.showEnglish &&
+              (widget.ayah.textEnglish?.isNotEmpty ?? false))
             Padding(
               padding: EdgeInsets.only(
                 top: (display.showArabic || display.showBangla)
