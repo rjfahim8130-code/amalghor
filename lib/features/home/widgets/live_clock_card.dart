@@ -4,10 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants.dart';
 import '../../../core/date_utils.dart';
 import '../../../data/models/prayer_times.dart';
-import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/clock_provider.dart';
 
-/// Live digital clock card. Ticks every second via [clockProvider].
+/// Live digital clock card with tri-calendar date row.
 class LiveClockCard extends ConsumerWidget {
   final PrayerTimes prayer;
 
@@ -39,13 +38,6 @@ class LiveClockCard extends ConsumerWidget {
         border: Border.all(
           color: AppConstants.emeraldPrimary.withValues(alpha: 0.18),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: AppConstants.emeraldPrimary.withValues(alpha: 0.06),
-            blurRadius: 24,
-            spreadRadius: 2,
-          ),
-        ],
       ),
       child: Column(
         children: [
@@ -87,9 +79,6 @@ class LiveClockCard extends ConsumerWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// TRI-CALENDAR DATE LINE
-// ─────────────────────────────────────────────
 class _DateLine extends StatelessWidget {
   final PrayerTimes prayer;
 
