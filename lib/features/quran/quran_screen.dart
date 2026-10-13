@@ -1,295 +1,521 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
 import '../../data/models/quran_models.dart';
-import '../../l10n/generated/app_localizations.dart';
+import '../../providers/quran_provider.dart';
+import 'widgets/loading_overlay.dart';
 
-/// Quran module — phase 1 shows the Surah list from a static catalogue.
-/// Tapping a Surah navigates to a reader screen (to be added later).
-class QuranScreen extends ConsumerWidget {
+/// The Quran module's main screen.
+///
+/// Shows:
+///   - A one-time loading overlay while the SQLite DB is populated
+///   - A "Continue Reading" card if a last-read position exists
+///   - A search bar
+///   - The complete list of 114 Surahs
+class QuranScreen extends ConsumerStatefulWidget {
   const QuranScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final localeCode = Localizations.localeOf(context).languageCode;
+  ConsumerState<QuranScreen> createState() => _QuranScreenState();
+}
+
+class _QuranScreenState extends ConsumerState<QuranScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  bool _searching = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Kick off the one-time load. Safe to call repeatedly.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(quranLoadProvider.notifier).load();
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final loadState = ref.watch(quranLoadProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.quranTitle),
+        title: _searching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                style: const TextStyle(
+                  color: AppConstants.textPrimary,
+                  fontSize: AppConstants.fontBody,
+                ),
+                decoration: const InputDecoration(
+                  hintText: 'Search the Quran...',
+                  border: InputBorder.none,
+                  hintStyle: TextStyle(color: AppConstants.textFaint),
+                ),
+                onChanged: (_) => setState(() {}),
+              )
+            : const Text('Al-Quran'),
+        actions: [
+          IconButton(
+            icon: Icon(_searching ? Icons.close : Icons.search),
+            onPressed: () {
+              setState(() {
+                if (_searching) {
+                  _searchController.clear();
+                }
+                _searching = !_searching;
+              });
+            },
+          ),
+          IconButton(
+            tooltip: 'Bookmarks',
+            icon: const Icon(Icons.bookmark_border),
+            onPressed: () => context.push('/quran/bookmarks'),
+          ),
+        ],
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppConstants.spaceLg,
-          vertical: AppConstants.spaceLg,
-        ),
-        itemCount: SurahCatalogue.surahs.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
-        itemBuilder: (context, i) {
-          final s = SurahCatalogue.surahs[i];
-          return _SurahTile(surah: s, localeCode: localeCode);
-        },
+      body: Stack(
+        children: [
+          // ─── Body content ─────────────────────
+          if (!loadState.isLoaded)
+            const _LoadingPlaceholder()
+          else if (_searching && _searchController.text.trim().isNotEmpty)
+            _SearchResults(query: _searchController.text.trim())
+          else
+            const _SurahListView(),
+
+          // ─── Loading overlay ──────────────────
+          if (!loadState.isLoaded)
+            LoadingOverlay(
+              stage: loadState.stage,
+              progress: loadState.progress,
+            ),
+        ],
       ),
     );
   }
 }
 
-class _SurahTile extends StatelessWidget {
-  final Surah surah;
-  final String localeCode;
-
-  const _SurahTile({required this.surah, required this.localeCode});
+// ─────────────────────────────────────────────
+// PLACEHOLDER WHILE LOADING
+// ─────────────────────────────────────────────
+class _LoadingPlaceholder extends StatelessWidget {
+  const _LoadingPlaceholder();
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    return const SizedBox.shrink();
+  }
+}
 
-    return InkWell(
-      onTap: () {
-        // TODO: navigate to reader
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          vertical: AppConstants.spaceMd,
+// ─────────────────────────────────────────────
+// MAIN LIST VIEW
+// ─────────────────────────────────────────────
+class _SurahListView extends ConsumerWidget {
+  const _SurahListView();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final surahsAsync = ref.watch(surahListProvider);
+    final lastRead = ref.watch(lastReadProvider);
+
+    return surahsAsync.when(
+      loading: () => const Center(
+        child: CircularProgressIndicator(
+          color: AppConstants.emeraldPrimary,
         ),
-        child: Row(
-          children: [
-            // Number diamond
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: AppConstants.surfaceDark,
-                borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-                border: Border.all(
-                  color: AppConstants.emeraldPrimary.withValues(alpha: 0.35),
-                ),
+      ),
+      error: (e, _) => Center(
+        child: Text(
+          'Failed to load: $e',
+          style: const TextStyle(color: AppConstants.textMuted),
+        ),
+      ),
+      data: (surahs) {
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(
+            vertical: AppConstants.spaceMd,
+          ),
+          itemCount: surahs.length + (lastRead != null ? 1 : 0),
+          itemBuilder: (context, i) {
+            // Continue Reading card at the very top.
+            if (lastRead != null && i == 0) {
+              return _ContinueReadingCard(lastRead: lastRead);
+            }
+
+            final index = lastRead != null ? i - 1 : i;
+            final surah = surahs[index];
+            return _SurahTile(surah: surah);
+          },
+        );
+      },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// CONTINUE READING CARD
+// ─────────────────────────────────────────────
+class _ContinueReadingCard extends ConsumerWidget {
+  final LastReadPosition lastRead;
+
+  const _ContinueReadingCard({required this.lastRead});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final surahAsync = ref.watch(surahMetaProvider(lastRead.surahNumber));
+    final surah = surahAsync.value;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppConstants.spaceLg,
+        AppConstants.spaceSm,
+        AppConstants.spaceLg,
+        AppConstants.spaceMd,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+          onTap: () => context.push(
+            '/quran/${lastRead.surahNumber}?ayah=${lastRead.ayahNumber}',
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(AppConstants.spaceLg),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppConstants.emeraldPrimary.withValues(alpha: 0.18),
+                  AppConstants.emeraldPrimary.withValues(alpha: 0.05),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              child: Center(
-                child: Text(
-                  '${surah.number}',
-                  style: const TextStyle(
-                    color: AppConstants.emeraldPrimary,
-                    fontSize: AppConstants.fontBody,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+              borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+              border: Border.all(
+                color: AppConstants.emeraldPrimary.withValues(alpha: 0.4),
               ),
             ),
-            const SizedBox(width: AppConstants.spaceMd),
-
-            // Name column
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    surah.nameFor(localeCode),
-                    style: const TextStyle(
-                      color: AppConstants.textPrimary,
-                      fontSize: AppConstants.fontSubtitle,
-                      fontWeight: FontWeight.w600,
-                    ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppConstants.emeraldPrimary.withValues(alpha: 0.20),
+                    borderRadius: BorderRadius.circular(AppConstants.radiusMd),
                   ),
-                  const SizedBox(height: 2),
-                  Row(
+                  child: const Icon(
+                    Icons.play_arrow_rounded,
+                    color: AppConstants.emeraldPrimary,
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(width: AppConstants.spaceMd),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const Text(
+                        'Continue Reading',
+                        style: TextStyle(
+                          color: AppConstants.textPrimary,
+                          fontSize: AppConstants.fontSubtitle,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
                       Text(
-                        surah.nameTransliteration,
+                        '${surah?.nameEnglish ?? 'Surah ${lastRead.surahNumber}'}'
+                        ' — Ayah ${lastRead.ayahNumber}',
                         style: const TextStyle(
                           color: AppConstants.textMuted,
                           fontSize: AppConstants.fontCaption,
                         ),
                       ),
-                      const SizedBox(width: AppConstants.spaceSm),
-                      Container(
-                        width: 4,
-                        height: 4,
-                        decoration: const BoxDecoration(
-                          color: AppConstants.textFaint,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: AppConstants.spaceSm),
-                      Text(
-                        surah.isMakki ? l10n.quranMakki : l10n.quranMadani,
-                        style: const TextStyle(
-                          color: AppConstants.textFaint,
-                          fontSize: AppConstants.fontMicro,
-                        ),
-                      ),
                     ],
                   ),
-                ],
-              ),
+                ),
+                const Icon(
+                  Icons.chevron_right,
+                  color: AppConstants.emeraldPrimary,
+                ),
+              ],
             ),
-
-            // Arabic name
-            Text(
-              surah.nameArabic,
-              style: const TextStyle(
-                color: AppConstants.goldAccent,
-                fontSize: AppConstants.fontSubtitle,
-                fontFamily: 'NotoNaskhArabic',
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// Static catalogue of the 114 Surahs. Populated at build time so
-/// that the list screen works fully offline.
-class SurahCatalogue {
-  SurahCatalogue._();
+// ─────────────────────────────────────────────
+// SURAH TILE
+// ─────────────────────────────────────────────
+class _SurahTile extends StatelessWidget {
+  final SurahMeta surah;
 
-  static const List<Surah> surahs = [
-    Surah(
-      number: 1,
-      nameArabic: 'الفاتحة',
-      nameEnglish: 'The Opening',
-      nameBangla: 'সূচনা',
-      nameTransliteration: 'Al-Fatihah',
-      totalAyahs: 7,
-      revelationPlace: 'makkah',
-    ),
-    Surah(
-      number: 2,
-      nameArabic: 'البقرة',
-      nameEnglish: 'The Cow',
-      nameBangla: 'গাভী',
-      nameTransliteration: 'Al-Baqarah',
-      totalAyahs: 286,
-      revelationPlace: 'madinah',
-    ),
-    Surah(
-      number: 3,
-      nameArabic: 'آل عمران',
-      nameEnglish: 'Family of Imran',
-      nameBangla: 'ইমরানের পরিবার',
-      nameTransliteration: 'Ali Imran',
-      totalAyahs: 200,
-      revelationPlace: 'madinah',
-    ),
-    Surah(
-      number: 4,
-      nameArabic: 'النساء',
-      nameEnglish: 'The Women',
-      nameBangla: 'নারী',
-      nameTransliteration: 'An-Nisa',
-      totalAyahs: 176,
-      revelationPlace: 'madinah',
-    ),
-    Surah(
-      number: 5,
-      nameArabic: 'المائدة',
-      nameEnglish: 'The Table',
-      nameBangla: 'খাদ্য পরিবেশিত টেবিল',
-      nameTransliteration: 'Al-Maidah',
-      totalAyahs: 120,
-      revelationPlace: 'madinah',
-    ),
-    Surah(
-      number: 6,
-      nameArabic: 'الأنعام',
-      nameEnglish: 'The Cattle',
-      nameBangla: 'গবাদি পশু',
-      nameTransliteration: 'Al-Anam',
-      totalAyahs: 165,
-      revelationPlace: 'makkah',
-    ),
-    Surah(
-      number: 7,
-      nameArabic: 'الأعراف',
-      nameEnglish: 'The Heights',
-      nameBangla: 'উঁচু স্থান',
-      nameTransliteration: 'Al-Araf',
-      totalAyahs: 206,
-      revelationPlace: 'makkah',
-    ),
-    Surah(
-      number: 8,
-      nameArabic: 'الأنفال',
-      nameEnglish: 'The Spoils of War',
-      nameBangla: 'যুদ্ধলব্ধ সম্পদ',
-      nameTransliteration: 'Al-Anfal',
-      totalAyahs: 75,
-      revelationPlace: 'madinah',
-    ),
-    Surah(
-      number: 9,
-      nameArabic: 'التوبة',
-      nameEnglish: 'The Repentance',
-      nameBangla: 'অনুশোচনা',
-      nameTransliteration: 'At-Tawbah',
-      totalAyahs: 129,
-      revelationPlace: 'madinah',
-    ),
-    Surah(
-      number: 10,
-      nameArabic: 'يونس',
-      nameEnglish: 'Jonah',
-      nameBangla: 'ইউনুস',
-      nameTransliteration: 'Yunus',
-      totalAyahs: 109,
-      revelationPlace: 'makkah',
-    ),
-    Surah(
-      number: 36,
-      nameArabic: 'يس',
-      nameEnglish: 'Ya Sin',
-      nameBangla: 'ইয়া সিন',
-      nameTransliteration: 'Ya-Sin',
-      totalAyahs: 83,
-      revelationPlace: 'makkah',
-    ),
-    Surah(
-      number: 55,
-      nameArabic: 'الرحمن',
-      nameEnglish: 'The Beneficent',
-      nameBangla: 'পরম দয়াময়',
-      nameTransliteration: 'Ar-Rahman',
-      totalAyahs: 78,
-      revelationPlace: 'madinah',
-    ),
-    Surah(
-      number: 67,
-      nameArabic: 'الملك',
-      nameEnglish: 'The Sovereignty',
-      nameBangla: 'সার্বভৌমত্ব',
-      nameTransliteration: 'Al-Mulk',
-      totalAyahs: 30,
-      revelationPlace: 'makkah',
-    ),
-    Surah(
-      number: 112,
-      nameArabic: 'الإخلاص',
-      nameEnglish: 'The Purity',
-      nameBangla: 'একনিষ্ঠতা',
-      nameTransliteration: 'Al-Ikhlas',
-      totalAyahs: 4,
-      revelationPlace: 'makkah',
-    ),
-    Surah(
-      number: 113,
-      nameArabic: 'الفلق',
-      nameEnglish: 'The Dawn',
-      nameBangla: 'প্রভাত',
-      nameTransliteration: 'Al-Falaq',
-      totalAyahs: 5,
-      revelationPlace: 'makkah',
-    ),
-    Surah(
-      number: 114,
-      nameArabic: 'الناس',
-      nameEnglish: 'Mankind',
-      nameBangla: 'মানবজাতি',
-      nameTransliteration: 'An-Nas',
-      totalAyahs: 6,
-      revelationPlace: 'makkah',
-    ),
-  ];
+  const _SurahTile({required this.surah});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.push('/quran/${surah.number}'),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppConstants.spaceLg,
+            vertical: AppConstants.spaceMd,
+          ),
+          child: Row(
+            children: [
+              // Number diamond
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppConstants.surfaceDark,
+                  borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+                  border: Border.all(
+                    color:
+                        AppConstants.emeraldPrimary.withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    '${surah.number}',
+                    style: const TextStyle(
+                      color: AppConstants.emeraldPrimary,
+                      fontSize: AppConstants.fontBody,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppConstants.spaceMd),
+
+              // Names column
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      surah.nameEnglish,
+                      style: const TextStyle(
+                        color: AppConstants.textPrimary,
+                        fontSize: AppConstants.fontSubtitle,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Text(
+                          surah.nameTransliteration,
+                          style: const TextStyle(
+                            color: AppConstants.textMuted,
+                            fontSize: AppConstants.fontCaption,
+                          ),
+                        ),
+                        const SizedBox(width: AppConstants.spaceSm),
+                        Container(
+                          width: 3,
+                          height: 3,
+                          decoration: const BoxDecoration(
+                            color: AppConstants.textFaint,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: AppConstants.spaceSm),
+                        Text(
+                          surah.isMakki ? 'Makki' : 'Madani',
+                          style: const TextStyle(
+                            color: AppConstants.textFaint,
+                            fontSize: AppConstants.fontMicro,
+                          ),
+                        ),
+                        const SizedBox(width: AppConstants.spaceSm),
+                        Container(
+                          width: 3,
+                          height: 3,
+                          decoration: const BoxDecoration(
+                            color: AppConstants.textFaint,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: AppConstants.spaceSm),
+                        Text(
+                          '${surah.totalAyahs} ayahs',
+                          style: const TextStyle(
+                            color: AppConstants.textFaint,
+                            fontSize: AppConstants.fontMicro,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Arabic name
+              Text(
+                surah.nameArabic,
+                style: const TextStyle(
+                  color: AppConstants.goldAccent,
+                  fontSize: 20,
+                  fontFamily: 'NotoNaskhArabic',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// SEARCH RESULTS
+// ─────────────────────────────────────────────
+class _SearchResults extends ConsumerWidget {
+  final String query;
+
+  const _SearchResults({required this.query});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final resultsAsync = ref.watch(quranSearchProvider(query));
+
+    return resultsAsync.when(
+      loading: () => const Center(
+        child: CircularProgressIndicator(
+          color: AppConstants.emeraldPrimary,
+        ),
+      ),
+      error: (e, _) => Center(
+        child: Text(
+          'Search failed: $e',
+          style: const TextStyle(color: AppConstants.textMuted),
+        ),
+      ),
+      data: (results) {
+        if (results.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(AppConstants.spaceXl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.search_off,
+                    color: AppConstants.textFaint,
+                    size: 48,
+                  ),
+                  const SizedBox(height: AppConstants.spaceMd),
+                  Text(
+                    'No results for "$query"',
+                    style: const TextStyle(
+                      color: AppConstants.textMuted,
+                      fontSize: AppConstants.fontBody,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.symmetric(
+            vertical: AppConstants.spaceMd,
+          ),
+          itemCount: results.length,
+          separatorBuilder: (_, __) =>
+              const Divider(height: 1, indent: AppConstants.spaceLg),
+          itemBuilder: (context, i) => _SearchResultTile(result: results[i]),
+        );
+      },
+    );
+  }
+}
+
+class _SearchResultTile extends StatelessWidget {
+  final QuranSearchResult result;
+
+  const _SearchResultTile({required this.result});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.push(
+          '/quran/${result.surahNumber}?ayah=${result.ayahNumber}',
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppConstants.spaceLg,
+            vertical: AppConstants.spaceMd,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.spaceSm,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppConstants.emeraldPrimary
+                          .withValues(alpha: 0.15),
+                      borderRadius:
+                          BorderRadius.circular(AppConstants.radiusSm),
+                    ),
+                    child: Text(
+                      '${result.surahNumber}:${result.ayahNumber}',
+                      style: const TextStyle(
+                        color: AppConstants.emeraldPrimary,
+                        fontSize: AppConstants.fontMicro,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppConstants.spaceSm),
+                  Expanded(
+                    child: Text(
+                      result.surahName,
+                      style: const TextStyle(
+                        color: AppConstants.textPrimary,
+                        fontSize: AppConstants.fontBody,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppConstants.spaceSm),
+              Text(
+                result.snippet,
+                style: const TextStyle(
+                  color: AppConstants.textMuted,
+                  fontSize: AppConstants.fontBody,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
