@@ -135,6 +135,8 @@ class PdfProgress {
 ///   3. Load fonts
 ///   4. Render the PDF
 class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
+  // The ref is retained for future use (e.g., invalidating caches).
+  // ignore: unused_field
   final Ref _ref;
   final AdhanService _adhan = const AdhanService();
 
@@ -152,7 +154,10 @@ class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
       final loc = _ref.read(currentLocationProvider);
 
       // Step 1: Fetch or compute the year of prayer times.
-      state = state.copyWith(stage: 'Computing prayer times...', progress: 0.1);
+      state = state.copyWith(
+        stage: 'Computing prayer times...',
+        progress: 0.1,
+      );
 
       final times = _adhan.calculateYear(
         latitude: loc.latitude,
@@ -163,7 +168,10 @@ class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
       );
 
       // Step 2: Build clusters.
-      state = state.copyWith(stage: 'Building clusters...', progress: 0.4);
+      state = state.copyWith(
+        stage: 'Building clusters...',
+        progress: 0.4,
+      );
 
       final result = buildClusters(
         year: options.year,
@@ -174,11 +182,17 @@ class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
       );
 
       // Step 3: Load fonts.
-      state = state.copyWith(stage: 'Loading fonts...', progress: 0.55);
+      state = state.copyWith(
+        stage: 'Loading fonts...',
+        progress: 0.55,
+      );
       final fonts = await PdfFonts.load();
 
       // Step 4: Render.
-      state = state.copyWith(stage: 'Rendering PDF...', progress: 0.7);
+      state = state.copyWith(
+        stage: 'Rendering PDF...',
+        progress: 0.7,
+      );
 
       final builder = PdfBuilder(
         fonts: fonts,
