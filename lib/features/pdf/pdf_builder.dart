@@ -18,6 +18,9 @@ class PdfOptions {
   final String locationName;
   final double latitude;
   final double longitude;
+  final Set<PdfColumn> columns;
+  final String appName;
+  final String appTagline;
 
   const PdfOptions({
     required this.primaryCalendar,
@@ -26,6 +29,9 @@ class PdfOptions {
     required this.locationName,
     required this.latitude,
     required this.longitude,
+    required this.columns,
+    this.appName = 'আমলঘর',
+    this.appTagline = 'নামাযের সময়সূচি',
   });
 }
 
@@ -41,27 +47,34 @@ class PdfBuilder {
     required this.options,
   });
 
-  /// Build the full PDF and return its bytes.
   Future<Uint8List> build(ClusterResult result) async {
-    final doc = pw.Document(theme: fonts.theme);
+    final doc = pw.Document(
+      title: '${options.appName} — ${result.year}',
+      author: options.appName,
+      theme: fonts.theme,
+    );
 
-    // Split clusters by month so each page shows a single Gregorian month.
+    // Split clusters by Gregorian month.
     final byMonth = _groupByMonth(result.rows);
-
     final months = byMonth.keys.toList()..sort();
 
     for (final month in months) {
       final rows = byMonth[month]!;
       doc.addPage(
-        pw.MultiPage(
+        pw.Page(
           pageFormat: PdfPageFormat.a4,
           orientation: pw.PageOrientation.portrait,
-          margin: const pw.EdgeInsets.fromLTRB(24, 28, 24, 24),
-          header: (ctx) => _header(month, result),
-          footer: (ctx) => _footer(ctx, result),
-          build: (ctx) => [
-            _table(rows),
-          ],
+          margin: const pw.EdgeInsets.fromLTRB(20, 24, 20, 20),
+          build: (ctx) => pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+            children: [
+              _header(month, result),
+              pw.SizedBox(height: 10),
+              _table(rows),
+              pw.Spacer(),
+              _footer(ctx, result),
+            ],
+          ),
         ),
       );
     }
@@ -87,66 +100,127 @@ class PdfBuilder {
   // ─────────────────────────────────────────────
 
   pw.Widget _header(int month, ClusterResult result) {
-    // English month name.
-    final monthEn = DateFormat('MMMM y').format(DateTime(result.year, month));
-
-    // Bangla months: may span two Bangla months in the same Gregorian month.
+    final monthEn =
+        DateFormat('MMMM y').format(DateTime(result.year, month));
     final banglaMonths = _banglaMonthsFor(result.year, month);
-
-    // Hijri months: same span logic.
     final hijriMonths = _hijriMonthsFor(result.year, month);
 
-    return pw.Container(
-      margin: const pw.EdgeInsets.only(bottom: 12),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.center,
-        children: [
-          // English month (emerald)
-          pw.Text(
-            monthEn,
-            style: pw.TextStyle(
-              fontSize: 18,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColor.fromHex('#10B981'),
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.center,
+      children: [
+        // ─── App brand row ──────────────────
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: pw.CrossAxisAlignment.center,
+          children: [
+            // App name (Arabic-style brand)
+            pw.Row(
+              children: [
+                pw.Container(
+                  width: 26,
+                  height: 26,
+                  decoration: pw.BoxDecoration(
+                    color: PdfColor.fromHex('#10B981'),
+                    borderRadius: pw.BorderRadius.circular(6),
+                  ),
+                  child: pw.Center(
+                    child: pw.Text(
+                      'আ',
+                      style: pw.TextStyle(
+                        color: PdfColors.white,
+                        fontSize: 14,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                pw.SizedBox(width: 6),
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      options.appName,
+                      style: pw.TextStyle(
+                        fontSize: 12,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColor.fromHex('#10B981'),
+                      ),
+                    ),
+                    pw.Text(
+                      options.appTagline,
+                      style: pw.TextStyle(
+                        fontSize: 7,
+                        color: PdfColors.grey600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ),
-          pw.SizedBox(height: 4),
 
-          // Bangla months (gold)
-          pw.Text(
-            banglaMonths,
-            style: pw.TextStyle(
-              fontSize: 12,
-              color: PdfColor.fromHex('#D4A24A'),
+            // Location + method meta
+            pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.end,
+              children: [
+                pw.Text(
+                  options.locationName,
+                  style: pw.TextStyle(
+                    fontSize: 8,
+                    color: PdfColors.grey700,
+                  ),
+                ),
+                pw.Text(
+                  '${options.latitude.toStringAsFixed(2)}°, '
+                  '${options.longitude.toStringAsFixed(2)}°',
+                  style: pw.TextStyle(
+                    fontSize: 7,
+                    color: PdfColors.grey500,
+                  ),
+                ),
+              ],
             ),
-          ),
-          pw.SizedBox(height: 2),
+          ],
+        ),
 
-          // Hijri months (sky blue)
-          pw.Text(
-            hijriMonths,
-            style: pw.TextStyle(
-              fontSize: 12,
-              color: PdfColor.fromHex('#0EA5E9'),
-            ),
-          ),
-          pw.SizedBox(height: 8),
+        pw.SizedBox(height: 10),
 
-          // Location + method meta
-          pw.Text(
-            '${options.locationName}  •  '
-            '${options.latitude.toStringAsFixed(2)}°, '
-            '${options.longitude.toStringAsFixed(2)}°  •  '
-            '${_madhhabLabel(options.madhhab)}  •  '
-            '${result.granularity.label}',
-            style: pw.TextStyle(
-              fontSize: 8,
-              color: PdfColors.grey700,
-            ),
+        // ─── Month titles (3 calendars) ─────
+        pw.Text(
+          monthEn,
+          style: pw.TextStyle(
+            fontSize: 16,
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColor.fromHex('#10B981'),
           ),
-          pw.Divider(color: PdfColors.grey400, height: 12),
-        ],
-      ),
+        ),
+        pw.SizedBox(height: 3),
+        pw.Text(
+          banglaMonths,
+          style: pw.TextStyle(
+            fontSize: 11,
+            color: PdfColor.fromHex('#D4A24A'),
+          ),
+        ),
+        pw.SizedBox(height: 2),
+        pw.Text(
+          hijriMonths,
+          style: pw.TextStyle(
+            fontSize: 11,
+            color: PdfColor.fromHex('#0EA5E9'),
+          ),
+        ),
+        pw.SizedBox(height: 4),
+        pw.Text(
+          '${_madhhabLabel(options.madhhab)} মাযহাব  •  '
+          '${result.granularity.label}',
+          style: pw.TextStyle(
+            fontSize: 7.5,
+            color: PdfColors.grey600,
+          ),
+        ),
+        pw.SizedBox(height: 6),
+        pw.Divider(color: PdfColors.grey400, height: 2),
+      ],
     );
   }
 
@@ -178,13 +252,18 @@ class PdfBuilder {
   pw.Widget _footer(pw.Context ctx, ClusterResult result) {
     return pw.Container(
       margin: const pw.EdgeInsets.only(top: 8),
+      padding: const pw.EdgeInsets.only(top: 6),
+      decoration: pw.BoxDecoration(
+        border: pw.Border(
+          top: pw.BorderSide(color: PdfColors.grey400, width: 0.5),
+        ),
+      ),
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
           pw.Text(
             options.showSafetyTimes
-                ? 'সেহরি: সতর্ক (ফজরের ৭ মিনিট আগে) | '
-                    'ইফতার: সতর্ক (মাগরিবের ৩ মিনিট পরে)'
+                ? 'সেহরি: ৭ মিনিট আগে (সতর্ক) | ইফতার: ৩ মিনিট পরে (সতর্ক)'
                 : 'সেহরি / ইফতার: আসল সময়',
             style: pw.TextStyle(
               fontSize: 7,
@@ -192,10 +271,10 @@ class PdfBuilder {
             ),
           ),
           pw.Text(
-            'Page ${ctx.pageNumber} / ${ctx.pagesCount}',
+            '${options.appName} — পৃষ্ঠা ${ctx.pageNumber} / ${ctx.pagesCount}',
             style: pw.TextStyle(
-              fontSize: 8,
-              color: PdfColors.grey700,
+              fontSize: 7,
+              color: PdfColors.grey600,
             ),
           ),
         ],
@@ -208,43 +287,26 @@ class PdfBuilder {
   // ─────────────────────────────────────────────
 
   pw.Widget _table(List<ClusterRow> rows) {
-    final isHanafi = options.madhhab == MadhhabType.hanafi;
+    final cols = options.columns;
+    final orderedCols = PdfColumn.values.where(cols.contains).toList();
 
     // Headers.
     final headers = <String>[
-      'তারিখ',
-      'তাহাজ্জুদ',
-      'সেহরি',
-      'ফজর',
-      'সূর্যোদয়',
-      'ইশরাক',
-      'যোহর',
-      'আসর',
-      'সূর্যাস্ত',
-      'ইফতার',
-      'মাগরিব',
-      'এশা',
-      if (isHanafi) 'মুস্তাহাব\nএশা',
+      for (final c in orderedCols) c.label,
     ];
 
-    // Data rows.
+    // Data.
     final data = rows.map((r) {
       return <String>[
-        _dateCell(r),
-        _shortTime(r.times.lastThirdStart),
-        _safetyCell(r.times.sehriSafety, r.times.sehriActual, 'আসল'),
-        _shortTime(r.times.fajr),
-        _shortTime(r.times.sunrise),
-        _shortTime(r.times.ishraq),
-        _shortTime(r.times.dhuhr),
-        _shortTime(r.times.asr),
-        _shortTime(r.times.sunset),
-        _safetyCell(r.times.iftarSafety, r.times.iftarActual, 'আসল'),
-        _shortTime(r.times.maghrib),
-        _shortTime(r.times.isha),
-        if (isHanafi) _shortTime(r.times.ishaMustahab),
+        for (final c in orderedCols) _cellFor(r, c),
       ];
     }).toList();
+
+    // Column alignment: first column left, others center.
+    final alignments = <int, pw.Alignment>{
+      for (var i = 0; i < orderedCols.length; i++)
+        i: i == 0 ? pw.Alignment.centerLeft : pw.Alignment.center,
+    };
 
     return pw.TableHelper.fromTextArray(
       headers: headers,
@@ -261,13 +323,11 @@ class PdfBuilder {
       headerDecoration: pw.BoxDecoration(
         color: PdfColor.fromHex('#10B981'),
       ),
-      cellStyle: pw.TextStyle(fontSize: 8),
-      cellAlignments: {
-        for (var i = 0; i < headers.length; i++) i: pw.Alignment.center,
-      },
+      cellStyle: pw.TextStyle(fontSize: 7.5),
+      cellAlignments: alignments,
       cellPadding: const pw.EdgeInsets.symmetric(
         horizontal: 2,
-        vertical: 3,
+        vertical: 2.5,
       ),
     );
   }
@@ -276,33 +336,77 @@ class PdfBuilder {
   // CELL HELPERS
   // ─────────────────────────────────────────────
 
+  String _cellFor(ClusterRow row, PdfColumn col) {
+    switch (col) {
+      case PdfColumn.date:
+        return _dateCell(row);
+      case PdfColumn.tahajjud:
+        return _shortTime(row.times.lastThirdStart);
+      case PdfColumn.sehri:
+        return _safetyCell(
+          row.times.sehriSafety,
+          row.times.sehriActual,
+        );
+      case PdfColumn.fajr:
+        return _shortTime(row.times.fajr);
+      case PdfColumn.sunrise:
+        return _shortTime(row.times.sunrise);
+      case PdfColumn.ishraq:
+        return _shortTime(row.times.ishraq);
+      case PdfColumn.dhuhr:
+        return _shortTime(row.times.dhuhr);
+      case PdfColumn.asr:
+        return _shortTime(row.times.asr);
+      case PdfColumn.sunset:
+        return _shortTime(row.times.sunset);
+      case PdfColumn.iftar:
+        return _safetyCell(
+          row.times.iftarSafety,
+          row.times.iftarActual,
+        );
+      case PdfColumn.maghrib:
+        return _shortTime(row.times.maghrib);
+      case PdfColumn.isha:
+        return _shortTime(row.times.isha);
+      case PdfColumn.ishaMustahab:
+        return _shortTime(row.times.ishaMustahab);
+    }
+  }
+
+  /// Date cell: English (big) on top, Bangla & Hijri (small) below.
+  /// Multi-day clusters show "1-3" instead of "1".
   String _dateCell(ClusterRow row) {
-  final start = row.startDate;
-  final end = row.endDate;
+    final start = row.startDate;
+    final end = row.endDate;
 
-  final enStart = start.day.toString();
-  final enEnd = end.day.toString();
-  final enLabel = row.isSingleDay ? enStart : '$enStart–$enEnd';
+    final enLabel = row.isSingleDay
+        ? '${start.day}'
+        : '${start.day}–${end.day}';
 
-  final bn = bangla.convert(start);
-  final hn = hijri.toHijri(start);
+    final bn = bangla.convert(start);
+    final hn = hijri.toHijri(start);
 
-  // Layout: big English on top, small Bangla & Hijri on the next line.
-  // Bangla on the left, Hijri on the right, separated by spaces.
-  return '$enLabel\n'
-      '${bangla.toBanglaDigits(bn.day)}    '
-      '${bangla.toBanglaDigits(hn.hDay)}';
+    final bnLabel = bangla.toBanglaDigits(bn.day);
+    final hnLabel = bangla.toBanglaDigits(hn.hDay);
+
+    return '$enLabel\n$bnLabel    $hnLabel';
   }
 
-  String _safetyCell(DateTime safety, DateTime actual, String label) {
+  /// Safety cell: big safety time on top, small "real" time below.
+  String _safetyCell(DateTime safety, DateTime actual) {
     if (!options.showSafetyTimes) return _shortTime(actual);
-    return '${_shortTime(safety)}\n$label ${_shortTime(actual)}';
+    return '${_shortTime(safety)}\nআসল ${_shortTime(actual)}';
   }
 
+  /// Format HH:MM with seconds when seconds != 0.
   String _shortTime(DateTime d) {
     final h12 = d.hour % 12 == 0 ? 12 : d.hour % 12;
     final m = d.minute.toString().padLeft(2, '0');
+    final s = d.second;
     final period = d.hour < 12 ? 'AM' : 'PM';
-    return '$h12:$m $period';
+    if (s == 0) {
+      return '$h12:$m $period';
+    }
+    return '$h12:$m:${s.toString().padLeft(2, '0')} $period';
   }
 }
