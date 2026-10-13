@@ -62,6 +62,11 @@ _NavigationTile(
   title: 'আল্লাহর ৯৯ নাম',
   onTap: () => context.push(Routes.asma),
 ),
+_NavigationTile(
+  icon: Icons.calendar_month_outlined,
+  title: 'ইসলামিক ক্যালেন্ডার',
+  onTap: () => context.push(Routes.calendar),
+),
 
 const SizedBox(height: AppConstants.spaceLg),
 
