@@ -7,6 +7,7 @@ import '../../core/router.dart';
 import '../../data/models/settings_model.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../providers/location_provider.dart';
+import '../../providers/notification_provider.dart';
 import '../../providers/settings_provider.dart';
 
 /// Settings screen.
@@ -29,79 +30,27 @@ class SettingsScreen extends ConsumerWidget {
         children: [
           // ─── Location ─────────────────────────
           _SectionHeader(title: l10n.settingsLocation),
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppConstants.spaceLg,
-              vertical: AppConstants.spaceSm,
-            ),
-            child: Material(
-              color: AppConstants.surfaceDark,
-              borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-              child: InkWell(
-                onTap: () => context.push(Routes.location),
-                borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-                child: Container(
-                  padding: const EdgeInsets.all(AppConstants.spaceLg),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-                    border: Border.all(
-                      color:
-                          AppConstants.emeraldPrimary.withValues(alpha: 0.25),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on_outlined,
-                        color: AppConstants.emeraldPrimary,
-                        size: 22,
-                      ),
-                      const SizedBox(width: AppConstants.spaceMd),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              location.shortLabel,
-                              style: const TextStyle(
-                                color: AppConstants.textPrimary,
-                                fontSize: AppConstants.fontBody,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${location.latitude.toStringAsFixed(4)}°, '
-                              '${location.longitude.toStringAsFixed(4)}°',
-                              style: const TextStyle(
-                                color: AppConstants.textMuted,
-                                fontSize: AppConstants.fontCaption,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Icon(
-                        Icons.chevron_right,
-                        color: AppConstants.textMuted,
-                        size: 20,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+          _NavigationTile(
+            icon: Icons.location_on_outlined,
+            title: location.shortLabel,
+            subtitle: '${location.latitude.toStringAsFixed(4)}°, '
+                '${location.longitude.toStringAsFixed(4)}°',
+            onTap: () => context.push(Routes.location),
           ),
 
           const SizedBox(height: AppConstants.spaceLg),
 
-          // ─── Tools (Qibla) ────────────────────
-          _SectionHeader(title: 'Tools'),
+          // ─── Tools ────────────────────────────
+          const _SectionHeader(title: 'Tools'),
           _NavigationTile(
             icon: Icons.explore_outlined,
             title: 'কিবলা কম্পাস',
             onTap: () => context.push(Routes.qibla),
+          ),
+          _NavigationTile(
+            icon: Icons.picture_as_pdf_outlined,
+            title: 'PDF ক্যালেন্ডার',
+            onTap: () => context.push(Routes.pdfSettings),
           ),
 
           const SizedBox(height: AppConstants.spaceLg),
@@ -229,40 +178,62 @@ class SettingsScreen extends ConsumerWidget {
 
           // ─── Notifications ────────────────────
           _SectionHeader(title: l10n.settingsNotifications),
+          const _NotificationPermissionBanner(),
           _SwitchTile(
             title: l10n.notificationFajr,
             value: settings.notifFajr,
-            onChanged: notifier.setNotifFajr,
+            onChanged: (v) async {
+              await notifier.setNotifFajr(v);
+              ref.read(notificationProvider.notifier).reschedule();
+            },
           ),
           _SwitchTile(
             title: l10n.notificationDhuhr,
             value: settings.notifDhuhr,
-            onChanged: notifier.setNotifDhuhr,
+            onChanged: (v) async {
+              await notifier.setNotifDhuhr(v);
+              ref.read(notificationProvider.notifier).reschedule();
+            },
           ),
           _SwitchTile(
             title: l10n.notificationAsr,
             value: settings.notifAsr,
-            onChanged: notifier.setNotifAsr,
+            onChanged: (v) async {
+              await notifier.setNotifAsr(v);
+              ref.read(notificationProvider.notifier).reschedule();
+            },
           ),
           _SwitchTile(
             title: l10n.notificationMaghrib,
             value: settings.notifMaghrib,
-            onChanged: notifier.setNotifMaghrib,
+            onChanged: (v) async {
+              await notifier.setNotifMaghrib(v);
+              ref.read(notificationProvider.notifier).reschedule();
+            },
           ),
           _SwitchTile(
             title: l10n.notificationIsha,
             value: settings.notifIsha,
-            onChanged: notifier.setNotifIsha,
+            onChanged: (v) async {
+              await notifier.setNotifIsha(v);
+              ref.read(notificationProvider.notifier).reschedule();
+            },
           ),
           _SwitchTile(
             title: l10n.notificationSehri,
             value: settings.notifSehri,
-            onChanged: notifier.setNotifSehri,
+            onChanged: (v) async {
+              await notifier.setNotifSehri(v);
+              ref.read(notificationProvider.notifier).reschedule();
+            },
           ),
           _SwitchTile(
             title: l10n.notificationIftar,
             value: settings.notifIftar,
-            onChanged: notifier.setNotifIftar,
+            onChanged: (v) async {
+              await notifier.setNotifIftar(v);
+              ref.read(notificationProvider.notifier).reschedule();
+            },
           ),
 
           const SizedBox(height: AppConstants.spaceLg),
@@ -299,6 +270,95 @@ class SettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: AppConstants.spaceXl),
         ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// NOTIFICATION PERMISSION BANNER
+// ─────────────────────────────────────────────
+
+class _NotificationPermissionBanner extends ConsumerWidget {
+  const _NotificationPermissionBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final status = ref.watch(notificationProvider);
+
+    // Hide banner if already granted.
+    if (status == NotificationPermissionStatus.granted) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppConstants.spaceLg,
+        AppConstants.spaceSm,
+        AppConstants.spaceLg,
+        AppConstants.spaceMd,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+          onTap: () async {
+            final granted = await ref
+                .read(notificationProvider.notifier)
+                .requestPermission();
+            if (granted) {
+              await ref.read(notificationProvider.notifier).reschedule();
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.all(AppConstants.spaceLg),
+            decoration: BoxDecoration(
+              color: AppConstants.goldAccent.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+              border: Border.all(
+                color: AppConstants.goldAccent.withValues(alpha: 0.4),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.notifications_active_outlined,
+                  color: AppConstants.goldAccent,
+                  size: 22,
+                ),
+                const SizedBox(width: AppConstants.spaceMd),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Enable Notifications',
+                        style: TextStyle(
+                          color: AppConstants.textPrimary,
+                          fontSize: AppConstants.fontBody,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Tap to allow prayer time alerts',
+                        style: TextStyle(
+                          color: AppConstants.textMuted,
+                          fontSize: AppConstants.fontCaption,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right,
+                  color: AppConstants.goldAccent,
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -429,15 +489,16 @@ class _SwitchTile extends StatelessWidget {
   }
 }
 
-/// Card-style navigation tile used for "Tools" (Qibla, etc.).
 class _NavigationTile extends StatelessWidget {
   final IconData icon;
   final String title;
+  final String? subtitle;
   final VoidCallback onTap;
 
   const _NavigationTile({
     required this.icon,
     required this.title,
+    this.subtitle,
     required this.onTap,
   });
 
@@ -464,20 +525,32 @@ class _NavigationTile extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(
-                  icon,
-                  color: AppConstants.emeraldPrimary,
-                  size: 22,
-                ),
+                Icon(icon, color: AppConstants.emeraldPrimary, size: 22),
                 const SizedBox(width: AppConstants.spaceMd),
                 Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      color: AppConstants.textPrimary,
-                      fontSize: AppConstants.fontBody,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: AppConstants.textPrimary,
+                          fontSize: AppConstants.fontBody,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (subtitle != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            subtitle!,
+                            style: const TextStyle(
+                              color: AppConstants.textMuted,
+                              fontSize: AppConstants.fontCaption,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 const Icon(
