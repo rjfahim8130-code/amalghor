@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../features/amol/amol_screen.dart';
 import '../features/asma/asma_screen.dart';
 import '../features/calendar/islamic_calendar_screen.dart';
+import '../features/dua/dua_category_screen.dart';
+import '../features/dua/dua_detail_screen.dart';
+import '../features/dua/dua_list_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/location/location_picker_screen.dart';
 import '../features/pdf/pdf_preview_screen.dart';
@@ -19,7 +22,6 @@ import '../features/settings/settings_screen.dart';
 import '../features/shell/app_shell.dart';
 import '../features/tasbih/tasbih_screen.dart';
 
-/// Route paths — single source of truth.
 class Routes {
   Routes._();
   static const String home = '/';
@@ -37,15 +39,16 @@ class Routes {
   static const String tasbih = '/tasbih';
   static const String asma = '/asma';
   static const String calendar = '/calendar';
+  static const String dua = '/dua';
+  static const String duaCategory = '/dua/category/:categoryId';
+  static const String duaDetail = '/dua/detail/:duaId';
 }
 
-/// Riverpod-wrapped GoRouter.
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: Routes.home,
     debugLogDiagnostics: false,
     routes: <RouteBase>[
-      // ─── Shell (bottom navigation) ─────────────
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
         routes: [
@@ -98,7 +101,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
 
-      // ─── Full-screen (no bottom nav) ───────────
       GoRoute(
         path: Routes.settings,
         builder: (context, state) => const SettingsScreen(),
@@ -130,6 +132,24 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.calendar,
         builder: (context, state) => const IslamicCalendarScreen(),
+      ),
+      GoRoute(
+        path: Routes.dua,
+        builder: (context, state) => const DuaListScreen(),
+      ),
+      GoRoute(
+        path: Routes.duaCategory,
+        builder: (context, state) {
+          final id = state.pathParameters['categoryId'] ?? '';
+          return DuaCategoryScreen(categoryId: id);
+        },
+      ),
+      GoRoute(
+        path: Routes.duaDetail,
+        builder: (context, state) {
+          final id = state.pathParameters['duaId'] ?? '';
+          return DuaDetailScreen(duaId: id);
+        },
       ),
     ],
 
