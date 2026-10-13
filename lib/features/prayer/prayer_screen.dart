@@ -8,7 +8,7 @@ import '../../data/models/timeline_event.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../providers/prayer_provider.dart';
 
-/// Full timeline screen listing all 13 events for the current day.
+/// Full timeline screen listing all events for the current day.
 class PrayerScreen extends ConsumerWidget {
   const PrayerScreen({super.key});
 
@@ -18,9 +18,7 @@ class PrayerScreen extends ConsumerWidget {
     final prayerAsync = ref.watch(currentDayPrayerProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.navPrayer),
-      ),
+      appBar: AppBar(title: Text(l10n.navPrayer)),
       body: prayerAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(
@@ -50,8 +48,8 @@ class _PrayerTimeline extends StatelessWidget {
     final now = DateTime.now();
 
     final events = TimelineBuilder.build(
-      lastThird: prayer.lastThird,
-      imsak: prayer.imsak,
+      lastThird: prayer.lastThirdStart,
+      imsak: prayer.sehriSafety,
       fajr: prayer.fajr,
       sunrise: prayer.sunrise,
       ishraq: prayer.ishraq,
@@ -61,7 +59,7 @@ class _PrayerTimeline extends StatelessWidget {
       sunset: prayer.sunset,
       maghrib: prayer.maghrib,
       isha: prayer.isha,
-      midnight: prayer.midnight,
+      midnight: prayer.islamicMidnight,
     );
 
     final currentIdx = TimelineBuilder.currentIndex(events, now);
@@ -105,7 +103,7 @@ class _PrayerTimeline extends StatelessWidget {
       case 'asr':
         return l10n.asr;
       case 'sunset':
-        return l10n.sunrise == l10n.sunrise ? 'Sunset' : 'Sunset';
+        return 'সূর্যাস্ত';
       case 'maghrib':
         return l10n.maghrib;
       case 'isha':
@@ -144,7 +142,6 @@ class _TimelineTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Timeline rail
           SizedBox(
             width: 40,
             child: Column(
@@ -171,8 +168,6 @@ class _TimelineTile extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppConstants.spaceMd),
-
-          // Content card
           Expanded(
             child: Container(
               margin: const EdgeInsets.only(top: 2),
