@@ -45,7 +45,8 @@ class SettingsScreen extends ConsumerWidget {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(AppConstants.radiusMd),
                     border: Border.all(
-                      color: AppConstants.emeraldPrimary.withValues(alpha: 0.25),
+                      color:
+                          AppConstants.emeraldPrimary.withValues(alpha: 0.25),
                     ),
                   ),
                   child: Row(
@@ -91,6 +92,16 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
             ),
+          ),
+
+          const SizedBox(height: AppConstants.spaceLg),
+
+          // ─── Tools (Qibla) ────────────────────
+          _SectionHeader(title: 'Tools'),
+          _NavigationTile(
+            icon: Icons.explore_outlined,
+            title: 'কিবলা কম্পাস',
+            onTap: () => context.push(Routes.qibla),
           ),
 
           const SizedBox(height: AppConstants.spaceLg),
@@ -296,6 +307,7 @@ class SettingsScreen extends ConsumerWidget {
 // ─────────────────────────────────────────────
 // SECTION WIDGETS
 // ─────────────────────────────────────────────
+
 class _SectionHeader extends StatelessWidget {
   final String title;
 
@@ -412,6 +424,71 @@ class _SwitchTile extends StatelessWidget {
             onChanged: onChanged,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Card-style navigation tile used for "Tools" (Qibla, etc.).
+class _NavigationTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+
+  const _NavigationTile({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.spaceLg,
+        vertical: AppConstants.spaceSm,
+      ),
+      child: Material(
+        color: AppConstants.surfaceDark,
+        borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+          child: Container(
+            padding: const EdgeInsets.all(AppConstants.spaceLg),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+              border: Border.all(
+                color: AppConstants.emeraldPrimary.withValues(alpha: 0.25),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  color: AppConstants.emeraldPrimary,
+                  size: 22,
+                ),
+                const SizedBox(width: AppConstants.spaceMd),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      color: AppConstants.textPrimary,
+                      fontSize: AppConstants.fontBody,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right,
+                  color: AppConstants.textMuted,
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
