@@ -5,36 +5,30 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/constants.dart';
 import 'core/router.dart';
 import 'core/theme.dart';
+import 'features/onboarding/onboarding_screen.dart';
 import 'l10n/generated/app_localizations.dart';
+import 'providers/onboarding_provider.dart';
 import 'providers/settings_provider.dart';
 
 /// Root application widget.
-///
-/// Wires together:
-/// - Theme (dark AMOLED / light)
-/// - Localization (English / Bangla / Arabic)
-/// - Routing (single-source navigator)
-/// - Riverpod-driven settings state
 class AmalghorApp extends ConsumerWidget {
   const AmalghorApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
+    final onboarded = ref.watch(onboardingProvider);
     final locale = settings.locale;
     final themeMode = settings.themeMode;
 
     return MaterialApp.router(
-      // ─── Identification ────────────────────────
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
 
-      // ─── Theme ─────────────────────────────────
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,
 
-      // ─── Localization ──────────────────────────
       locale: locale,
       supportedLocales: AppConstants.supportedLocales,
       localizationsDelegates: const [
@@ -49,17 +43,15 @@ class AmalghorApp extends ConsumerWidget {
             if (loc.languageCode == deviceLocale.languageCode) return loc;
           }
         }
-        return const Locale('en');
+        return const Locale('bn');
       },
 
-      // ─── Routing ───────────────────────────────
       routerConfig: ref.watch(routerProvider),
 
-      // ─── Global builders ───────────────────────
+      // Intercept initial route: show onboarding until completed.
       builder: (context, child) {
-        // Clamp text scaling to prevent layout breaks.
         final mediaQuery = MediaQuery.of(context);
-        return MediaQuery(
+        final clamped = MediaQuery(
           data: mediaQuery.copyWith(
             textScaler: TextScaler.linear(
               mediaQuery.textScaler.scale(1.0).clamp(0.85, 1.30),
@@ -67,6 +59,11 @@ class AmalghorApp extends ConsumerWidget {
           ),
           child: child ?? const SizedBox.shrink(),
         );
+
+        if (!onboarded) {
+          return OnboardingScreen(onComplete: () {});
+        }
+        return clamped;
       },
     );
   }
