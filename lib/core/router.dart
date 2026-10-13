@@ -15,6 +15,7 @@ import '../features/quran/surah_reader_screen.dart';
 import '../features/ramadan/ramadan_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/shell/app_shell.dart';
+import '../features/tasbih/tasbih_screen.dart';
 
 /// Route paths — single source of truth.
 class Routes {
@@ -31,6 +32,7 @@ class Routes {
   static const String pdfSettings = '/pdf';
   static const String pdfPreview = '/pdf/preview';
   static const String qibla = '/qibla';
+  static const String tasbih = '/tasbih';
 }
 
 /// Riverpod-wrapped GoRouter.
@@ -112,6 +114,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.qibla,
         builder: (context, state) => const QiblaScreen(),
+      ),
+      GoRoute(
+        path: Routes.tasbih,
+        builder: (context, state) => const TasbihScreen(),
       ),
     ],
 
