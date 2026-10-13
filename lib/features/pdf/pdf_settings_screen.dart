@@ -16,13 +16,15 @@ class PdfSettingsScreen extends ConsumerWidget {
     final opts = ref.watch(pdfOptionsProvider);
     final notifier = ref.read(pdfOptionsProvider.notifier);
     final currentYear = DateTime.now().year;
+    final isHanafi = opts.madhhab == MadhhabType.hanafi;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('PDF Calendar')),
+      appBar: AppBar(title: const Text('PDF ক্যালেন্ডার')),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: AppConstants.spaceLg),
         children: [
-          const _SectionHeader('Year'),
+          // ─── Year ─────────────────────────────
+          const _SectionHeader('বছর'),
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppConstants.spaceLg,
@@ -48,7 +50,23 @@ class PdfSettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: AppConstants.spaceLg),
 
-          const _SectionHeader('Calendar Mode'),
+          // ─── Cluster granularity ──────────────
+          const _SectionHeader('ক্যালেন্ডার মোড'),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppConstants.spaceLg,
+              vertical: AppConstants.spaceSm,
+            ),
+            child: const Text(
+              'প্রতিদিন আলাদা — সবচেয়ে সঠিক\n'
+              'গ্যাপ মোড — একই সময়ের দিনগুলো একসাথে দেখাবে (ছোট PDF)',
+              style: TextStyle(
+                color: AppConstants.textMuted,
+                fontSize: AppConstants.fontCaption,
+                height: 1.5,
+              ),
+            ),
+          ),
           for (final g in ClusterGranularity.values)
             _RadioTile<ClusterGranularity>(
               title: g.label,
@@ -59,7 +77,8 @@ class PdfSettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: AppConstants.spaceLg),
 
-          const _SectionHeader('Primary Calendar'),
+          // ─── Primary calendar ────────────────
+          const _SectionHeader('প্রধান ক্যালেন্ডার (বড় হবে)'),
           _RadioTile<CalendarPrimary>(
             title: 'ইংরেজি (English)',
             value: CalendarPrimary.english,
@@ -81,9 +100,10 @@ class PdfSettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: AppConstants.spaceLg),
 
-          const _SectionHeader('Madhhab'),
+          // ─── Madhhab ─────────────────────────
+          const _SectionHeader('মাযহাব'),
           _RadioTile<MadhhabType>(
-            title: 'হানাফী (Hanafi — with Isha Mustahab)',
+            title: 'হানাফী',
             value: MadhhabType.hanafi,
             group: opts.madhhab,
             onChanged: notifier.setMadhhab,
@@ -97,7 +117,8 @@ class PdfSettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: AppConstants.spaceLg),
 
-          const _SectionHeader('Safety Times'),
+          // ─── Safety times ────────────────────
+          const _SectionHeader('সতর্কতা সময়'),
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppConstants.spaceLg,
@@ -107,8 +128,7 @@ class PdfSettingsScreen extends ConsumerWidget {
               children: [
                 const Expanded(
                   child: Text(
-                    'Show safety times\n'
-                    '(Sehri −7 min, Iftar +3 min)',
+                    'সেহরি ৭ মিনিট আগে, ইফতার ৩ মিনিট পরে',
                     style: TextStyle(
                       color: AppConstants.textPrimary,
                       fontSize: AppConstants.fontBody,
@@ -123,8 +143,50 @@ class PdfSettingsScreen extends ConsumerWidget {
             ),
           ),
 
+          const SizedBox(height: AppConstants.spaceLg),
+
+          // ─── Column selection ────────────────
+          const _SectionHeader('কলাম নির্বাচন'),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppConstants.spaceLg,
+              vertical: AppConstants.spaceSm,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${opts.columns.length}টি কলাম নির্বাচিত',
+                    style: const TextStyle(
+                      color: AppConstants.textMuted,
+                      fontSize: AppConstants.fontCaption,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () =>
+                      notifier.selectAllColumns(isHanafi: isHanafi),
+                  child: const Text('সব'),
+                ),
+                TextButton(
+                  onPressed: notifier.clearColumns,
+                  child: const Text('বন্ধ'),
+                ),
+              ],
+            ),
+          ),
+          for (final c in PdfColumn.values)
+            if (!c.requiresHanafi || isHanafi)
+              _CheckTile(
+                title: c.label,
+                checked: opts.columns.contains(c),
+                onChanged: (_) => notifier.toggleColumn(c),
+                disabled: c == PdfColumn.date,
+              ),
+
           const SizedBox(height: AppConstants.spaceXl),
 
+          // ─── Generate button ─────────────────
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppConstants.spaceLg,
@@ -132,9 +194,19 @@ class PdfSettingsScreen extends ConsumerWidget {
             child: SizedBox(
               height: 56,
               child: ElevatedButton.icon(
-                onPressed: () => context.push('/pdf/preview'),
+                onPressed: () {
+                  if (opts.columns.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('অন্তত একটি কলাম নির্বাচন করুন'),
+                      ),
+                    );
+                    return;
+                  }
+                  context.push('/pdf/preview');
+                },
                 icon: const Icon(Icons.picture_as_pdf_outlined),
-                label: const Text('Generate PDF'),
+                label: const Text('PDF তৈরি করুন'),
               ),
             ),
           ),
@@ -145,6 +217,10 @@ class PdfSettingsScreen extends ConsumerWidget {
     );
   }
 }
+
+// ─────────────────────────────────────────────
+// SECTION WIDGETS
+// ─────────────────────────────────────────────
 
 class _SectionHeader extends StatelessWidget {
   final String title;
@@ -217,6 +293,74 @@ class _RadioTile<T> extends StatelessWidget {
                       : AppConstants.textMuted,
                   fontSize: AppConstants.fontBody,
                   fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CheckTile extends StatelessWidget {
+  final String title;
+  final bool checked;
+  final ValueChanged<bool> onChanged;
+  final bool disabled;
+
+  const _CheckTile({
+    required this.title,
+    required this.checked,
+    required this.onChanged,
+    this.disabled = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: disabled ? null : () => onChanged(!checked),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppConstants.spaceLg,
+          vertical: AppConstants.spaceSm,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                color: checked
+                    ? AppConstants.emeraldPrimary
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: checked
+                      ? AppConstants.emeraldPrimary
+                      : (disabled
+                          ? AppConstants.textFaint
+                          : AppConstants.textMuted),
+                  width: 1.4,
+                ),
+              ),
+              child: checked
+                  ? const Icon(
+                      Icons.check,
+                      color: Colors.black,
+                      size: 16,
+                    )
+                  : null,
+            ),
+            const SizedBox(width: AppConstants.spaceMd),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: disabled
+                      ? AppConstants.textFaint
+                      : AppConstants.textPrimary,
+                  fontSize: AppConstants.fontBody,
                 ),
               ),
             ),
