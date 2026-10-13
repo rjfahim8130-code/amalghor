@@ -6,30 +6,23 @@ import '../services/location_service.dart';
 import 'settings_provider.dart';
 
 // ─────────────────────────────────────────────
-// PROVIDERS — DEPENDENCIES
+// DEPENDENCY PROVIDERS
 // ─────────────────────────────────────────────
 
-/// Provider for [LocationRepository]. Depends on SharedPreferences.
 final locationRepositoryProvider = Provider<LocationRepository>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
   return LocationRepository(prefs);
 });
 
-/// Provider for [LocationService] — GPS + geocoding.
 final locationServiceProvider = Provider<LocationService>((ref) {
   return const LocationService();
 });
 
 // ─────────────────────────────────────────────
-// STATE SHAPE
+// STATE
 // ─────────────────────────────────────────────
 
 /// UI-facing state for the location system.
-///
-/// Carries:
-///   - the currently active location
-///   - a refresh-in-progress flag
-///   - the last error (if any) from the last refresh attempt
 class LocationState {
   final LocationModel location;
   final bool isRefreshing;
@@ -59,8 +52,6 @@ class LocationState {
 // NOTIFIER
 // ─────────────────────────────────────────────
 
-/// Owns the active location and exposes actions for GPS refresh,
-/// manual selection, and reset-to-default.
 class LocationNotifier extends StateNotifier<LocationState> {
   final LocationRepository _repo;
   final LocationService _service;
@@ -117,7 +108,7 @@ class LocationNotifier extends StateNotifier<LocationState> {
 }
 
 // ─────────────────────────────────────────────
-// PROVIDERS — PUBLIC API
+// PUBLIC PROVIDERS
 // ─────────────────────────────────────────────
 
 /// The primary provider — watch this from any screen.
@@ -142,39 +133,30 @@ final isRefreshingLocationProvider = Provider<bool>((ref) {
 // STATIC CATALOGUE PROVIDERS
 // ─────────────────────────────────────────────
 
-/// All divisions with their districts.
 final locationDivisionsProvider =
     Provider<Map<String, List<LocationEntry>>>((ref) {
   return LocationRepository.divisions;
 });
 
-/// Flat list of all 64 districts.
 final allDistrictsProvider = Provider<List<LocationEntry>>((ref) {
   return LocationRepository.allDistricts;
 });
 
-/// Division names in display order.
 final divisionNamesProvider = Provider<List<String>>((ref) {
   return LocationRepository.divisionNames;
 });
 
-/// Selected international cities.
 final internationalLocationsProvider =
     Provider<List<LocationEntry>>((ref) {
   return LocationRepository.international;
 });
 
-/// Family provider — districts of a given division.
 final districtsByDivisionProvider =
     Provider.family<List<LocationEntry>, String>((ref, division) {
   final repo = ref.watch(locationRepositoryProvider);
   return repo.byDivision(division);
 });
 
-/// Family provider — search results for a query.
-///
-/// Returns an empty list for empty queries (as opposed to all
-/// locations) so the UI can hide the results section cleanly.
 final locationSearchProvider =
     Provider.family<List<LocationEntry>, String>((ref, query) {
   final repo = ref.watch(locationRepositoryProvider);
