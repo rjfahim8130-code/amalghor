@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants.dart';
 import '../../data/models/settings_model.dart';
 import '../../providers/pdf_provider.dart';
+import 'pdf_cluster.dart';
 
 /// Configuration screen for PDF generation.
 class PdfSettingsScreen extends ConsumerWidget {
@@ -21,7 +22,6 @@ class PdfSettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: AppConstants.spaceLg),
         children: [
-          // ─── Year ─────────────────────────────
           const _SectionHeader('Year'),
           Padding(
             padding: const EdgeInsets.symmetric(
@@ -48,7 +48,6 @@ class PdfSettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: AppConstants.spaceLg),
 
-          // ─── Cluster granularity ──────────────
           const _SectionHeader('Calendar Mode'),
           for (final g in ClusterGranularity.values)
             _RadioTile<ClusterGranularity>(
@@ -60,7 +59,6 @@ class PdfSettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: AppConstants.spaceLg),
 
-          // ─── Primary calendar ────────────────
           const _SectionHeader('Primary Calendar'),
           _RadioTile<CalendarPrimary>(
             title: 'ইংরেজি (English)',
@@ -83,7 +81,6 @@ class PdfSettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: AppConstants.spaceLg),
 
-          // ─── Madhhab ─────────────────────────
           const _SectionHeader('Madhhab'),
           _RadioTile<MadhhabType>(
             title: 'হানাফী (Hanafi — with Isha Mustahab)',
@@ -100,7 +97,6 @@ class PdfSettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: AppConstants.spaceLg),
 
-          // ─── Safety times ────────────────────
           const _SectionHeader('Safety Times'),
           Padding(
             padding: const EdgeInsets.symmetric(
@@ -129,7 +125,6 @@ class PdfSettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: AppConstants.spaceXl),
 
-          // ─── Generate button ─────────────────
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppConstants.spaceLg,
@@ -150,10 +145,6 @@ class PdfSettingsScreen extends ConsumerWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────
-// WIDGETS
-// ─────────────────────────────────────────────
 
 class _SectionHeader extends StatelessWidget {
   final String title;
