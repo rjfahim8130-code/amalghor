@@ -5,26 +5,20 @@ import 'package:hijri/hijri_calendar.dart';
 class HijriService {
   const HijriService();
 
-  /// Convert a Gregorian date to a Hijri calendar record.
   HijriCalendar toHijri(DateTime date) => HijriCalendar.fromDate(date);
 
-  /// Get the Hijri day-of-month (1–30).
   int dayOfMonth(DateTime date) => toHijri(date).hDay;
 
-  /// Get the Hijri month number (1–12).
   int monthOfYear(DateTime date) => toHijri(date).hMonth;
 
-  /// Get the Hijri year.
   int year(DateTime date) => toHijri(date).hYear;
 
-  /// Formatted Hijri date string for the given locale code.
   String format(DateTime date, String localeCode) {
     final h = toHijri(date);
     final month = monthName(h.hMonth, localeCode);
     return '${h.hDay} $month ${h.hYear}';
   }
 
-  /// Localized Hijri month name.
   String monthName(int monthIndex, String localeCode) {
     final idx = (monthIndex - 1).clamp(0, 11);
     switch (localeCode) {
@@ -37,16 +31,13 @@ class HijriService {
     }
   }
 
-  /// True if the given date is inside the month of Ramadan.
   bool isRamadan(DateTime date) => monthOfYear(date) == 9;
 
-  /// Ramadan day number (1–30) or null if not in Ramadan.
   int? ramadanDay(DateTime date) {
     final h = toHijri(date);
     return h.hMonth == 9 ? h.hDay : null;
   }
 
-  /// Number of days from [from] until the next 1 Ramadan.
   int? daysUntilRamadan(DateTime from) {
     final start = DateTime(from.year, from.month, from.day);
     for (int i = 0; i < 400; i++) {
@@ -57,12 +48,8 @@ class HijriService {
     return null;
   }
 
-  /// Average Hijri year length in days (tabular calendar).
   static const double averageHijriYearDays = 10631 / 30;
 
-  // ─────────────────────────────────────────────
-  // MONTH NAME TABLES
-  // ─────────────────────────────────────────────
   static const List<String> _monthsEn = [
     'Muharram',
     'Safar',
