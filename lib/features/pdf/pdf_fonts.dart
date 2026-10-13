@@ -1,68 +1,76 @@
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/widgets.dart' as pw;
 
-/// Loads and caches the three fonts used in the PDF:
-///   - Inter (Latin)
-///   - Noto Sans Bengali (Bangla)
-///   - Noto Naskh Arabic (Arabic)
+/// Loads and caches the fonts used in the PDF.
 ///
-/// Fonts are read from assets/fonts/.
+/// Bangla rendering uses NotoSansBengali — it has full conjunct
+/// coverage (যুক্তাক্ষর) when embedded properly. We do NOT use
+/// Kalpurush here because its PDF rendering via the `pdf` package
+/// breaks ligatures for many yuktakkhors.
+///
+/// Arabic rendering uses NotoNaskhArabic which has full shaping
+/// support.
 class PdfFonts {
-  final pw.Font interRegular;
-  final pw.Font interBold;
-  final pw.Font notoBengaliRegular;
-  final pw.Font notoBengaliBold;
-  final pw.Font notoArabicRegular;
-  final pw.Font notoArabicBold;
+  final pw.Font latinRegular;
+  final pw.Font latinBold;
+  final pw.Font banglaRegular;
+  final pw.Font banglaBold;
+  final pw.Font arabicRegular;
+  final pw.Font arabicBold;
 
   const PdfFonts({
-    required this.interRegular,
-    required this.interBold,
-    required this.notoBengaliRegular,
-    required this.notoBengaliBold,
-    required this.notoArabicRegular,
-    required this.notoArabicBold,
+    required this.latinRegular,
+    required this.latinBold,
+    required this.banglaRegular,
+    required this.banglaBold,
+    required this.arabicRegular,
+    required this.arabicBold,
   });
 
-  /// Build the [pw.ThemeData] used by every generated document.
+  /// Theme data used by every generated PDF.
+  ///
+  /// Falls back to Bangla for text that has no Latin glyph, and to
+  /// Arabic for text that has no Latin or Bangla glyph.
   pw.ThemeData get theme => pw.ThemeData.withFont(
-        base: interRegular,
-        bold: interBold,
+        base: latinRegular,
+        bold: latinBold,
+        italic: latinRegular,
+        boldItalic: latinBold,
         fontFallback: [
-          notoBengaliRegular,
-          notoBengaliBold,
-          notoArabicRegular,
-          notoArabicBold,
+          banglaRegular,
+          banglaBold,
+          arabicRegular,
+          arabicBold,
         ],
       );
 
   static Future<PdfFonts> load() async {
-    final interRegular = pw.Font.ttf(
+    final latinRegular = pw.Font.ttf(
       await rootBundle.load('assets/fonts/Inter_18pt-Regular.ttf'),
     );
-    final interBold = pw.Font.ttf(
+    final latinBold = pw.Font.ttf(
       await rootBundle.load('assets/fonts/Inter_18pt-Bold.ttf'),
     );
-    final notoBengaliRegular = pw.Font.ttf(
+    final banglaRegular = pw.Font.ttf(
       await rootBundle.load('assets/fonts/NotoSansBengali-Regular.ttf'),
     );
-    final notoBengaliBold = pw.Font.ttf(
+    final banglaBold = pw.Font.ttf(
       await rootBundle.load('assets/fonts/NotoSansBengali-Bold.ttf'),
     );
-    final notoArabicRegular = pw.Font.ttf(
+    final arabicRegular = pw.Font.ttf(
       await rootBundle.load('assets/fonts/NotoNaskhArabic-Regular.ttf'),
     );
-    final notoArabicBold = pw.Font.ttf(
+    final arabicBold = pw.Font.ttf(
       await rootBundle.load('assets/fonts/NotoNaskhArabic-Bold.ttf'),
     );
 
     return PdfFonts(
-      interRegular: interRegular,
-      interBold: interBold,
-      notoBengaliRegular: notoBengaliRegular,
-      notoBengaliBold: notoBengaliBold,
-      notoArabicRegular: notoArabicRegular,
-      notoArabicBold: notoArabicBold,
+      latinRegular: latinRegular,
+      latinBold: latinBold,
+      banglaRegular: banglaRegular,
+      banglaBold: banglaBold,
+      arabicRegular: arabicRegular,
+      arabicBold: arabicBold,
     );
   }
 }
