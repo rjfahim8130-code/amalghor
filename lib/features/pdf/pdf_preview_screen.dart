@@ -6,6 +6,7 @@ import '../../core/constants.dart';
 import '../../providers/pdf_provider.dart';
 
 /// Runs PDF generation and shows the result with a print/share UI.
+/// Pinch-to-zoom supported via PdfPreview's built-in gesture layer.
 class PdfPreviewScreen extends ConsumerStatefulWidget {
   const PdfPreviewScreen({super.key});
 
@@ -28,11 +29,11 @@ class _PdfPreviewScreenState extends ConsumerState<PdfPreviewScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PDF Preview'),
+        title: const Text('PDF প্রিভিউ'),
         actions: [
           if (progress.bytes != null)
             IconButton(
-              tooltip: 'Regenerate',
+              tooltip: 'আবার তৈরি',
               icon: const Icon(Icons.refresh),
               onPressed: () =>
                   ref.read(pdfGeneratorProvider.notifier).generate(),
@@ -62,7 +63,7 @@ class _PdfPreviewScreenState extends ConsumerState<PdfPreviewScreen> {
     if (progress.bytes == null) {
       return const Center(
         child: Text(
-          'Nothing to preview',
+          'প্রিভিউ দেখানোর কিছু নেই',
           style: TextStyle(color: AppConstants.textMuted),
         ),
       );
@@ -76,6 +77,8 @@ class _PdfPreviewScreenState extends ConsumerState<PdfPreviewScreen> {
       allowPrinting: true,
       allowSharing: true,
       dynamicLayout: false,
+      pdfFileName: 'amalghor_prayer_calendar.pdf',
+      previewPageMargin: EdgeInsets.zero,
     );
   }
 }
@@ -116,7 +119,7 @@ class _ProgressView extends StatelessWidget {
             ),
             const SizedBox(height: AppConstants.spaceXl),
             const Text(
-              'Generating PDF',
+              'PDF তৈরি হচ্ছে',
               style: TextStyle(
                 color: AppConstants.textPrimary,
                 fontSize: AppConstants.fontHeading,
@@ -189,7 +192,7 @@ class _ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: AppConstants.spaceMd),
             const Text(
-              'PDF generation failed',
+              'PDF তৈরি ব্যর্থ',
               style: TextStyle(
                 color: AppConstants.textPrimary,
                 fontSize: AppConstants.fontSubtitle,
@@ -209,7 +212,7 @@ class _ErrorView extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: const Text('আবার চেষ্টা করুন'),
             ),
           ],
         ),
