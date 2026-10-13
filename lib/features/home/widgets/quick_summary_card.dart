@@ -6,10 +6,8 @@ import '../../../data/models/prayer_times.dart';
 
 /// Compact summary of the day's key prayer times.
 ///
-/// Shows each row with:
-///   - The primary (safety) time in large text
-///   - The actual time in small grey text where applicable
-///   - Highlight on the currently active window
+/// Each row shows the **actual** time (large) followed by the
+/// **safety** time (small, muted) where applicable.
 class QuickSummaryCard extends StatelessWidget {
   final PrayerTimes prayer;
 
@@ -25,9 +23,9 @@ class QuickSummaryCard extends StatelessWidget {
       _SummaryRow(
         key: 'sehri',
         label: 'সেহরি',
-        primary: prayer.sehriSafety,
-        secondary: prayer.sehriActual,
-        secondaryLabel: 'আসল',
+        primary: prayer.sehriActual,
+        secondary: prayer.sehriSafety,
+        secondaryLabel: 'সতর্ক',
         icon: Icons.alarm,
       ),
       _SummaryRow(
@@ -63,9 +61,9 @@ class QuickSummaryCard extends StatelessWidget {
       _SummaryRow(
         key: 'iftar',
         label: 'ইফতার',
-        primary: prayer.iftarSafety,
-        secondary: prayer.iftarActual,
-        secondaryLabel: 'আসল',
+        primary: prayer.iftarActual,
+        secondary: prayer.iftarSafety,
+        secondaryLabel: 'সতর্ক',
         icon: Icons.restaurant,
       ),
       _SummaryRow(
@@ -229,7 +227,7 @@ class _SummaryTile extends StatelessWidget {
               ),
             ),
 
-          // Primary time (large)
+          // Actual time (large) — always the primary
           Text(
             AppDateUtils.formatTimeShort(row.primary),
             style: TextStyle(
@@ -242,7 +240,7 @@ class _SummaryTile extends StatelessWidget {
             ),
           ),
 
-          // Secondary time (small, below primary)
+          // Safety time (small, muted) below — optional
           if (row.secondary != null) ...[
             const SizedBox(width: AppConstants.spaceSm),
             Text(
