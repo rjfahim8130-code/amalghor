@@ -9,14 +9,6 @@ import '../core/constants.dart';
 import '../data/models/prayer_times.dart';
 
 /// Singleton wrapper around flutter_local_notifications.
-///
-/// Provides scheduling for:
-///   - the 5 daily prayers
-///   - Sehri reminder (15 min before Imsak)
-///   - Iftar reminder (10 min before Maghrib)
-///   - Tahajjud reminder (last third of night)
-///
-/// All schedules are *local-only* — no server, no FCM.
 class NotificationService {
   NotificationService._();
   static final NotificationService instance = NotificationService._();
@@ -26,7 +18,6 @@ class NotificationService {
 
   bool _initialized = false;
 
-  /// Notification IDs (must be unique and stable).
   static const int _idFajr = 1001;
   static const int _idDhuhr = 1002;
   static const int _idAsr = 1003;
@@ -36,7 +27,6 @@ class NotificationService {
   static const int _idIftar = 1102;
   static const int _idTahajjud = 1103;
 
-  /// Initialize the plugin and the timezone database.
   Future<void> initialize() async {
     if (_initialized) return;
 
@@ -63,7 +53,6 @@ class NotificationService {
     _initialized = true;
   }
 
-  /// Ask the OS for permission (Android 13+ / iOS).
   Future<bool> requestPermissions() async {
     if (Platform.isAndroid) {
       final android = _plugin.resolvePlatformSpecificImplementation<
@@ -84,12 +73,8 @@ class NotificationService {
     return true;
   }
 
-  /// Cancel every pending notification.
   Future<void> cancelAll() => _plugin.cancelAll();
 
-  /// Schedule the daily prayer + reminder notifications for [times].
-  ///
-  /// Any previously scheduled set with the same IDs is replaced.
   Future<void> scheduleDaily({
     required PrayerTimes times,
     required String Function(String key) labelBuilder,
@@ -147,43 +132,40 @@ class NotificationService {
       );
     }
     if (sehri) {
-      final t = times.imsak.subtract(const Duration(minutes: 15));
+      final t = times.sehriSafety.subtract(const Duration(minutes: 15));
       if (t.isAfter(DateTime.now())) {
         await _scheduleAt(
           id: _idSehri,
           when: t,
           title: labelBuilder('sehri'),
-          body: '${labelBuilder('imsak')} in 15 minutes.',
+          body: 'সেহরি শেষ হবে ১৫ মিনিটে।',
         );
       }
     }
     if (iftar) {
-      final t = times.maghrib.subtract(const Duration(minutes: 10));
+      final t = times.iftarSafety.subtract(const Duration(minutes: 10));
       if (t.isAfter(DateTime.now())) {
         await _scheduleAt(
           id: _idIftar,
           when: t,
           title: labelBuilder('iftar'),
-          body: '${labelBuilder('iftar')} in 10 minutes.',
+          body: 'ইফতার ১০ মিনিটে।',
         );
       }
     }
     if (tahajjud) {
-      final t = times.lastThird;
+      final t = times.lastThirdStart;
       if (t.isAfter(DateTime.now())) {
         await _scheduleAt(
           id: _idTahajjud,
           when: t,
           title: labelBuilder('tahajjud'),
-          body: 'Last third of the night begins.',
+          body: 'রাতের শেষ ১/৩ শুরু — তাহাজ্জুদের সময়।',
         );
       }
     }
   }
 
-  // ─────────────────────────────────────────────
-  // INTERNAL
-  // ─────────────────────────────────────────────
   Future<void> _scheduleAt({
     required int id,
     required DateTime when,
@@ -238,7 +220,6 @@ class NotificationService {
   }
 
   void _onTap(NotificationResponse response) {
-    // Reserved for future deep-linking.
     if (kDebugMode) {
       debugPrint('Notification tapped: ${response.payload}');
     }
