@@ -8,6 +8,7 @@ import '../features/location/location_picker_screen.dart';
 import '../features/pdf/pdf_preview_screen.dart';
 import '../features/pdf/pdf_settings_screen.dart';
 import '../features/prayer/prayer_screen.dart';
+import '../features/qibla/qibla_screen.dart';
 import '../features/quran/bookmark_feature.dart';
 import '../features/quran/quran_screen.dart';
 import '../features/quran/surah_reader_screen.dart';
@@ -29,6 +30,7 @@ class Routes {
   static const String surahReader = '/quran/:surahNumber';
   static const String pdfSettings = '/pdf';
   static const String pdfPreview = '/pdf/preview';
+  static const String qibla = '/qibla';
 }
 
 /// Riverpod-wrapped GoRouter.
@@ -106,6 +108,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.pdfPreview,
         builder: (context, state) => const PdfPreviewScreen(),
+      ),
+      GoRoute(
+        path: Routes.qibla,
+        builder: (context, state) => const QiblaScreen(),
       ),
     ],
 
