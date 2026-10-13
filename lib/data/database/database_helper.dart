@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -9,11 +7,11 @@ import '../models/amol_models.dart';
 import '../models/prayer_times.dart';
 import '../models/quran_models.dart';
 
-/// Singleton SQLite database wrapper.
+/// Singleton SQLite wrapper for the app's main database.
 ///
 /// Tables:
-///   - prayer_cache     : 2-year rolling cache of computed prayer times
-///   - quran_bookmarks  : user bookmarks
+///   - prayer_cache     : rolling cache of computed prayer times
+///   - quran_bookmarks  : user bookmarks (kept here for convenience)
 ///   - amol_tracker     : per-day Amol completion records
 class DatabaseHelper {
   DatabaseHelper._();
@@ -27,9 +25,6 @@ class DatabaseHelper {
     return _db!;
   }
 
-  // ─────────────────────────────────────────────
-  // OPEN & MIGRATE
-  // ─────────────────────────────────────────────
   Future<Database> _open() async {
     final dir = await getApplicationDocumentsDirectory();
     final path = p.join(dir.path, AppConstants.dbName);
@@ -41,7 +36,6 @@ class DatabaseHelper {
         await db.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: _onCreate,
-      onUpgrade: _onUpgrade,
     );
   }
 
@@ -51,13 +45,6 @@ class DatabaseHelper {
     await _createAmolTracker(db);
   }
 
-  Future<void> _onUpgrade(Database db, int oldV, int newV) async {
-    // Future migrations go here.
-  }
-
-  // ─────────────────────────────────────────────
-  // TABLE DEFINITIONS
-  // ─────────────────────────────────────────────
   Future<void> _createPrayerCache(Database db) async {
     await db.execute('''
       CREATE TABLE ${AppConstants.tablePrayerCache} (
@@ -124,8 +111,9 @@ class DatabaseHelper {
   }
 
   // ─────────────────────────────────────────────
-  // PRAYER CACHE — CRUD
+  // PRAYER CACHE
   // ─────────────────────────────────────────────
+
   Future<void> upsertPrayerTimes({
     required PrayerTimes times,
     required String madhhab,
@@ -150,13 +138,13 @@ class DatabaseHelper {
         'sunrise': times.sunrise.toIso8601String(),
         'solar_noon': times.solarNoon.toIso8601String(),
         'sunset': times.sunset.toIso8601String(),
-        'imsak': times.imsak.toIso8601String(),
-        'midnight': times.midnight.toIso8601String(),
-        'last_third': times.lastThird.toIso8601String(),
-        'first_third': times.firstThird.toIso8601String(),
+        'imsak': times.sehriSafety.toIso8601String(),
+        'midnight': times.islamicMidnight.toIso8601String(),
+        'last_third': times.lastThirdStart.toIso8601String(),
+        'first_third': times.firstThirdEnd.toIso8601String(),
         'ishraq': times.ishraq.toIso8601String(),
-        'iftar': times.iftar.toIso8601String(),
-        'suhoor_end': times.suhoorEnd.toIso8601String(),
+        'iftar': times.iftarSafety.toIso8601String(),
+        'suhoor_end': times.sehriActual.toIso8601String(),
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
@@ -200,27 +188,50 @@ class DatabaseHelper {
     if (rows.isEmpty) return null;
 
     final m = rows.first;
-    DateTime parse(String key) => DateTime.parse(m[key] as String);
+    DateTime p(String k) => DateTime.parse(m[k] as String);
+
+    // Recompute derived times from stored anchors.
+    final fajr = p('fajr');
+    final maghrib = p('maghrib');
+    final isha = p('isha');
+    final sehriSafety = p('imsak');
+    final sehriActual = p('suhoor_end');
+    final iftarSafety = p('iftar');
+    final lastThird = p('last_third');
+    final firstThird = p('first_third');
+    final midnight = p('midnight');
+
+    // nextFajr ≈ fajr + 1 day (approximation; the exact value comes
+    // from the calculation engine when computing fresh).
+    final nextFajr = fajr.add(const Duration(days: 1));
+    final ishaToFajr = nextFajr.difference(isha);
+    final ishaMustahab = isha.add(
+      Duration(milliseconds: ishaToFajr.inMilliseconds ~/ 3),
+    );
 
     return PrayerTimes(
-      date: parse('fajr'),
+      date: fajr,
       latitude: (m['latitude'] as num).toDouble(),
       longitude: (m['longitude'] as num).toDouble(),
-      fajr: parse('fajr'),
-      dhuhr: parse('dhuhr'),
-      asr: parse('asr'),
-      maghrib: parse('maghrib'),
-      isha: parse('isha'),
-      sunrise: parse('sunrise'),
-      solarNoon: parse('solar_noon'),
-      sunset: parse('sunset'),
-      imsak: parse('imsak'),
-      midnight: parse('midnight'),
-      lastThird: parse('last_third'),
-      firstThird: parse('first_third'),
-      ishraq: parse('ishraq'),
-      iftar: parse('iftar'),
-      suhoorEnd: parse('suhoor_end'),
+      fajr: fajr,
+      dhuhr: p('dhuhr'),
+      asr: p('asr'),
+      maghrib: maghrib,
+      isha: isha,
+      sunrise: p('sunrise'),
+      sunset: p('sunset'),
+      solarNoon: p('solar_noon'),
+      sehriSafety: sehriSafety,
+      sehriActual: sehriActual,
+      iftarSafety: iftarSafety,
+      iftarActual: maghrib,
+      tahajjudStart: lastThird,
+      lastThirdStart: lastThird,
+      islamicMidnight: midnight,
+      firstThirdEnd: firstThird,
+      ishraq: p('ishraq'),
+      ishaMustahab: ishaMustahab,
+      nextFajr: nextFajr,
     );
   }
 
@@ -229,7 +240,6 @@ class DatabaseHelper {
     await db.delete(AppConstants.tablePrayerCache);
   }
 
-  /// Purge cache rows older than [days] before today.
   Future<void> prunePrayerCache({int days = 30}) async {
     final db = await database;
     final cutoff = DateTime.now()
@@ -244,8 +254,9 @@ class DatabaseHelper {
   }
 
   // ─────────────────────────────────────────────
-  // QURAN BOOKMARKS — CRUD
+  // QURAN BOOKMARKS
   // ─────────────────────────────────────────────
+
   Future<int> addBookmark({
     required int surah,
     required int ayah,
@@ -271,13 +282,15 @@ class DatabaseHelper {
       orderBy: 'createdAt DESC',
     );
     return rows
-        .map((m) => QuranBookmark(
-              id: m['id'] as int,
-              surahNumber: m['surah'] as int,
-              ayahNumber: m['ayah'] as int,
-              createdAt: DateTime.parse(m['createdAt'] as String),
-              note: m['note'] as String?,
-            ))
+        .map(
+          (m) => QuranBookmark(
+            id: m['id'] as int,
+            surahNumber: m['surah'] as int,
+            ayahNumber: m['ayah'] as int,
+            createdAt: DateTime.parse(m['createdAt'] as String),
+            note: m['note'] as String?,
+          ),
+        )
         .toList();
   }
 
@@ -291,8 +304,9 @@ class DatabaseHelper {
   }
 
   // ─────────────────────────────────────────────
-  // AMOL TRACKER — CRUD
+  // AMOL TRACKER
   // ─────────────────────────────────────────────
+
   Future<void> upsertAmolProgress({
     required String amolId,
     required String dateIso,
@@ -334,6 +348,7 @@ class DatabaseHelper {
   // ─────────────────────────────────────────────
   // HOUSEKEEPING
   // ─────────────────────────────────────────────
+
   Future<void> close() async {
     final db = _db;
     if (db != null) {
