@@ -7,12 +7,15 @@ import '../../data/models/prayer_times.dart';
 /// A cluster groups consecutive days whose prayer times are identical
 /// when rounded to the selected granularity.
 enum ClusterGranularity {
-  dayWise(minutes: 0, label: 'Day-wise (365 rows)'),
-  fifteenSec(minutes: 0.25, label: '15-second cluster'),
-  twentySec(minutes: 0.34, label: '20-second cluster'),
-  thirtySec(minutes: 0.5, label: '30-second cluster'),
-  fortySec(minutes: 0.67, label: '40-second cluster'),
-  oneMin(minutes: 1.0, label: '1-minute cluster');
+  dayWise(minutes: 0, label: 'প্রতিদিন আলাদা (৩৬৫ দিন)'),
+  tenSec(minutes: 0.1667, label: '১০ সেকেন্ডের গ্যাপ'),
+  fifteenSec(minutes: 0.25, label: '১৫ সেকেন্ডের গ্যাপ'),
+  twentySec(minutes: 0.3333, label: '২০ সেকেন্ডের গ্যাপ'),
+  thirtySec(minutes: 0.5, label: '৩০ সেকেন্ডের গ্যাপ'),
+  fortySec(minutes: 0.6667, label: '৪০ সেকেন্ডের গ্যাপ'),
+  oneMin(minutes: 1.0, label: '১ মিনিটের গ্যাপ'),
+  twoMin(minutes: 2.0, label: '২ মিনিটের গ্যাপ'),
+  fiveMin(minutes: 5.0, label: '৫ মিনিটের গ্যাপ');
 
   final double minutes;
   final String label;
@@ -27,15 +30,13 @@ enum ClusterGranularity {
 
 /// A single row in the clustered PDF calendar.
 ///
-/// Represents either one day (day-wise mode) or a range of days during
-/// which all displayed prayer times remained identical after rounding.
+/// [startDate] and [endDate] define the day range covered by this
+/// row. In day-wise mode they are identical; in clustered mode they
+/// represent a multi-day span with identical prayer times.
 @immutable
 class ClusterRow {
   final DateTime startDate;
   final DateTime endDate;
-
-  /// The prayer times used for display. For multi-day clusters, these
-  /// are the rounded times from the first day of the range.
   final PrayerTimes times;
 
   const ClusterRow({
@@ -83,14 +84,6 @@ class ClusterResult {
 }
 
 /// Builds clusters for a full year of prayer times.
-///
-/// The algorithm walks through every day, rounds each prayer time to
-/// the requested granularity, and appends the day to the current
-/// cluster if all displayed times match. Otherwise it starts a new
-/// cluster.
-///
-/// Day-wise mode bypasses the rounding entirely and produces 365/366
-/// rows (one per day).
 ClusterResult buildClusters({
   required int year,
   required double latitude,
@@ -162,16 +155,29 @@ ClusterResult buildClusters({
 // ─────────────────────────────────────────────
 
 /// Round all displayed prayer times to the nearest `granularity`
-/// minutes.
+/// minutes. Preserves seconds only when granularity is sub-minute.
 PrayerTimes _roundTimes(PrayerTimes t, double granularityMinutes) {
   DateTime roundTo(DateTime dt) {
-    final totalMinutes = dt.hour * 60 + dt.minute;
-    final roundedTotal =
-        (totalMinutes / granularityMinutes).round() * granularityMinutes;
-    final h = (roundedTotal ~/ 60).toInt();
-    final m = (roundedTotal % 60).round();
-    // Preserve seconds as zero — clusters are minute-resolution.
-    return DateTime(dt.year, dt.month, dt.day, h, m);
+    if (granularityMinutes >= 1.0) {
+      // Round to nearest whole minute.
+      final totalMin = dt.hour * 60 + dt.minute;
+      final rounded =
+          (totalMin / granularityMinutes).round() * granularityMinutes;
+      final h = (rounded ~/ 60).toInt();
+      final m = (rounded % 60).round();
+      return DateTime(dt.year, dt.month, dt.day, h, m, 0);
+    }
+
+    // Sub-minute granularity — keep seconds precision.
+    final totalSec =
+        dt.hour * 3600 + dt.minute * 60 + dt.second;
+    final granularitySec = (granularityMinutes * 60).round();
+    final rounded =
+        (totalSec / granularitySec).round() * granularitySec;
+    final h = rounded ~/ 3600;
+    final m = (rounded % 3600) ~/ 60;
+    final s = rounded % 60;
+    return DateTime(dt.year, dt.month, dt.day, h, m, s);
   }
 
   return t.copyWith(
@@ -193,30 +199,129 @@ PrayerTimes _roundTimes(PrayerTimes t, double granularityMinutes) {
   );
 }
 
-/// Compare the display-relevant times only.
+/// Compare the display-relevant times with second-level precision.
 bool _timesEqual(PrayerTimes a, PrayerTimes b) {
-  return _sameMinute(a.sehriSafety, b.sehriSafety) &&
-      _sameMinute(a.sehriActual, b.sehriActual) &&
-      _sameMinute(a.fajr, b.fajr) &&
-      _sameMinute(a.sunrise, b.sunrise) &&
-      _sameMinute(a.ishraq, b.ishraq) &&
-      _sameMinute(a.dhuhr, b.dhuhr) &&
-      _sameMinute(a.asr, b.asr) &&
-      _sameMinute(a.sunset, b.sunset) &&
-      _sameMinute(a.iftarSafety, b.iftarSafety) &&
-      _sameMinute(a.iftarActual, b.iftarActual) &&
-      _sameMinute(a.maghrib, b.maghrib) &&
-      _sameMinute(a.isha, b.isha) &&
-      _sameMinute(a.ishaMustahab, b.ishaMustahab) &&
-      _sameMinute(a.lastThirdStart, b.lastThirdStart);
+  return _sameSecond(a.sehriSafety, b.sehriSafety) &&
+      _sameSecond(a.sehriActual, b.sehriActual) &&
+      _sameSecond(a.fajr, b.fajr) &&
+      _sameSecond(a.sunrise, b.sunrise) &&
+      _sameSecond(a.ishraq, b.ishraq) &&
+      _sameSecond(a.dhuhr, b.dhuhr) &&
+      _sameSecond(a.asr, b.asr) &&
+      _sameSecond(a.sunset, b.sunset) &&
+      _sameSecond(a.iftarSafety, b.iftarSafety) &&
+      _sameSecond(a.iftarActual, b.iftarActual) &&
+      _sameSecond(a.maghrib, b.maghrib) &&
+      _sameSecond(a.isha, b.isha) &&
+      _sameSecond(a.ishaMustahab, b.ishaMustahab) &&
+      _sameSecond(a.lastThirdStart, b.lastThirdStart);
 }
 
-bool _sameMinute(DateTime a, DateTime b) =>
-    a.hour == b.hour && a.minute == b.minute;
+bool _sameSecond(DateTime a, DateTime b) =>
+    a.hour == b.hour && a.minute == b.minute && a.second == b.second;
 
-/// Leap-year helper.
 bool isLeapYear(int year) {
   if (year % 400 == 0) return true;
   if (year % 100 == 0) return false;
   return year % 4 == 0;
+}
+
+/// Whether a column should be included in the PDF.
+enum PdfColumn {
+  date,
+  tahajjud,
+  sehri,
+  fajr,
+  sunrise,
+  ishraq,
+  dhuhr,
+  asr,
+  sunset,
+  iftar,
+  maghrib,
+  isha,
+  ishaMustahab,
+}
+
+extension PdfColumnExt on PdfColumn {
+  String get label {
+    switch (this) {
+      case PdfColumn.date:
+        return 'তারিখ';
+      case PdfColumn.tahajjud:
+        return 'তাহাজ্জুদ';
+      case PdfColumn.sehri:
+        return 'সেহরি';
+      case PdfColumn.fajr:
+        return 'ফজর';
+      case PdfColumn.sunrise:
+        return 'সূর্যোদয়';
+      case PdfColumn.ishraq:
+        return 'ইশরাক';
+      case PdfColumn.dhuhr:
+        return 'যোহর';
+      case PdfColumn.asr:
+        return 'আসর';
+      case PdfColumn.sunset:
+        return 'সূর্যাস্ত';
+      case PdfColumn.iftar:
+        return 'ইফতার';
+      case PdfColumn.maghrib:
+        return 'মাগরিব';
+      case PdfColumn.isha:
+        return 'এশা';
+      case PdfColumn.ishaMustahab:
+        return 'মুস্তাহাব এশা';
+    }
+  }
+
+  bool get requiresHanafi => this == PdfColumn.ishaMustahab;
+}
+
+/// User-selected columns for the PDF.
+@immutable
+class PdfColumnSelection {
+  final Set<PdfColumn> columns;
+
+  const PdfColumnSelection(this.columns);
+
+  /// Sensible default — everything except Hanafi-only columns.
+  factory PdfColumnSelection.defaultSelection({
+    required bool isHanafi,
+  }) {
+    return PdfColumnSelection({
+      PdfColumn.date,
+      PdfColumn.tahajjud,
+      PdfColumn.sehri,
+      PdfColumn.fajr,
+      PdfColumn.sunrise,
+      PdfColumn.ishraq,
+      PdfColumn.dhuhr,
+      PdfColumn.asr,
+      PdfColumn.sunset,
+      PdfColumn.iftar,
+      PdfColumn.maghrib,
+      PdfColumn.isha,
+      if (isHanafi) PdfColumn.ishaMustahab,
+    });
+  }
+
+  bool contains(PdfColumn c) => columns.contains(c);
+
+  List<PdfColumn> orderedList() {
+    return PdfColumn.values.where(columns.contains).toList();
+  }
+
+  PdfColumnSelection toggle(PdfColumn c) {
+    final copy = Set<PdfColumn>.from(columns);
+    if (copy.contains(c)) {
+      copy.remove(c);
+    } else {
+      copy.add(c);
+    }
+    return PdfColumnSelection(copy);
+  }
+
+  bool get isEmpty => columns.isEmpty;
+  int get length => columns.length;
 }
