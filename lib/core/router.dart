@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../features/amol/amol_screen.dart';
 import '../features/asma/asma_screen.dart';
+import '../features/calendar/islamic_calendar_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/location/location_picker_screen.dart';
 import '../features/pdf/pdf_preview_screen.dart';
@@ -35,6 +36,7 @@ class Routes {
   static const String qibla = '/qibla';
   static const String tasbih = '/tasbih';
   static const String asma = '/asma';
+  static const String calendar = '/calendar';
 }
 
 /// Riverpod-wrapped GoRouter.
@@ -124,6 +126,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.asma,
         builder: (context, state) => const AsmaScreen(),
+      ),
+      GoRoute(
+        path: Routes.calendar,
+        builder: (context, state) => const IslamicCalendarScreen(),
       ),
     ],
 
