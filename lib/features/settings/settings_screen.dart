@@ -48,12 +48,17 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => context.push(Routes.qibla),
           ),
           _NavigationTile(
-            icon: Icons.picture_as_pdf_outlined,
-            title: 'PDF ক্যালেন্ডার',
-            onTap: () => context.push(Routes.pdfSettings),
-          ),
+  icon: Icons.picture_as_pdf_outlined,
+  title: 'PDF ক্যালেন্ডার',
+  onTap: () => context.push(Routes.pdfSettings),
+),
+_NavigationTile(
+  icon: Icons.radio_button_checked,
+  title: 'তাসবীহ কাউন্টার',
+  onTap: () => context.push(Routes.tasbih),
+),
 
-          const SizedBox(height: AppConstants.spaceLg),
+const SizedBox(height: AppConstants.spaceLg),
 
           // ─── Language ─────────────────────────
           _SectionHeader(title: l10n.settingsLanguage),
