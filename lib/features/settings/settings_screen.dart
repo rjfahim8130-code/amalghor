@@ -67,6 +67,11 @@ _NavigationTile(
   title: 'ইসলামিক ক্যালেন্ডার',
   onTap: () => context.push(Routes.calendar),
 ),
+_NavigationTile(
+  icon: Icons.volunteer_activism_outlined,
+  title: 'দুআ সংকলন',
+  onTap: () => context.push(Routes.dua),
+),
 
 const SizedBox(height: AppConstants.spaceLg),
 
