@@ -5,14 +5,23 @@ import '../data/models/settings_model.dart';
 
 /// Core astronomical prayer-time calculation service.
 ///
-/// Wraps the `adhan` package and returns a domain-level [PrayerTimes]
-/// object. All extended Islamic timings (Imsak, midnight, last third,
-/// Ishraq) are computed here so that the rest of the app never has to
-/// touch the raw `adhan` API.
+/// Produces a fully-computed [PrayerTimes] object including all
+/// extended Islamic timings:
+///   - Sehri safety & actual
+///   - Iftar safety & actual
+///   - Night divisions (1/3, 1/2, 2/3)
+///   - Tahajjud start
+///   - Ishraq
+///   - Isha Mustahab (Hanafi)
 class AdhanService {
   const AdhanService();
 
-  /// Compute prayer times for [date] at the given coordinates.
+  /// Safety offsets (minutes).
+  static const int sehriSafetyOffset = 7;
+  static const int sehriActualOffset = 5;
+  static const int iftarSafetyOffset = 3;
+  static const int ishraqOffset = 20;
+
   PrayerTimes calculate({
     required double latitude,
     required double longitude,
@@ -22,7 +31,7 @@ class AdhanService {
     double? fajrAngle,
     double? ishaAngle,
   }) {
-    final coordinates = adhan.Coordinates(latitude, longitude);
+    final coords = adhan.Coordinates(latitude, longitude);
     final params = _buildParameters(
       madhhab: madhhab,
       method: method,
@@ -32,17 +41,27 @@ class AdhanService {
 
     final dateComponents =
         adhan.DateComponents(date.year, date.month, date.day);
-    final raw = adhan.PrayerTimes(coordinates, dateComponents, params);
+    final raw = adhan.PrayerTimes(coords, dateComponents, params);
+
+    // ─── Compute tomorrow's Fajr for night maths ──
+    final tomorrow = date.add(const Duration(days: 1));
+    final tomorrowComponents =
+        adhan.DateComponents(tomorrow.year, tomorrow.month, tomorrow.day);
+    final tomorrowRaw = adhan.PrayerTimes(
+      coords,
+      tomorrowComponents,
+      params,
+    );
 
     return _mapToDomain(
       raw: raw,
+      nextFajr: tomorrowRaw.fajr,
       date: date,
       latitude: latitude,
       longitude: longitude,
     );
   }
 
-  /// Compute prayer times for an entire month.
   List<PrayerTimes> calculateMonth({
     required double latitude,
     required double longitude,
@@ -53,18 +72,16 @@ class AdhanService {
   }) {
     final daysInMonth = DateTime(year, month + 1, 0).day;
     return List.generate(daysInMonth, (i) {
-      final date = DateTime(year, month, i + 1);
       return calculate(
         latitude: latitude,
         longitude: longitude,
-        date: date,
+        date: DateTime(year, month, i + 1),
         madhhab: madhhab,
         method: method,
       );
     });
   }
 
-  /// Compute prayer times for an entire Gregorian year.
   List<PrayerTimes> calculateYear({
     required double latitude,
     required double longitude,
@@ -75,11 +92,10 @@ class AdhanService {
     final start = DateTime(year, 1, 1);
     final total = _isLeap(year) ? 366 : 365;
     return List.generate(total, (i) {
-      final date = start.add(Duration(days: i));
       return calculate(
         latitude: latitude,
         longitude: longitude,
-        date: date,
+        date: start.add(Duration(days: i)),
         madhhab: madhhab,
         method: method,
       );
@@ -89,6 +105,7 @@ class AdhanService {
   // ─────────────────────────────────────────────
   // INTERNAL
   // ─────────────────────────────────────────────
+
   adhan.CalculationParameters _buildParameters({
     required MadhhabType madhhab,
     required CalcMethodType method,
@@ -133,6 +150,7 @@ class AdhanService {
 
   PrayerTimes _mapToDomain({
     required adhan.PrayerTimes raw,
+    required DateTime nextFajr,
     required DateTime date,
     required double latitude,
     required double longitude,
@@ -144,28 +162,43 @@ class AdhanService {
     final maghrib = raw.maghrib;
     final isha = raw.isha;
 
-    final sunset = maghrib;
+    // Solar noon.
     final solarNoon = sunrise.add(
       Duration(
-        milliseconds: sunset.difference(sunrise).inMilliseconds ~/ 2,
+        milliseconds: maghrib.difference(sunrise).inMilliseconds ~/ 2,
       ),
     );
 
-    final imsak = fajr.subtract(const Duration(minutes: 5));
-    final nextFajr = fajr.add(const Duration(days: 1));
+    // ─── Sehri / Iftar ───────────────────────────
+    final sehriSafety =
+        fajr.subtract(const Duration(minutes: sehriSafetyOffset));
+    final sehriActual =
+        fajr.subtract(const Duration(minutes: sehriActualOffset));
+    final iftarSafety =
+        maghrib.add(const Duration(minutes: iftarSafetyOffset));
+    final iftarActual = maghrib;
+
+    // ─── Night divisions (Maghrib → next Fajr) ──
     final night = nextFajr.difference(maghrib);
-
-    final midnight = maghrib.add(
-      Duration(milliseconds: night.inMilliseconds ~/ 2),
+    final oneThird = Duration(
+      milliseconds: night.inMilliseconds ~/ 3,
     );
-    final lastThird = maghrib.add(
-      Duration(milliseconds: (night.inMilliseconds * 2) ~/ 3),
-    );
-    final firstThird = maghrib.add(
-      Duration(milliseconds: night.inMilliseconds ~/ 3),
+    final halfNight = Duration(
+      milliseconds: night.inMilliseconds ~/ 2,
     );
 
-    final ishraq = sunrise.add(const Duration(minutes: 20));
+    final firstThirdEnd = maghrib.add(oneThird);
+    final islamicMidnight = maghrib.add(halfNight);
+    final lastThirdStart = maghrib.add(oneThird + oneThird);
+
+    // ─── Ishraq ──────────────────────────────────
+    final ishraq = sunrise.add(const Duration(minutes: ishraqOffset));
+
+    // ─── Isha Mustahab (Isha + 1/3 × Isha→Fajr) ─
+    final ishaToFajr = nextFajr.difference(isha);
+    final ishaMustahab = isha.add(
+      Duration(milliseconds: ishaToFajr.inMilliseconds ~/ 3),
+    );
 
     return PrayerTimes(
       date: date,
@@ -177,15 +210,19 @@ class AdhanService {
       maghrib: maghrib,
       isha: isha,
       sunrise: sunrise,
+      sunset: maghrib,
       solarNoon: solarNoon,
-      sunset: sunset,
-      imsak: imsak,
-      midnight: midnight,
-      lastThird: lastThird,
-      firstThird: firstThird,
+      sehriSafety: sehriSafety,
+      sehriActual: sehriActual,
+      iftarSafety: iftarSafety,
+      iftarActual: iftarActual,
+      tahajjudStart: lastThirdStart,
+      lastThirdStart: lastThirdStart,
+      islamicMidnight: islamicMidnight,
+      firstThirdEnd: firstThirdEnd,
       ishraq: ishraq,
-      iftar: maghrib,
-      suhoorEnd: imsak,
+      ishaMustahab: ishaMustahab,
+      nextFajr: nextFajr,
     );
   }
 
