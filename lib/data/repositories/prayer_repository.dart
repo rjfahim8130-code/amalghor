@@ -5,10 +5,9 @@ import '../models/settings_model.dart';
 
 /// High-level repository for prayer times.
 ///
-/// Responsibilities:
-///   - Cache-aware reads: check DB first, fall back to astronomical
-///     calculation, and persist the result.
-///   - Bulk warm-up of a 2-year cache window (current + next year).
+/// Order of resolution:
+///   1. SQLite cache
+///   2. Astronomical calculation (then persist)
 class PrayerRepository {
   final AdhanService _adhan;
   final DatabaseHelper _db;
@@ -19,11 +18,6 @@ class PrayerRepository {
   })  : _adhan = adhan ?? const AdhanService(),
         _db = db ?? DatabaseHelper.instance;
 
-  /// Get prayer times for [date] at the given coordinates.
-  ///
-  /// Order of resolution:
-  ///   1. SQLite cache
-  ///   2. Astronomical calculation (then persist)
   Future<PrayerTimes> getForDate({
     required double latitude,
     required double longitude,
@@ -57,7 +51,6 @@ class PrayerRepository {
     return computed;
   }
 
-  /// Fetch (or compute) prayer times for every day of a month.
   Future<List<PrayerTimes>> getForMonth({
     required double latitude,
     required double longitude,
@@ -82,7 +75,6 @@ class PrayerRepository {
     return result;
   }
 
-  /// Fetch (or compute) prayer times for every day of a year.
   Future<List<PrayerTimes>> getForYear({
     required double latitude,
     required double longitude,
@@ -109,10 +101,6 @@ class PrayerRepository {
     return result;
   }
 
-  /// Warm up the cache for the current year and the next year.
-  ///
-  /// Call this once at app start (or in a background isolate) so that
-  /// subsequent reads are instant. Silently ignores failures.
   Future<void> warmUpTwoYears({
     required double latitude,
     required double longitude,
@@ -136,35 +124,14 @@ class PrayerRepository {
           madhhab: madhhab,
           method: method,
         );
-        rows.add({
-          'date_key': _dateKey(date),
-          'latitude': latitude,
-          'longitude': longitude,
-          'madhhab': madhhab.name,
-          'method': method.name,
-          'fajr': t.fajr.toIso8601String(),
-          'dhuhr': t.dhuhr.toIso8601String(),
-          'asr': t.asr.toIso8601String(),
-          'maghrib': t.maghrib.toIso8601String(),
-          'isha': t.isha.toIso8601String(),
-          'sunrise': t.sunrise.toIso8601String(),
-          'solar_noon': t.solarNoon.toIso8601String(),
-          'sunset': t.sunset.toIso8601String(),
-          'imsak': t.imsak.toIso8601String(),
-          'midnight': t.midnight.toIso8601String(),
-          'last_third': t.lastThird.toIso8601String(),
-          'first_third': t.firstThird.toIso8601String(),
-          'ishraq': t.ishraq.toIso8601String(),
-          'iftar': t.iftar.toIso8601String(),
-          'suhoor_end': t.suhoorEnd.toIso8601String(),
-        });
+        rows.add(_toDbRow(t, latitude, longitude, madhhab, method));
       }
       await _db.upsertPrayerTimesBatch(rows);
     }
   }
 
-  /// Clear the cache and prune old rows.
   Future<void> clearCache() => _db.clearPrayerCache();
+
   Future<void> prune({int days = 30}) =>
       _db.prunePrayerCache(days: days);
 
@@ -174,10 +141,40 @@ class PrayerRepository {
     return year % 4 == 0;
   }
 
-  String _dateKey(DateTime date) {
-    final y = date.year.toString().padLeft(4, '0');
-    final m = date.month.toString().padLeft(2, '0');
-    final d = date.day.toString().padLeft(2, '0');
-    return '$y-$m-$d';
+  Map<String, Object?> _toDbRow(
+    PrayerTimes t,
+    double lat,
+    double lng,
+    MadhhabType madhhab,
+    CalcMethodType method,
+  ) {
+    final date = t.date;
+    final dateKey =
+        '${date.year.toString().padLeft(4, '0')}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
+
+    return {
+      'date_key': dateKey,
+      'latitude': lat,
+      'longitude': lng,
+      'madhhab': madhhab.name,
+      'method': method.name,
+      'fajr': t.fajr.toIso8601String(),
+      'dhuhr': t.dhuhr.toIso8601String(),
+      'asr': t.asr.toIso8601String(),
+      'maghrib': t.maghrib.toIso8601String(),
+      'isha': t.isha.toIso8601String(),
+      'sunrise': t.sunrise.toIso8601String(),
+      'solar_noon': t.solarNoon.toIso8601String(),
+      'sunset': t.sunset.toIso8601String(),
+      'imsak': t.sehriSafety.toIso8601String(),
+      'midnight': t.islamicMidnight.toIso8601String(),
+      'last_third': t.lastThirdStart.toIso8601String(),
+      'first_third': t.firstThirdEnd.toIso8601String(),
+      'ishraq': t.ishraq.toIso8601String(),
+      'iftar': t.iftarSafety.toIso8601String(),
+      'suhoor_end': t.sehriActual.toIso8601String(),
+    };
   }
 }
