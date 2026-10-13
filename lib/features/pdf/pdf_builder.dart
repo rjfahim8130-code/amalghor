@@ -54,37 +54,30 @@ class PdfBuilder {
       theme: fonts.theme,
     );
 
-    // Split clusters by Gregorian month.
     final byMonth = _groupByMonth(result.rows);
     final months = byMonth.keys.toList()..sort();
 
     for (final month in months) {
       final rows = byMonth[month]!;
       doc.addPage(
-        pw.Page(
+        pw.MultiPage(
           pageFormat: PdfPageFormat.a4,
           orientation: pw.PageOrientation.portrait,
-          margin: const pw.EdgeInsets.fromLTRB(20, 24, 20, 20),
-          build: (ctx) => pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-            children: [
-              _header(month, result),
-              pw.SizedBox(height: 10),
-              _table(rows),
-              pw.Spacer(),
-              _footer(ctx, result),
-            ],
-          ),
+          margin: const pw.EdgeInsets.fromLTRB(16, 20, 16, 16),
+          header: (ctx) => ctx.pageNumber == 1
+              ? _header(month, result)
+              : pw.SizedBox.shrink(),
+          footer: (ctx) => _footer(ctx, result),
+          build: (ctx) => [
+            pw.SizedBox(height: 6),
+            _buildTable(rows),
+          ],
         ),
       );
     }
 
     return doc.save();
   }
-
-  // ─────────────────────────────────────────────
-  // GROUPS
-  // ─────────────────────────────────────────────
 
   Map<int, List<ClusterRow>> _groupByMonth(List<ClusterRow> rows) {
     final map = <int, List<ClusterRow>>{};
@@ -108,17 +101,15 @@ class PdfBuilder {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: [
-        // ─── App brand row ──────────────────
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           crossAxisAlignment: pw.CrossAxisAlignment.center,
           children: [
-            // App name + logo badge
             pw.Row(
               children: [
                 pw.Container(
-                  width: 26,
-                  height: 26,
+                  width: 24,
+                  height: 24,
                   decoration: pw.BoxDecoration(
                     color: PdfColor.fromHex('#10B981'),
                     borderRadius: pw.BorderRadius.circular(6),
@@ -128,7 +119,7 @@ class PdfBuilder {
                       'আ',
                       style: pw.TextStyle(
                         color: PdfColors.white,
-                        fontSize: 14,
+                        fontSize: 12,
                         fontWeight: pw.FontWeight.bold,
                       ),
                     ),
@@ -141,7 +132,7 @@ class PdfBuilder {
                     pw.Text(
                       options.appName,
                       style: pw.TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: pw.FontWeight.bold,
                         color: PdfColor.fromHex('#10B981'),
                       ),
@@ -149,7 +140,7 @@ class PdfBuilder {
                     pw.Text(
                       options.appTagline,
                       style: pw.TextStyle(
-                        fontSize: 7,
+                        fontSize: 6.5,
                         color: PdfColors.grey600,
                       ),
                     ),
@@ -157,15 +148,13 @@ class PdfBuilder {
                 ),
               ],
             ),
-
-            // Location meta
             pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.end,
               children: [
                 pw.Text(
                   options.locationName,
                   style: pw.TextStyle(
-                    fontSize: 8,
+                    fontSize: 7.5,
                     color: PdfColors.grey700,
                   ),
                 ),
@@ -173,7 +162,7 @@ class PdfBuilder {
                   '${options.latitude.toStringAsFixed(2)}°, '
                   '${options.longitude.toStringAsFixed(2)}°',
                   style: pw.TextStyle(
-                    fontSize: 7,
+                    fontSize: 6.5,
                     color: PdfColors.grey500,
                   ),
                 ),
@@ -181,23 +170,20 @@ class PdfBuilder {
             ),
           ],
         ),
-
-        pw.SizedBox(height: 10),
-
-        // ─── Month titles (3 calendars) ─────
+        pw.SizedBox(height: 8),
         pw.Text(
           monthEn,
           style: pw.TextStyle(
-            fontSize: 16,
+            fontSize: 15,
             fontWeight: pw.FontWeight.bold,
             color: PdfColor.fromHex('#10B981'),
           ),
         ),
-        pw.SizedBox(height: 3),
+        pw.SizedBox(height: 2),
         pw.Text(
           banglaMonths,
           style: pw.TextStyle(
-            fontSize: 11,
+            fontSize: 10,
             color: PdfColor.fromHex('#D4A24A'),
           ),
         ),
@@ -205,20 +191,20 @@ class PdfBuilder {
         pw.Text(
           hijriMonths,
           style: pw.TextStyle(
-            fontSize: 11,
+            fontSize: 10,
             color: PdfColor.fromHex('#0EA5E9'),
           ),
         ),
-        pw.SizedBox(height: 4),
+        pw.SizedBox(height: 3),
         pw.Text(
           '${_madhhabLabel(options.madhhab)} মাযহাব  •  '
           '${result.granularity.label}',
           style: pw.TextStyle(
-            fontSize: 7.5,
+            fontSize: 7,
             color: PdfColors.grey600,
           ),
         ),
-        pw.SizedBox(height: 6),
+        pw.SizedBox(height: 5),
         pw.Divider(color: PdfColors.grey400, height: 2),
       ],
     );
@@ -251,8 +237,8 @@ class PdfBuilder {
 
   pw.Widget _footer(pw.Context ctx, ClusterResult result) {
     return pw.Container(
-      margin: const pw.EdgeInsets.only(top: 8),
-      padding: const pw.EdgeInsets.only(top: 6),
+      margin: const pw.EdgeInsets.only(top: 6),
+      padding: const pw.EdgeInsets.only(top: 4),
       decoration: pw.BoxDecoration(
         border: pw.Border(
           top: pw.BorderSide(color: PdfColors.grey400, width: 0.5),
@@ -263,17 +249,17 @@ class PdfBuilder {
         children: [
           pw.Text(
             options.showSafetyTimes
-                ? 'সেহরি: ৭ মিনিট আগে (সতর্ক) | ইফতার: ৩ মিনিট পরে (সতর্ক)'
+                ? 'সেহরি সতর্ক: ৭ মিনিট আগে | ইফতার সতর্ক: ৩ মিনিট পরে'
                 : 'সেহরি / ইফতার: আসল সময়',
             style: pw.TextStyle(
-              fontSize: 7,
+              fontSize: 6.5,
               color: PdfColors.grey600,
             ),
           ),
           pw.Text(
-            '${options.appName} — পৃষ্ঠা ${ctx.pageNumber} / ${ctx.pagesCount}',
+            '${options.appName}  •  পৃষ্ঠা ${ctx.pageNumber} / ${ctx.pagesCount}',
             style: pw.TextStyle(
-              fontSize: 7,
+              fontSize: 6.5,
               color: PdfColors.grey600,
             ),
           ),
@@ -283,67 +269,106 @@ class PdfBuilder {
   }
 
   // ─────────────────────────────────────────────
-  // TABLE — with automatic column fallback
+  // TABLE — manual build for reliability
   // ─────────────────────────────────────────────
 
-  pw.Widget _table(List<ClusterRow> rows) {
-    // ─── Fallback: if the user somehow cleared all columns (or
-    //     state got out of sync), use the default set so the PDF
-    //     always renders at least the date column.
+  pw.Widget _buildTable(List<ClusterRow> rows) {
+    // Determine effective column set with fallback.
     Set<PdfColumn> cols = options.columns;
-    if (cols.isEmpty) {
+    if (cols.isEmpty || cols.length < 2) {
       cols = PdfColumnSelection.defaultSelection(
         isHanafi: options.madhhab == MadhhabType.hanafi,
       ).columns;
     }
 
-    // Always keep the date column first.
-    final orderedCols = <PdfColumn>[
+    // Date column always first; others in enum order.
+    final ordered = <PdfColumn>[
       PdfColumn.date,
       ...PdfColumn.values.where(
         (c) => c != PdfColumn.date && cols.contains(c),
       ),
     ];
 
-    // Headers.
-    final headers = <String>[
-      for (final c in orderedCols) c.label,
-    ];
-
-    // Data rows.
-    final data = rows.map((r) {
-      return <String>[
-        for (final c in orderedCols) _cellFor(r, c),
-      ];
-    }).toList();
-
-    // Column alignment: first column left, others center.
-    final alignments = <int, pw.Alignment>{
-      for (var i = 0; i < orderedCols.length; i++)
-        i: i == 0 ? pw.Alignment.centerLeft : pw.Alignment.center,
-    };
-
-    return pw.TableHelper.fromTextArray(
-      headers: headers,
-      data: data,
-      border: pw.TableBorder.all(
-        color: PdfColors.grey400,
-        width: 0.4,
-      ),
-      headerStyle: pw.TextStyle(
-        fontSize: 8,
-        fontWeight: pw.FontWeight.bold,
-        color: PdfColors.white,
-      ),
-      headerDecoration: pw.BoxDecoration(
+    // Header row.
+    final header = pw.TableRow(
+      decoration: pw.BoxDecoration(
         color: PdfColor.fromHex('#10B981'),
       ),
-      cellStyle: pw.TextStyle(fontSize: 7.5),
-      cellAlignments: alignments,
-      cellPadding: const pw.EdgeInsets.symmetric(
-        horizontal: 2,
-        vertical: 2.5,
+      children: ordered
+          .map(
+            (c) => pw.Container(
+              alignment: pw.Alignment.center,
+              padding: const pw.EdgeInsets.symmetric(
+                horizontal: 1.5,
+                vertical: 3,
+              ),
+              child: pw.Text(
+                c.label,
+                style: pw.TextStyle(
+                  fontSize: 7,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.white,
+                ),
+                textAlign: pw.TextAlign.center,
+              ),
+            ),
+          )
+          .toList(),
+    );
+
+    // Data rows.
+    final dataRows = <pw.TableRow>[];
+    for (var r = 0; r < rows.length; r++) {
+      final row = rows[r];
+      final isEven = r.isEven;
+
+      dataRows.add(
+        pw.TableRow(
+          decoration: pw.BoxDecoration(
+            color: isEven
+                ? PdfColors.white
+                : PdfColor.fromHex('#F3F4F6'),
+          ),
+          children: ordered.map((c) {
+            final isDate = c == PdfColumn.date;
+            return pw.Container(
+              alignment: isDate
+                  ? pw.Alignment.centerLeft
+                  : pw.Alignment.center,
+              padding: const pw.EdgeInsets.symmetric(
+                horizontal: 2,
+                vertical: 3,
+              ),
+              child: pw.Text(
+                _cellFor(row, c),
+                style: pw.TextStyle(
+                  fontSize: 7,
+                  lineSpacing: 1.2,
+                ),
+                textAlign: isDate ? pw.TextAlign.left : pw.TextAlign.center,
+              ),
+            );
+          }).toList(),
+        ),
+      );
+    }
+
+    // Column widths — flex.
+    final widths = <int, pw.TableColumnWidth>{};
+    for (var i = 0; i < ordered.length; i++) {
+      widths[i] = ordered[i] == PdfColumn.date
+          ? const pw.FlexColumnWidth(1.6)
+          : const pw.FlexColumnWidth(1.0);
+    }
+
+    return pw.Table(
+      border: pw.TableBorder.all(
+        color: PdfColors.grey400,
+        width: 0.35,
       ),
+      columnWidths: widths,
+      defaultVerticalAlignment: pw.TableCellVerticalAlignment.middle,
+      children: [header, ...dataRows],
     );
   }
 
@@ -358,9 +383,9 @@ class PdfBuilder {
       case PdfColumn.tahajjud:
         return _shortTime(row.times.lastThirdStart);
       case PdfColumn.sehri:
-        return _safetyCell(
-          row.times.sehriSafety,
+        return _dualTimeCell(
           row.times.sehriActual,
+          row.times.sehriSafety,
         );
       case PdfColumn.fajr:
         return _shortTime(row.times.fajr);
@@ -375,9 +400,9 @@ class PdfBuilder {
       case PdfColumn.sunset:
         return _shortTime(row.times.sunset);
       case PdfColumn.iftar:
-        return _safetyCell(
-          row.times.iftarSafety,
+        return _dualTimeCell(
           row.times.iftarActual,
+          row.times.iftarSafety,
         );
       case PdfColumn.maghrib:
         return _shortTime(row.times.maghrib);
@@ -388,8 +413,8 @@ class PdfBuilder {
     }
   }
 
-  /// Date cell: English (big) on top, Bangla & Hijri (small) below.
-  /// Multi-day clusters show "1-3" instead of "1".
+  /// Date cell: English (big) on top, Bangla & Hijri below.
+  /// Multi-day clusters show "1-3".
   String _dateCell(ClusterRow row) {
     final start = row.startDate;
     final end = row.endDate;
@@ -401,19 +426,17 @@ class PdfBuilder {
     final bn = bangla.convert(start);
     final hn = hijri.toHijri(start);
 
-    final bnLabel = bangla.toBanglaDigits(bn.day);
-    final hnLabel = bangla.toBanglaDigits(hn.hDay);
-
-    return '$enLabel\n$bnLabel    $hnLabel';
+    return '$enLabel\n'
+        '${bangla.toBanglaDigits(bn.day)} / '
+        '${bangla.toBanglaDigits(hn.hDay)}';
   }
 
-  /// Safety cell: big safety time on top, small "real" time below.
-  String _safetyCell(DateTime safety, DateTime actual) {
+  /// Cell with actual (large) on top and safety (small) below.
+  String _dualTimeCell(DateTime actual, DateTime safety) {
     if (!options.showSafetyTimes) return _shortTime(actual);
-    return '${_shortTime(safety)}\nআসল ${_shortTime(actual)}';
+    return '${_shortTime(actual)}\nসতর্ক ${_shortTime(safety)}';
   }
 
-  /// Format HH:MM with seconds when seconds != 0.
   String _shortTime(DateTime d) {
     final h12 = d.hour % 12 == 0 ? 12 : d.hour % 12;
     final m = d.minute.toString().padLeft(2, '0');
