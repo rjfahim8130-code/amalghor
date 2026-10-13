@@ -277,19 +277,21 @@ class PdfBuilder {
   // ─────────────────────────────────────────────
 
   String _dateCell(ClusterRow row) {
-    final start = row.startDate;
-    final end = row.endDate;
+  final start = row.startDate;
+  final end = row.endDate;
 
-    final enStart = start.day.toString();
-    final enEnd = end.day.toString();
-    final enLabel = row.isSingleDay ? enStart : '$enStart–$enEnd';
+  final enStart = start.day.toString();
+  final enEnd = end.day.toString();
+  final enLabel = row.isSingleDay ? enStart : '$enStart–$enEnd';
 
-    final bn = bangla.convert(start);
-    final hn = hijri.toHijri(start);
+  final bn = bangla.convert(start);
+  final hn = hijri.toHijri(start);
 
-    return '$enLabel\n'
-        '${bangla.toBanglaDigits(bn.day)}  '
-        '${bangla.toBanglaDigits(hn.hDay)}';
+  // Layout: big English on top, small Bangla & Hijri on the next line.
+  // Bangla on the left, Hijri on the right, separated by spaces.
+  return '$enLabel\n'
+      '${bangla.toBanglaDigits(bn.day)}    '
+      '${bangla.toBanglaDigits(hn.hDay)}';
   }
 
   String _safetyCell(DateTime safety, DateTime actual, String label) {
