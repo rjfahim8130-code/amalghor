@@ -43,7 +43,7 @@ Future<void> main() async {
 
   // ─────────────────────────────────────────────
   // SharedPreferences — MUST resolve before runApp().
-  // Without this, sharedPreferencesProvider throws
+  // Without this override, sharedPreferencesProvider throws
   // UnimplementedError and the app shows a blank screen.
   // ─────────────────────────────────────────────
   final prefs = await SharedPreferences.getInstance();
