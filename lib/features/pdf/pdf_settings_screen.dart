@@ -196,12 +196,7 @@ class PdfSettingsScreen extends ConsumerWidget {
               child: ElevatedButton.icon(
                 onPressed: () {
                   if (opts.columns.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('অন্তত একটি কলাম নির্বাচন করুন'),
-                      ),
-                    );
-                    return;
+                    notifier.selectAllColumns(isHanafi: isHanafi);
                   }
                   context.push('/pdf/preview');
                 },
