@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/amol/amol_screen.dart';
+import '../features/asma/asma_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/location/location_picker_screen.dart';
 import '../features/pdf/pdf_preview_screen.dart';
@@ -33,6 +34,7 @@ class Routes {
   static const String pdfPreview = '/pdf/preview';
   static const String qibla = '/qibla';
   static const String tasbih = '/tasbih';
+  static const String asma = '/asma';
 }
 
 /// Riverpod-wrapped GoRouter.
@@ -118,6 +120,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.tasbih,
         builder: (context, state) => const TasbihScreen(),
+      ),
+      GoRoute(
+        path: Routes.asma,
+        builder: (context, state) => const AsmaScreen(),
       ),
     ],
 
