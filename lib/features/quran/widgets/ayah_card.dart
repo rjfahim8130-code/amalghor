@@ -14,7 +14,7 @@ import '../../../providers/quran_provider.dart';
 ///   - Bangla text (below Arabic if enabled)
 ///   - English text (below Bangla if enabled)
 ///   - Bookmark toggle
-///   - Copy action (long press)
+///   - Copy action
 ///
 /// The card adapts to the current [QuranDisplayMode] — only the
 /// enabled language layers are rendered.
