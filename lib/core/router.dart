@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../features/amol/amol_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/location/location_picker_screen.dart';
+import '../features/pdf/pdf_preview_screen.dart';
+import '../features/pdf/pdf_settings_screen.dart';
 import '../features/prayer/prayer_screen.dart';
 import '../features/quran/bookmark_feature.dart';
 import '../features/quran/quran_screen.dart';
@@ -25,6 +27,8 @@ class Routes {
   static const String location = '/location';
   static const String quranBookmarks = '/quran/bookmarks';
   static const String surahReader = '/quran/:surahNumber';
+  static const String pdfSettings = '/pdf';
+  static const String pdfPreview = '/pdf/preview';
 }
 
 /// Riverpod-wrapped GoRouter.
@@ -52,12 +56,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: QuranScreen()),
             routes: [
-              // Nested: /quran/bookmarks
               GoRoute(
                 path: 'bookmarks',
                 builder: (context, state) => const BookmarkScreen(),
               ),
-              // Nested: /quran/:surahNumber?ayah=N
               GoRoute(
                 path: ':surahNumber',
                 builder: (context, state) {
@@ -96,6 +98,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.location,
         builder: (context, state) => const LocationPickerScreen(),
+      ),
+      GoRoute(
+        path: Routes.pdfSettings,
+        builder: (context, state) => const PdfSettingsScreen(),
+      ),
+      GoRoute(
+        path: Routes.pdfPreview,
+        builder: (context, state) => const PdfPreviewScreen(),
       ),
     ],
 
