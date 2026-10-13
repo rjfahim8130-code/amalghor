@@ -11,13 +11,14 @@ import '../services/adhan_service.dart';
 import 'location_provider.dart';
 import 'settings_provider.dart';
 
-/// The user's selections for one PDF generation run.
+/// User-selected options for one PDF generation run.
 class PdfGenerationOptions {
   final int year;
   final ClusterGranularity granularity;
   final CalendarPrimary primaryCalendar;
   final MadhhabType madhhab;
   final bool showSafetyTimes;
+  final Set<PdfColumn> columns;
 
   const PdfGenerationOptions({
     required this.year,
@@ -25,6 +26,7 @@ class PdfGenerationOptions {
     required this.primaryCalendar,
     required this.madhhab,
     required this.showSafetyTimes,
+    required this.columns,
   });
 
   PdfGenerationOptions copyWith({
@@ -33,6 +35,7 @@ class PdfGenerationOptions {
     CalendarPrimary? primaryCalendar,
     MadhhabType? madhhab,
     bool? showSafetyTimes,
+    Set<PdfColumn>? columns,
   }) {
     return PdfGenerationOptions(
       year: year ?? this.year,
@@ -40,6 +43,7 @@ class PdfGenerationOptions {
       primaryCalendar: primaryCalendar ?? this.primaryCalendar,
       madhhab: madhhab ?? this.madhhab,
       showSafetyTimes: showSafetyTimes ?? this.showSafetyTimes,
+      columns: columns ?? this.columns,
     );
   }
 
@@ -51,7 +55,8 @@ class PdfGenerationOptions {
           other.granularity == granularity &&
           other.primaryCalendar == primaryCalendar &&
           other.madhhab == madhhab &&
-          other.showSafetyTimes == showSafetyTimes;
+          other.showSafetyTimes == showSafetyTimes &&
+          _setEquals(other.columns, columns);
 
   @override
   int get hashCode => Object.hash(
@@ -60,7 +65,16 @@ class PdfGenerationOptions {
         primaryCalendar,
         madhhab,
         showSafetyTimes,
+        Object.hashAllUnordered(columns),
       );
+
+  static bool _setEquals(Set<PdfColumn> a, Set<PdfColumn> b) {
+    if (a.length != b.length) return false;
+    for (final e in a) {
+      if (!b.contains(e)) return false;
+    }
+    return true;
+  }
 }
 
 /// Default options derived from current settings.
@@ -72,10 +86,13 @@ class PdfOptionsNotifier extends StateNotifier<PdfGenerationOptions> {
           PdfGenerationOptions(
             year: DateTime.now().year,
             granularity: ClusterGranularity.thirtySec,
-            primaryCalendar:
-                _ref.read(settingsProvider).calendarPrimary,
+            primaryCalendar: _ref.read(settingsProvider).calendarPrimary,
             madhhab: _ref.read(settingsProvider).madhhab,
             showSafetyTimes: true,
+            columns: PdfColumnSelection.defaultSelection(
+              isHanafi:
+                  _ref.read(settingsProvider).madhhab == MadhhabType.hanafi,
+            ).columns,
           ),
         );
 
@@ -84,9 +101,40 @@ class PdfOptionsNotifier extends StateNotifier<PdfGenerationOptions> {
       state = state.copyWith(granularity: g);
   void setPrimaryCalendar(CalendarPrimary c) =>
       state = state.copyWith(primaryCalendar: c);
-  void setMadhhab(MadhhabType m) => state = state.copyWith(madhhab: m);
   void setShowSafetyTimes(bool v) =>
       state = state.copyWith(showSafetyTimes: v);
+
+  void setMadhhab(MadhhabType m) {
+    // Update the madhhab and, if switching to Shafi'i, drop the
+    // Hanafi-only Isha Mustahab column.
+    final newCols = Set<PdfColumn>.from(state.columns);
+    if (m == MadhhabType.shafii) {
+      newCols.remove(PdfColumn.ishaMustahab);
+    } else {
+      newCols.add(PdfColumn.ishaMustahab);
+    }
+    state = state.copyWith(madhhab: m, columns: newCols);
+  }
+
+  void toggleColumn(PdfColumn c) {
+    final newCols = Set<PdfColumn>.from(state.columns);
+    if (newCols.contains(c)) {
+      newCols.remove(c);
+    } else {
+      newCols.add(c);
+    }
+    state = state.copyWith(columns: newCols);
+  }
+
+  void selectAllColumns({required bool isHanafi}) {
+    state = state.copyWith(
+      columns: PdfColumnSelection.defaultSelection(isHanafi: isHanafi).columns,
+    );
+  }
+
+  void clearColumns() {
+    state = state.copyWith(columns: {PdfColumn.date});
+  }
 }
 
 final pdfOptionsProvider =
@@ -129,13 +177,8 @@ class PdfProgress {
   }
 }
 
-/// Notifier that runs the full PDF build pipeline:
-///   1. Fetch year of prayer times (cached or calculated)
-///   2. Build clusters at the chosen granularity
-///   3. Load fonts
-///   4. Render the PDF
+/// Notifier that runs the full PDF build pipeline.
 class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
-  // The ref is retained for future use (e.g., invalidating caches).
   // ignore: unused_field
   final Ref _ref;
   final AdhanService _adhan = const AdhanService();
@@ -145,7 +188,7 @@ class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
   Future<void> generate() async {
     state = const PdfProgress(
       isGenerating: true,
-      stage: 'Preparing...',
+      stage: 'প্রস্তুতি নিচ্ছি...',
       progress: 0.0,
     );
 
@@ -153,9 +196,8 @@ class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
       final options = _ref.read(pdfOptionsProvider);
       final loc = _ref.read(currentLocationProvider);
 
-      // Step 1: Fetch or compute the year of prayer times.
       state = state.copyWith(
-        stage: 'Computing prayer times...',
+        stage: 'নামাযের সময় হিসাব করছি...',
         progress: 0.1,
       );
 
@@ -167,9 +209,8 @@ class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
         method: _ref.read(settingsProvider).calcMethod,
       );
 
-      // Step 2: Build clusters.
       state = state.copyWith(
-        stage: 'Building clusters...',
+        stage: 'গ্রুপ তৈরি করছি...',
         progress: 0.4,
       );
 
@@ -181,16 +222,14 @@ class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
         yearTimes: times,
       );
 
-      // Step 3: Load fonts.
       state = state.copyWith(
-        stage: 'Loading fonts...',
+        stage: 'ফন্ট লোড করছি...',
         progress: 0.55,
       );
       final fonts = await PdfFonts.load();
 
-      // Step 4: Render.
       state = state.copyWith(
-        stage: 'Rendering PDF...',
+        stage: 'PDF তৈরি করছি...',
         progress: 0.7,
       );
 
@@ -203,6 +242,9 @@ class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
           locationName: loc.displayName,
           latitude: loc.latitude,
           longitude: loc.longitude,
+          columns: options.columns,
+          appName: 'আমলঘর',
+          appTagline: 'নামাযের সময়সূচি',
         ),
       );
 
@@ -210,7 +252,7 @@ class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
 
       state = state.copyWith(
         isGenerating: false,
-        stage: 'Complete',
+        stage: 'সম্পূর্ণ',
         progress: 1.0,
         bytes: bytes,
         clearError: true,
@@ -218,7 +260,7 @@ class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
     } catch (e) {
       state = state.copyWith(
         isGenerating: false,
-        stage: 'Failed',
+        stage: 'ব্যর্থ',
         progress: 0.0,
         error: e.toString(),
       );
@@ -233,8 +275,6 @@ final pdfGeneratorProvider =
   return PdfGeneratorNotifier(ref);
 });
 
-/// Provider exposing the current year's daily prayer list for PDF size
-/// estimation on the settings screen.
 final pdfYearPreviewProvider =
     FutureProvider.family<List<PrayerTimes>, int>((ref, year) async {
   final loc = ref.watch(currentLocationProvider);
