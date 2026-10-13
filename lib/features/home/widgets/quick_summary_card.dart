@@ -1,51 +1,104 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants.dart';
 import '../../../core/date_utils.dart';
 import '../../../data/models/prayer_times.dart';
-import '../../../l10n/generated/app_localizations.dart';
-import '../../../providers/clock_provider.dart';
 
-/// Compact list of today's five prayers plus the key astronomical
-/// anchors, showing an indicator on the currently active row.
-class QuickSummaryCard extends ConsumerWidget {
+/// Compact summary of the day's key prayer times.
+///
+/// Shows each row with:
+///   - The primary (safety) time in large text
+///   - The actual time in small grey text where applicable
+///   - Highlight on the currently active window
+class QuickSummaryCard extends StatelessWidget {
   final PrayerTimes prayer;
 
   const QuickSummaryCard({super.key, required this.prayer});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final asyncNow = ref.watch(clockProvider);
-    final now = asyncNow.value ?? DateTime.now();
-
-    final rows = <_SummaryRow>[
-      _SummaryRow('imsak', l10n.imsak, prayer.imsak, Icons.alarm),
-      _SummaryRow('fajr', l10n.fajr, prayer.fajr, Icons.mosque),
-      _SummaryRow('sunrise', l10n.sunrise, prayer.sunrise, Icons.wb_twilight),
-      _SummaryRow('dhuhr', l10n.dhuhr, prayer.dhuhr, Icons.mosque),
-      _SummaryRow('asr', l10n.asr, prayer.asr, Icons.mosque),
-      _SummaryRow('maghrib', l10n.maghrib, prayer.maghrib, Icons.mosque),
-      _SummaryRow('isha', l10n.isha, prayer.isha, Icons.mosque),
-    ];
-
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
     final current = prayer.currentPrayer(now);
     final next = prayer.nextPrayer(now);
+
+    final rows = <_SummaryRow>[
+      _SummaryRow(
+        key: 'sehri',
+        label: 'সেহরি',
+        primary: prayer.sehriSafety,
+        secondary: prayer.sehriActual,
+        secondaryLabel: 'আসল',
+        icon: Icons.alarm,
+      ),
+      _SummaryRow(
+        key: 'fajr',
+        label: 'ফজর',
+        primary: prayer.fajr,
+        icon: Icons.mosque,
+      ),
+      _SummaryRow(
+        key: 'sunrise',
+        label: 'সূর্যোদয়',
+        primary: prayer.sunrise,
+        icon: Icons.wb_twilight,
+      ),
+      _SummaryRow(
+        key: 'ishraq',
+        label: 'ইশরাক',
+        primary: prayer.ishraq,
+        icon: Icons.wb_sunny_outlined,
+      ),
+      _SummaryRow(
+        key: 'dhuhr',
+        label: 'যোহর',
+        primary: prayer.dhuhr,
+        icon: Icons.mosque,
+      ),
+      _SummaryRow(
+        key: 'asr',
+        label: 'আসর',
+        primary: prayer.asr,
+        icon: Icons.mosque,
+      ),
+      _SummaryRow(
+        key: 'iftar',
+        label: 'ইফতার',
+        primary: prayer.iftarSafety,
+        secondary: prayer.iftarActual,
+        secondaryLabel: 'আসল',
+        icon: Icons.restaurant,
+      ),
+      _SummaryRow(
+        key: 'maghrib',
+        label: 'মাগরিব',
+        primary: prayer.maghrib,
+        icon: Icons.mosque,
+      ),
+      _SummaryRow(
+        key: 'isha',
+        label: 'এশা',
+        primary: prayer.isha,
+        icon: Icons.mosque,
+      ),
+      _SummaryRow(
+        key: 'ishaMustahab',
+        label: 'মুস্তাহাব এশা',
+        primary: prayer.ishaMustahab,
+        icon: Icons.star_outline,
+      ),
+    ];
 
     return Container(
       decoration: BoxDecoration(
         color: AppConstants.surfaceDark,
         borderRadius: BorderRadius.circular(AppConstants.radiusLg),
-        border: Border.all(
-          color: AppConstants.dividerColor,
-        ),
+        border: Border.all(color: AppConstants.dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
+          const Padding(
+            padding: EdgeInsets.fromLTRB(
               AppConstants.spaceLg,
               AppConstants.spaceLg,
               AppConstants.spaceLg,
@@ -53,15 +106,15 @@ class QuickSummaryCard extends ConsumerWidget {
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.calendar_today_outlined,
                   color: AppConstants.emeraldPrimary,
                   size: 18,
                 ),
-                const SizedBox(width: AppConstants.spaceSm),
+                SizedBox(width: AppConstants.spaceSm),
                 Text(
-                  l10n.todaysSchedule,
-                  style: const TextStyle(
+                  'আজকের সময়সূচি',
+                  style: TextStyle(
                     color: AppConstants.textPrimary,
                     fontSize: AppConstants.fontSubtitle,
                     fontWeight: FontWeight.w600,
@@ -87,10 +140,19 @@ class QuickSummaryCard extends ConsumerWidget {
 class _SummaryRow {
   final String key;
   final String label;
-  final DateTime time;
+  final DateTime primary;
+  final DateTime? secondary;
+  final String? secondaryLabel;
   final IconData icon;
 
-  const _SummaryRow(this.key, this.label, this.time, this.icon);
+  const _SummaryRow({
+    required this.key,
+    required this.label,
+    required this.primary,
+    this.secondary,
+    this.secondaryLabel,
+    required this.icon,
+  });
 }
 
 class _SummaryTile extends StatelessWidget {
@@ -106,7 +168,7 @@ class _SummaryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isCurrent
+    final accent = isCurrent
         ? AppConstants.emeraldPrimary
         : (isNext ? AppConstants.goldAccent : AppConstants.textMuted);
 
@@ -117,16 +179,19 @@ class _SummaryTile extends StatelessWidget {
       ),
       child: Row(
         children: [
+          // Icon box
           Container(
-            width: 30,
-            height: 30,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
+              color: accent.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(AppConstants.radiusSm),
             ),
-            child: Icon(row.icon, color: color, size: 16),
+            child: Icon(row.icon, color: accent, size: 16),
           ),
           const SizedBox(width: AppConstants.spaceMd),
+
+          // Label
           Expanded(
             child: Text(
               row.label,
@@ -141,6 +206,8 @@ class _SummaryTile extends StatelessWidget {
               ),
             ),
           ),
+
+          // Indicator dot
           if (isCurrent)
             Container(
               margin: const EdgeInsets.only(right: AppConstants.spaceSm),
@@ -161,17 +228,34 @@ class _SummaryTile extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
             ),
+
+          // Primary time (large)
           Text(
-            AppDateUtils.formatTimeShort(row.time),
+            AppDateUtils.formatTimeShort(row.primary),
             style: TextStyle(
               color: isCurrent
                   ? AppConstants.emeraldPrimary
                   : AppConstants.textPrimary,
-              fontSize: AppConstants.fontBody,
-              fontWeight: FontWeight.w600,
+              fontSize: AppConstants.fontSubtitle,
+              fontWeight: FontWeight.w700,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
+
+          // Secondary time (small, below primary)
+          if (row.secondary != null) ...[
+            const SizedBox(width: AppConstants.spaceSm),
+            Text(
+              '${row.secondaryLabel ?? ''} '
+              '${AppDateUtils.formatTimeShort(row.secondary!)}',
+              style: const TextStyle(
+                color: AppConstants.textFaint,
+                fontSize: AppConstants.fontMicro,
+                fontWeight: FontWeight.w400,
+                fontFeatures: [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
         ],
       ),
     );
