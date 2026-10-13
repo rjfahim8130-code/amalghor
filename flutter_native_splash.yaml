@@ -1,11 +1,16 @@
 flutter_native_splash:
+  # ─── Fallback for pre-Android-12 devices ───
   color: "#0B0F12"
   image: assets/icons/icon_alt_star.png
 
   android: true
   ios: false
 
+  # ─── Android 12+ (Material You splash) ───
   android_12:
     color: "#0B0F12"
+    color_dark: "#0B0F12"
     image: assets/icons/icon_alt_star.png
+    image_dark: assets/icons/icon_alt_star.png
     icon_background_color: "#0B0F12"
+    icon_background_color_dark: "#0B0F12"
