@@ -19,7 +19,6 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
     final prayerAsync = ref.watch(currentDayPrayerProvider);
 
     return Scaffold(
@@ -62,7 +61,7 @@ class HomeScreen extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────
-// BODY (data-ready)
+// BODY
 // ─────────────────────────────────────────────
 class _HomeBody extends StatelessWidget {
   final PrayerTimes prayer;
@@ -220,19 +219,13 @@ class _PdfHeroButton extends StatelessWidget {
           SizedBox(
             height: 48,
             child: ElevatedButton.icon(
-              onPressed: () => _openPdfFlow(context),
+              onPressed: () => context.push(Routes.pdfSettings),
               icon: const Icon(Icons.download_rounded),
               label: Text(l10n.generatePdfShort),
             ),
           ),
         ],
       ),
-    );
-  }
-
-  void _openPdfFlow(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('PDF flow coming soon')),
     );
   }
 }
