@@ -57,6 +57,11 @@ _NavigationTile(
   title: 'তাসবীহ কাউন্টার',
   onTap: () => context.push(Routes.tasbih),
 ),
+_NavigationTile(
+  icon: Icons.auto_awesome_outlined,
+  title: 'আল্লাহর ৯৯ নাম',
+  onTap: () => context.push(Routes.asma),
+),
 
 const SizedBox(height: AppConstants.spaceLg),
 
