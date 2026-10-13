@@ -1,7 +1,19 @@
 import 'package:flutter/foundation.dart';
 
-/// Immutable data model representing all prayer and astronomical times
-/// for a single day at a specific location.
+/// Immutable model holding every prayer and Islamic timing for a
+/// single day at a specific location.
+///
+/// All times are safety-adjusted where appropriate:
+///   - Sehri safety  = Fajr − 7 min
+///   - Sehri actual  = Fajr − 5 min
+///   - Iftar safety  = Maghrib + 3 min
+///   - Iftar actual  = Maghrib
+///
+/// Night division timings (Hanafi et al.):
+///   - firstThirdEnd   = Maghrib + 1/3 × night
+///   - islamicMidnight = Maghrib + 1/2 × night
+///   - lastThirdStart  = Maghrib + 2/3 × night
+///   - ishaMustahab    = Isha    + 1/3 × (nextFajr − Isha)
 @immutable
 class PrayerTimes {
   final DateTime date;
@@ -17,19 +29,27 @@ class PrayerTimes {
 
   // ─── Astronomical anchors ────────────────────
   final DateTime sunrise;
-  final DateTime solarNoon;
   final DateTime sunset;
+  final DateTime solarNoon;
 
-  // ─── Extended Islamic timings ────────────────
-  final DateTime imsak;
-  final DateTime midnight;
-  final DateTime lastThird;
-  final DateTime firstThird;
+  // ─── Sehri / Iftar (safety + actual) ─────────
+  final DateTime sehriSafety;
+  final DateTime sehriActual;
+  final DateTime iftarSafety;
+  final DateTime iftarActual;
 
-  // ─── Contextual derived times ────────────────
-  final DateTime ishraq;
-  final DateTime iftar;
-  final DateTime suhoorEnd;
+  // ─── Extended Islamic windows ────────────────
+  final DateTime tahajjudStart;     // = lastThirdStart
+  final DateTime lastThirdStart;
+  final DateTime islamicMidnight;
+  final DateTime firstThirdEnd;
+
+  // ─── Contextual ──────────────────────────────
+  final DateTime ishraq;            // Sunrise + 20 min
+  final DateTime ishaMustahab;      // Isha + 1/3 × (nextFajr − Isha)
+
+  // ─── Next-day Fajr (for night-window maths) ──
+  final DateTime nextFajr;
 
   const PrayerTimes({
     required this.date,
@@ -41,15 +61,19 @@ class PrayerTimes {
     required this.maghrib,
     required this.isha,
     required this.sunrise,
-    required this.solarNoon,
     required this.sunset,
-    required this.imsak,
-    required this.midnight,
-    required this.lastThird,
-    required this.firstThird,
+    required this.solarNoon,
+    required this.sehriSafety,
+    required this.sehriActual,
+    required this.iftarSafety,
+    required this.iftarActual,
+    required this.tahajjudStart,
+    required this.lastThirdStart,
+    required this.islamicMidnight,
+    required this.firstThirdEnd,
     required this.ishraq,
-    required this.iftar,
-    required this.suhoorEnd,
+    required this.ishaMustahab,
+    required this.nextFajr,
   });
 
   // ─────────────────────────────────────────────
@@ -64,7 +88,7 @@ class PrayerTimes {
         'isha': isha,
       };
 
-  /// Returns the next prayer strictly after [now], or tomorrow's Fajr.
+  /// Next prayer strictly after [now], or tomorrow's Fajr.
   ({String key, DateTime time}) nextPrayer(DateTime now) {
     final entries = fivePrayers.entries.toList()
       ..sort((a, b) => a.value.compareTo(b.value));
@@ -74,16 +98,18 @@ class PrayerTimes {
         return (key: e.key, time: e.value);
       }
     }
-    return (key: 'fajr', time: fajr.add(const Duration(days: 1)));
+    return (key: 'fajr', time: nextFajr);
   }
 
-  /// Returns the currently active prayer window, or null before Fajr.
+  /// Currently active window, or null before Fajr.
   ({String key, DateTime start, DateTime end})? currentPrayer(DateTime now) {
     final entries = <MapEntry<String, DateTime>>[
       MapEntry('fajr', fajr),
       MapEntry('sunrise', sunrise),
+      MapEntry('ishraq', ishraq),
       MapEntry('dhuhr', dhuhr),
       MapEntry('asr', asr),
+      MapEntry('sunset', sunset),
       MapEntry('maghrib', maghrib),
       MapEntry('isha', isha),
     ];
@@ -93,7 +119,7 @@ class PrayerTimes {
         final start = entries[i].value;
         final end = i + 1 < entries.length
             ? entries[i + 1].value
-            : isha.add(const Duration(hours: 6));
+            : nextFajr;
         return (key: entries[i].key, start: start, end: end);
       }
     }
@@ -105,37 +131,24 @@ class PrayerTimes {
     return n.time.difference(now);
   }
 
-  Duration? elapsedInCurrent(DateTime now) {
-    final c = currentPrayer(now);
-    if (c == null) return null;
-    return now.difference(c.start);
-  }
-
-  bool isForbiddenWindow(DateTime now) {
-    bool within(DateTime anchor, int minutes) {
-      final diff = now.difference(anchor).inMinutes;
-      return diff.abs() <= minutes;
-    }
-
-    return within(sunrise, 15) || within(solarNoon, 5) || within(sunset, 15);
-  }
-
-  /// Phase key for the given moment used by Home screen.
-  String phaseKey(DateTime now) {
-    if (now.isBefore(imsak)) return 'lastThird';
-    if (now.isBefore(fajr)) return 'imsak';
-    if (now.isBefore(sunrise)) return 'fajr';
-    if (now.isBefore(ishraq)) return 'sunrise';
-    if (now.isBefore(solarNoon.subtract(const Duration(hours: 1)))) {
-      return 'ishraq';
-    }
-    if (now.isBefore(dhuhr)) return 'solarNoon';
-    if (now.isBefore(asr)) return 'dhuhr';
-    if (now.isBefore(sunset)) return 'asr';
-    if (now.isBefore(iftar)) return 'sunset';
-    if (now.isBefore(isha)) return 'maghrib';
-    if (now.isBefore(midnight)) return 'isha';
-    return 'midnight';
+  /// All timings in chronological order — used by the multi-countdown
+  /// widget on the home screen.
+  List<({String key, DateTime time, String label})> allTimings(DateTime now) {
+    return [
+      (key: 'tahajjud', time: lastThirdStart, label: 'তাহাজ্জুদ'),
+      (key: 'sehri', time: sehriSafety, label: 'সেহরি'),
+      (key: 'fajr', time: fajr, label: 'ফজর'),
+      (key: 'sunrise', time: sunrise, label: 'সূর্যোদয়'),
+      (key: 'ishraq', time: ishraq, label: 'ইশরাক'),
+      (key: 'dhuhr', time: dhuhr, label: 'যোহর'),
+      (key: 'asr', time: asr, label: 'আসর'),
+      (key: 'sunset', time: sunset, label: 'সূর্যাস্ত'),
+      (key: 'iftar', time: iftarSafety, label: 'ইফতার'),
+      (key: 'maghrib', time: maghrib, label: 'মাগরিব'),
+      (key: 'isha', time: isha, label: 'এশা'),
+      (key: 'ishaMustahab', time: ishaMustahab, label: 'মুস্তাহাব এশা'),
+      (key: 'midnight', time: islamicMidnight, label: 'রাত অর্ধেক'),
+    ];
   }
 
   // ─────────────────────────────────────────────
@@ -151,38 +164,46 @@ class PrayerTimes {
         'maghrib': maghrib.toIso8601String(),
         'isha': isha.toIso8601String(),
         'sunrise': sunrise.toIso8601String(),
-        'solar_noon': solarNoon.toIso8601String(),
         'sunset': sunset.toIso8601String(),
-        'imsak': imsak.toIso8601String(),
-        'midnight': midnight.toIso8601String(),
-        'last_third': lastThird.toIso8601String(),
-        'first_third': firstThird.toIso8601String(),
+        'solar_noon': solarNoon.toIso8601String(),
+        'sehri_safety': sehriSafety.toIso8601String(),
+        'sehri_actual': sehriActual.toIso8601String(),
+        'iftar_safety': iftarSafety.toIso8601String(),
+        'iftar_actual': iftarActual.toIso8601String(),
+        'tahajjud_start': tahajjudStart.toIso8601String(),
+        'last_third_start': lastThirdStart.toIso8601String(),
+        'islamic_midnight': islamicMidnight.toIso8601String(),
+        'first_third_end': firstThirdEnd.toIso8601String(),
         'ishraq': ishraq.toIso8601String(),
-        'iftar': iftar.toIso8601String(),
-        'suhoor_end': suhoorEnd.toIso8601String(),
+        'isha_mustahab': ishaMustahab.toIso8601String(),
+        'next_fajr': nextFajr.toIso8601String(),
       };
 
   factory PrayerTimes.fromMap(Map<String, dynamic> m) {
-    DateTime parse(String key) => DateTime.parse(m[key] as String);
+    DateTime p(String k) => DateTime.parse(m[k] as String);
     return PrayerTimes(
-      date: parse('date'),
+      date: p('date'),
       latitude: (m['latitude'] as num).toDouble(),
       longitude: (m['longitude'] as num).toDouble(),
-      fajr: parse('fajr'),
-      dhuhr: parse('dhuhr'),
-      asr: parse('asr'),
-      maghrib: parse('maghrib'),
-      isha: parse('isha'),
-      sunrise: parse('sunrise'),
-      solarNoon: parse('solar_noon'),
-      sunset: parse('sunset'),
-      imsak: parse('imsak'),
-      midnight: parse('midnight'),
-      lastThird: parse('last_third'),
-      firstThird: parse('first_third'),
-      ishraq: parse('ishraq'),
-      iftar: parse('iftar'),
-      suhoorEnd: parse('suhoor_end'),
+      fajr: p('fajr'),
+      dhuhr: p('dhuhr'),
+      asr: p('asr'),
+      maghrib: p('maghrib'),
+      isha: p('isha'),
+      sunrise: p('sunrise'),
+      sunset: p('sunset'),
+      solarNoon: p('solar_noon'),
+      sehriSafety: p('sehri_safety'),
+      sehriActual: p('sehri_actual'),
+      iftarSafety: p('iftar_safety'),
+      iftarActual: p('iftar_actual'),
+      tahajjudStart: p('tahajjud_start'),
+      lastThirdStart: p('last_third_start'),
+      islamicMidnight: p('islamic_midnight'),
+      firstThirdEnd: p('first_third_end'),
+      ishraq: p('ishraq'),
+      ishaMustahab: p('isha_mustahab'),
+      nextFajr: p('next_fajr'),
     );
   }
 
@@ -199,15 +220,19 @@ class PrayerTimes {
     DateTime? maghrib,
     DateTime? isha,
     DateTime? sunrise,
-    DateTime? solarNoon,
     DateTime? sunset,
-    DateTime? imsak,
-    DateTime? midnight,
-    DateTime? lastThird,
-    DateTime? firstThird,
+    DateTime? solarNoon,
+    DateTime? sehriSafety,
+    DateTime? sehriActual,
+    DateTime? iftarSafety,
+    DateTime? iftarActual,
+    DateTime? tahajjudStart,
+    DateTime? lastThirdStart,
+    DateTime? islamicMidnight,
+    DateTime? firstThirdEnd,
     DateTime? ishraq,
-    DateTime? iftar,
-    DateTime? suhoorEnd,
+    DateTime? ishaMustahab,
+    DateTime? nextFajr,
   }) {
     return PrayerTimes(
       date: date ?? this.date,
@@ -219,15 +244,19 @@ class PrayerTimes {
       maghrib: maghrib ?? this.maghrib,
       isha: isha ?? this.isha,
       sunrise: sunrise ?? this.sunrise,
-      solarNoon: solarNoon ?? this.solarNoon,
       sunset: sunset ?? this.sunset,
-      imsak: imsak ?? this.imsak,
-      midnight: midnight ?? this.midnight,
-      lastThird: lastThird ?? this.lastThird,
-      firstThird: firstThird ?? this.firstThird,
+      solarNoon: solarNoon ?? this.solarNoon,
+      sehriSafety: sehriSafety ?? this.sehriSafety,
+      sehriActual: sehriActual ?? this.sehriActual,
+      iftarSafety: iftarSafety ?? this.iftarSafety,
+      iftarActual: iftarActual ?? this.iftarActual,
+      tahajjudStart: tahajjudStart ?? this.tahajjudStart,
+      lastThirdStart: lastThirdStart ?? this.lastThirdStart,
+      islamicMidnight: islamicMidnight ?? this.islamicMidnight,
+      firstThirdEnd: firstThirdEnd ?? this.firstThirdEnd,
       ishraq: ishraq ?? this.ishraq,
-      iftar: iftar ?? this.iftar,
-      suhoorEnd: suhoorEnd ?? this.suhoorEnd,
+      ishaMustahab: ishaMustahab ?? this.ishaMustahab,
+      nextFajr: nextFajr ?? this.nextFajr,
     );
   }
 
