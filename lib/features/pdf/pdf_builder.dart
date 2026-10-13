@@ -113,7 +113,7 @@ class PdfBuilder {
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           crossAxisAlignment: pw.CrossAxisAlignment.center,
           children: [
-            // App name (Arabic-style brand)
+            // App name + logo badge
             pw.Row(
               children: [
                 pw.Container(
@@ -158,7 +158,7 @@ class PdfBuilder {
               ],
             ),
 
-            // Location + method meta
+            // Location meta
             pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.end,
               children: [
@@ -283,19 +283,34 @@ class PdfBuilder {
   }
 
   // ─────────────────────────────────────────────
-  // TABLE
+  // TABLE — with automatic column fallback
   // ─────────────────────────────────────────────
 
   pw.Widget _table(List<ClusterRow> rows) {
-    final cols = options.columns;
-    final orderedCols = PdfColumn.values.where(cols.contains).toList();
+    // ─── Fallback: if the user somehow cleared all columns (or
+    //     state got out of sync), use the default set so the PDF
+    //     always renders at least the date column.
+    Set<PdfColumn> cols = options.columns;
+    if (cols.isEmpty) {
+      cols = PdfColumnSelection.defaultSelection(
+        isHanafi: options.madhhab == MadhhabType.hanafi,
+      ).columns;
+    }
+
+    // Always keep the date column first.
+    final orderedCols = <PdfColumn>[
+      PdfColumn.date,
+      ...PdfColumn.values.where(
+        (c) => c != PdfColumn.date && cols.contains(c),
+      ),
+    ];
 
     // Headers.
     final headers = <String>[
       for (final c in orderedCols) c.label,
     ];
 
-    // Data.
+    // Data rows.
     final data = rows.map((r) {
       return <String>[
         for (final c in orderedCols) _cellFor(r, c),
