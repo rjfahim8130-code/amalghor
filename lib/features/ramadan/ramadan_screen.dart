@@ -8,11 +8,6 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../providers/clock_provider.dart';
 import '../../providers/prayer_provider.dart';
 
-/// Ramadan screen showing:
-///   - today's Sehri end (Imsak) and Iftar times
-///   - a live countdown to the nearest event
-///   - a Ramadan day counter if the current date is in Ramadan
-///   - days remaining until next Ramadan otherwise
 class RamadanScreen extends ConsumerWidget {
   const RamadanScreen({super.key});
 
@@ -62,7 +57,6 @@ class _RamadanBody extends ConsumerWidget {
         vertical: AppConstants.spaceLg,
       ),
       children: [
-        // Status banner
         _Banner(
           isRamadan: isRamadan,
           ramadanDay: ramadanDay,
@@ -70,28 +64,22 @@ class _RamadanBody extends ConsumerWidget {
           l10n: l10n,
         ),
         const SizedBox(height: AppConstants.spaceLg),
-
-        // Countdown card
         _CountdownCard(prayer: prayer, now: now, l10n: l10n),
         const SizedBox(height: AppConstants.spaceLg),
-
-        // Sehri + Iftar times
         _TimeRow(
           title: l10n.ramadanSehriEnds,
-          time: AppDateUtils.formatTimeShort(prayer.imsak),
+          time: AppDateUtils.formatTimeShort(prayer.sehriSafety),
           icon: Icons.alarm,
           accent: AppConstants.goldAccent,
         ),
         const SizedBox(height: AppConstants.spaceMd),
         _TimeRow(
           title: l10n.ramadanIftarAt,
-          time: AppDateUtils.formatTimeShort(prayer.maghrib),
+          time: AppDateUtils.formatTimeShort(prayer.iftarSafety),
           icon: Icons.restaurant,
           accent: AppConstants.emeraldPrimary,
         ),
         const SizedBox(height: AppConstants.spaceXl),
-
-        // Fasting duration
         _DurationCard(prayer: prayer, l10n: l10n),
       ],
     );
@@ -114,17 +102,12 @@ class _Banner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String title;
-    String subtitle;
-
     if (isRamadan && ramadanDay != null) {
       title = l10n.ramadanDay(ramadanDay!);
-      subtitle = '';
     } else if (daysUntil != null) {
       title = l10n.ramadanDaysRemaining(daysUntil!);
-      subtitle = '';
     } else {
       title = l10n.ramadanTitle;
-      subtitle = '';
     }
 
     return Container(
@@ -160,29 +143,13 @@ class _Banner extends StatelessWidget {
           ),
           const SizedBox(width: AppConstants.spaceLg),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: AppConstants.textPrimary,
-                    fontSize: AppConstants.fontHeading,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                if (subtitle.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      subtitle,
-                      style: const TextStyle(
-                        color: AppConstants.textMuted,
-                        fontSize: AppConstants.fontCaption,
-                      ),
-                    ),
-                  ),
-              ],
+            child: Text(
+              title,
+              style: const TextStyle(
+                color: AppConstants.textPrimary,
+                fontSize: AppConstants.fontHeading,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -204,8 +171,8 @@ class _CountdownCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sehriEnds = prayer.imsak;
-    final iftar = prayer.maghrib;
+    final sehriEnds = prayer.sehriSafety;
+    final iftar = prayer.iftarSafety;
     final isBeforeSehriEnd = now.isBefore(sehriEnds);
     final target = isBeforeSehriEnd ? sehriEnds : iftar;
     final label =
