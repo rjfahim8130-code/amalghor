@@ -15,6 +15,7 @@ import '../features/pdf/pdf_settings_screen.dart';
 import '../features/prayer/prayer_screen.dart';
 import '../features/qibla/qibla_screen.dart';
 import '../features/quran/bookmark_feature.dart';
+import '../features/quran/mushaf_reader_screen.dart';
 import '../features/quran/quran_screen.dart';
 import '../features/quran/surah_reader_screen.dart';
 import '../features/ramadan/ramadan_screen.dart';
@@ -32,6 +33,7 @@ class Routes {
   static const String settings = '/settings';
   static const String location = '/location';
   static const String quranBookmarks = '/quran/bookmarks';
+  static const String quranMushaf = '/quran/mushaf';
   static const String surahReader = '/quran/:surahNumber';
   static const String pdfSettings = '/pdf';
   static const String pdfPreview = '/pdf/preview';
@@ -70,6 +72,14 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'bookmarks',
                 builder: (context, state) => const BookmarkScreen(),
+              ),
+              GoRoute(
+                path: 'mushaf',
+                builder: (context, state) {
+                  final pageParam = state.uri.queryParameters['page'];
+                  final page = int.tryParse(pageParam ?? '') ?? 2;
+                  return MushafReaderScreen(initialPage: page);
+                },
               ),
               GoRoute(
                 path: ':surahNumber',
@@ -139,17 +149,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: Routes.duaCategory,
-        builder: (context, state) {
-          final id = state.pathParameters['categoryId'] ?? '';
-          return DuaCategoryScreen(categoryId: id);
-        },
+        builder: (context, state) => DuaCategoryScreen(
+          categoryId: state.pathParameters['categoryId'] ?? '',
+        ),
       ),
       GoRoute(
         path: Routes.duaDetail,
-        builder: (context, state) {
-          final id = state.pathParameters['duaId'] ?? '';
-          return DuaDetailScreen(duaId: id);
-        },
+        builder: (context, state) => DuaDetailScreen(
+          duaId: state.pathParameters['duaId'] ?? '',
+        ),
       ),
     ],
 
