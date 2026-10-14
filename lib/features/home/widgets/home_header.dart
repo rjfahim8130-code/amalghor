@@ -9,11 +9,11 @@ import '../../../providers/location_provider.dart';
 
 /// Top header for the Home screen.
 ///
-/// Contains:
-///   - A tappable location chip (icon + short label).
-///     Tapping it triggers a GPS refresh in place.
-///     Long-pressing it opens the location picker.
-///   - A settings icon on the right that pushes to /settings.
+/// Layout (left → right):
+///   1. Brand mark — small emerald-square with mosque icon
+///   2. App name — "আমলঘর" (emerald) + tagline (muted)
+///   3. Location chip — tappable to refresh GPS; long-press opens picker
+///   4. Settings icon
 class HomeHeader extends ConsumerWidget {
   const HomeHeader({super.key});
 
@@ -33,72 +33,116 @@ class HomeHeader extends ConsumerWidget {
 
     return Row(
       children: [
-        // ─── Location chip ──────────────────────
-        Expanded(
-          child: InkWell(
-            onTap: isRefreshing
-                ? null
-                : () => _handleRefresh(context, ref),
-            onLongPress: () => context.push(Routes.location),
-            borderRadius: BorderRadius.circular(AppConstants.radiusFull),
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.spaceMd,
-                vertical: AppConstants.spaceSm,
-              ),
-              decoration: BoxDecoration(
-                color: AppConstants.surfaceDark,
-                borderRadius: BorderRadius.circular(AppConstants.radiusFull),
-                border: Border.all(
-                  color: AppConstants.emeraldPrimary.withValues(alpha: 0.25),
+        // ─── 1. Brand mark ────────────────────
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            gradient: AppConstants.brandChipGradient,
+            borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+            boxShadow: AppConstants.emeraldGlowSmall,
+          ),
+          child: const Icon(
+            Icons.mosque_rounded,
+            color: Colors.white,
+            size: 22,
+          ),
+        ),
+        const SizedBox(width: AppConstants.spaceMd),
+
+        // ─── 2. App name + tagline ────────────
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'আমলঘর',
+                style: TextStyle(
+                  color: AppConstants.emeraldPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
                 ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _locationIcon(isRefreshing),
-                  const SizedBox(width: AppConstants.spaceSm),
-                  Flexible(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _headerLabel(context, loc, isRefreshing),
-                          style: const TextStyle(
-                            color: AppConstants.textPrimary,
-                            fontSize: AppConstants.fontBody,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (!isRefreshing && loc.country != null)
-                          Text(
-                            loc.country!,
-                            style: const TextStyle(
-                              color: AppConstants.textFaint,
-                              fontSize: AppConstants.fontMicro,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
+              SizedBox(height: 1),
+              Text(
+                'ইবাদতের পথে, সবসময়',
+                style: TextStyle(
+                  color: AppConstants.textMuted,
+                  fontSize: 10.5,
+                  letterSpacing: 0.2,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
+            ],
+          ),
+        ),
+
+        // ─── 3. Location chip ─────────────────
+        InkWell(
+          onTap: isRefreshing
+              ? null
+              : () => _handleRefresh(context, ref),
+          onLongPress: () => context.push(Routes.location),
+          borderRadius: BorderRadius.circular(AppConstants.radiusFull),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppConstants.spaceMd,
+              vertical: 6,
+            ),
+            decoration: BoxDecoration(
+              color: AppConstants.surfaceDark,
+              borderRadius: BorderRadius.circular(AppConstants.radiusFull),
+              border: Border.all(
+                color: AppConstants.emeraldPrimary.withValues(alpha: 0.35),
+                width: 1.0,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _locationIcon(isRefreshing),
+                const SizedBox(width: 5),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 78),
+                  child: Text(
+                    _chipLabel(loc, isRefreshing),
+                    style: const TextStyle(
+                      color: AppConstants.textPrimary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 2),
+                const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 14,
+                  color: AppConstants.textMuted,
+                ),
+              ],
             ),
           ),
         ),
 
-        const SizedBox(width: AppConstants.spaceSm),
+        const SizedBox(width: AppConstants.spaceXs),
 
-        // ─── Settings icon ──────────────────────
+        // ─── 4. Settings ──────────────────────
         IconButton(
           tooltip: 'Settings',
           onPressed: () => context.push(Routes.settings),
           icon: const Icon(
             Icons.settings_outlined,
             color: AppConstants.textPrimary,
+            size: 22,
+          ),
+          splashRadius: 20,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(
+            minWidth: 36,
+            minHeight: 36,
           ),
         ),
       ],
@@ -112,37 +156,29 @@ class HomeHeader extends ConsumerWidget {
   Widget _locationIcon(bool isRefreshing) {
     if (isRefreshing) {
       return const SizedBox(
-        width: 18,
-        height: 18,
+        width: 14,
+        height: 14,
         child: CircularProgressIndicator(
           strokeWidth: 2,
           color: AppConstants.emeraldPrimary,
         ),
       );
     }
-    return Container(
-      width: 22,
-      height: 22,
-      decoration: BoxDecoration(
-        color: AppConstants.emeraldPrimary.withValues(alpha: 0.18),
-        shape: BoxShape.circle,
-      ),
-      child: const Icon(
-        Icons.location_on,
-        color: AppConstants.emeraldPrimary,
-        size: 14,
-      ),
+    return const Icon(
+      Icons.location_on_rounded,
+      color: AppConstants.emeraldPrimary,
+      size: 14,
     );
   }
 
-  String _headerLabel(
-    BuildContext context,
-    LocationModel loc,
-    bool isRefreshing,
-  ) {
-    if (isRefreshing) return 'Fetching location...';
-    if (loc.source == LocationSource.fallback) return 'Tap to set location';
-    return loc.shortLabel;
+  String _chipLabel(LocationModel loc, bool isRefreshing) {
+    if (isRefreshing) return 'খোঁজা হচ্ছে';
+    if (loc.source == LocationSource.fallback) {
+      return 'লোকেশন';
+    }
+    // Prefer city name only; fall back to first segment of displayName.
+    final label = loc.city ?? loc.displayName.split(',').first.trim();
+    return label;
   }
 
   Future<void> _handleRefresh(BuildContext context, WidgetRef ref) async {
@@ -151,7 +187,7 @@ class HomeHeader extends ConsumerWidget {
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Location updated'),
+          content: Text('লোকেশন আপডেট হয়েছে'),
           duration: Duration(seconds: 2),
         ),
       );
@@ -168,14 +204,14 @@ class HomeHeader extends ConsumerWidget {
   String _errorMessage(String code) {
     switch (code) {
       case 'services_disabled':
-        return 'Please enable location services.';
+        return 'লোকেশন সার্ভিস চালু করুন।';
       case 'permission_denied':
-        return 'Location permission denied.';
+        return 'লোকেশন অনুমতি দেওয়া হয়নি।';
       case 'permission_denied_forever':
-        return 'Location permission permanently denied. '
-            'Enable it in app settings.';
+        return 'লোকেশন অনুমতি স্থায়ীভাবে বন্ধ। '
+            'সেটিংস থেকে চালু করুন।';
       default:
-        return 'Could not update location.';
+        return 'লোকেশন আপডেট করা যায়নি।';
     }
   }
 }
