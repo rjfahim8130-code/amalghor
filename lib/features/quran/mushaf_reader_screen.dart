@@ -70,7 +70,7 @@ class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
         final para = config.paraForPage(_currentPage);
         final paraLabel = para == null
             ? ''
-            : 'পারা ${para.para} · পৃষ্ঠা ${_currentPage}';
+            : 'পারা ${para.para} · পৃষ্ঠা $_currentPage';
 
         return Scaffold(
           appBar: AppBar(
@@ -101,11 +101,7 @@ class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
               IconButton(
                 tooltip: 'তরজমা',
                 icon: const Icon(Icons.translate, size: 22),
-                onPressed: () {
-                  // পরে সূরা/আয়াত ম্যাপ যোগ করলে এখানে লিংক হবে
-                  // আপাতত সূরা লিস্টে নিয়ে যাই
-                  context.push('/quran');
-                },
+                onPressed: () => context.push('/quran'),
               ),
             ],
           ),
