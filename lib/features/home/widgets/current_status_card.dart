@@ -7,10 +7,10 @@ import '../../../data/models/prayer_times.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/clock_provider.dart';
 
-/// Home dashboard card showing:
-///   - the currently active prayer window
-///   - a live countdown to the next prayer
-///   - a compact list of all 13 timings with per-row countdowns
+/// Home dashboard card showing the currently active prayer window
+/// and a live countdown to the next prayer.
+///
+/// The full prayer timeline lives on the "নামায" (Prayer) tab.
 class CurrentStatusCard extends ConsumerWidget {
   final PrayerTimes prayer;
 
@@ -25,30 +25,20 @@ class CurrentStatusCard extends ConsumerWidget {
     final current = prayer.currentPrayer(now);
     final next = prayer.nextPrayer(now);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _MainCard(
-          now: now,
-          prayer: prayer,
-          current: current,
-          next: next,
-          l10n: l10n,
-        ),
-        const SizedBox(height: AppConstants.spaceMd),
-        _AllTimingsList(
-          now: now,
-          prayer: prayer,
-          l10n: l10n,
-        ),
-      ],
+    return _MainCard(
+      now: now,
+      prayer: prayer,
+      current: current,
+      next: next,
+      l10n: l10n,
     );
   }
 }
 
 // ─────────────────────────────────────────────
-// MAIN CARD — current + next
+// MAIN CARD
 // ─────────────────────────────────────────────
+
 class _MainCard extends StatelessWidget {
   final DateTime now;
   final PrayerTimes prayer;
@@ -207,180 +197,9 @@ class _MainCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-// ALL TIMINGS LIST — per-row countdown
-// ─────────────────────────────────────────────
-class _AllTimingsList extends StatelessWidget {
-  final DateTime now;
-  final PrayerTimes prayer;
-  final AppLocalizations l10n;
-
-  const _AllTimingsList({
-    required this.now,
-    required this.prayer,
-    required this.l10n,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final timings = prayer.allTimings(now);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppConstants.surfaceDark,
-        borderRadius: BorderRadius.circular(AppConstants.radiusLg),
-        border: Border.all(color: AppConstants.dividerColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppConstants.spaceLg,
-              AppConstants.spaceLg,
-              AppConstants.spaceLg,
-              AppConstants.spaceSm,
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.schedule,
-                  color: AppConstants.emeraldPrimary,
-                  size: 18,
-                ),
-                const SizedBox(width: AppConstants.spaceSm),
-                Text(
-                  l10n.todaysSchedule,
-                  style: const TextStyle(
-                    color: AppConstants.textPrimary,
-                    fontSize: AppConstants.fontSubtitle,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          ...timings.asMap().entries.map((e) {
-            final isLast = e.key == timings.length - 1;
-            return _TimingRow(
-              entry: e.value,
-              now: now,
-              showDivider: !isLast,
-            );
-          }),
-        ],
-      ),
-    );
-  }
-}
-
-class _TimingRow extends StatelessWidget {
-  final ({String key, DateTime time, String label}) entry;
-  final DateTime now;
-  final bool showDivider;
-
-  const _TimingRow({
-    required this.entry,
-    required this.now,
-    required this.showDivider,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isPast = entry.time.isBefore(now);
-    final isNext = !isPast;
-
-    // Compute countdown from now to this event (only if not past).
-    final diff = entry.time.difference(now);
-    final countdownText = isPast
-        ? '✓'
-        : AppDateUtils.formatDuration(diff);
-
-    final accent = isPast
-        ? AppConstants.textFaint
-        : AppConstants.emeraldPrimary;
-
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppConstants.spaceLg,
-            vertical: AppConstants.spaceMd,
-          ),
-          child: Row(
-            children: [
-              // Icon
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(AppConstants.radiusSm),
-                ),
-                child: Icon(
-                  _iconFor(entry.key),
-                  color: accent,
-                  size: 14,
-                ),
-              ),
-              const SizedBox(width: AppConstants.spaceMd),
-
-              // Label
-              Expanded(
-                child: Text(
-                  entry.label,
-                  style: TextStyle(
-                    color: isPast
-                        ? AppConstants.textFaint
-                        : AppConstants.textPrimary,
-                    fontSize: AppConstants.fontBody,
-                    fontWeight:
-                        isNext ? FontWeight.w600 : FontWeight.w400,
-                  ),
-                ),
-              ),
-
-              // Clock time
-              Text(
-                AppDateUtils.formatTimeShort(entry.time),
-                style: TextStyle(
-                  color: isPast
-                      ? AppConstants.textFaint
-                      : AppConstants.textPrimary,
-                  fontSize: AppConstants.fontBody,
-                  fontWeight: FontWeight.w600,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-              ),
-              const SizedBox(width: AppConstants.spaceMd),
-
-              // Countdown
-              SizedBox(
-                width: 72,
-                child: Text(
-                  countdownText,
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                    color: accent,
-                    fontSize: AppConstants.fontCaption,
-                    fontWeight: FontWeight.w600,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (showDivider)
-          const Divider(height: 1, indent: AppConstants.spaceLg),
-      ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────
+
 String _localizedName(AppLocalizations l10n, String key) {
   switch (key) {
     case 'fajr':
