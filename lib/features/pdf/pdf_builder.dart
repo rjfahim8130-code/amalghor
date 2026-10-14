@@ -10,7 +10,6 @@ import '../../services/hijri_service.dart';
 import 'pdf_cluster.dart';
 import 'pdf_fonts.dart';
 
-/// Options controlling how the PDF is rendered.
 class PdfOptions {
   final CalendarPrimary primaryCalendar;
   final MadhhabType madhhab;
@@ -35,7 +34,6 @@ class PdfOptions {
   });
 }
 
-/// High-level PDF builder for the yearly prayer calendar.
 class PdfBuilder {
   final PdfFonts fonts;
   final PdfOptions options;
@@ -87,10 +85,6 @@ class PdfBuilder {
     }
     return map;
   }
-
-  // ─────────────────────────────────────────────
-  // HEADER
-  // ─────────────────────────────────────────────
 
   pw.Widget _header(int month, ClusterResult result) {
     final monthEn =
@@ -231,10 +225,6 @@ class PdfBuilder {
   String _madhhabLabel(MadhhabType m) =>
       m == MadhhabType.hanafi ? 'হানাফী' : 'শাফেঈ';
 
-  // ─────────────────────────────────────────────
-  // FOOTER
-  // ─────────────────────────────────────────────
-
   pw.Widget _footer(pw.Context ctx, ClusterResult result) {
     return pw.Container(
       margin: const pw.EdgeInsets.only(top: 6),
@@ -249,8 +239,8 @@ class PdfBuilder {
         children: [
           pw.Text(
             options.showSafetyTimes
-                ? 'সেহরি সতর্ক: ৭ মিনিট আগে | ইফতার সতর্ক: ৩ মিনিট পরে'
-                : 'সেহরি / ইফতার: আসল সময়',
+                ? 'সেহরি: ৭ মিনিট আগে  •  ইফতার: ৩ মিনিট পরে'
+                : 'সেহরি / ইফতার: মূল সময়',
             style: pw.TextStyle(
               fontSize: 6.5,
               color: PdfColors.grey600,
@@ -268,12 +258,7 @@ class PdfBuilder {
     );
   }
 
-  // ─────────────────────────────────────────────
-  // TABLE — manual build for reliability
-  // ─────────────────────────────────────────────
-
   pw.Widget _buildTable(List<ClusterRow> rows) {
-    // Determine effective column set with fallback.
     Set<PdfColumn> cols = options.columns;
     if (cols.isEmpty || cols.length < 2) {
       cols = PdfColumnSelection.defaultSelection(
@@ -281,7 +266,6 @@ class PdfBuilder {
       ).columns;
     }
 
-    // Date column always first; others in enum order.
     final ordered = <PdfColumn>[
       PdfColumn.date,
       ...PdfColumn.values.where(
@@ -289,7 +273,7 @@ class PdfBuilder {
       ),
     ];
 
-    // Header row.
+    // Header row
     final header = pw.TableRow(
       decoration: pw.BoxDecoration(
         color: PdfColor.fromHex('#10B981'),
@@ -316,7 +300,7 @@ class PdfBuilder {
           .toList(),
     );
 
-    // Data rows.
+    // Data rows
     final dataRows = <pw.TableRow>[];
     for (var r = 0; r < rows.length; r++) {
       final row = rows[r];
@@ -325,16 +309,13 @@ class PdfBuilder {
       dataRows.add(
         pw.TableRow(
           decoration: pw.BoxDecoration(
-            color: isEven
-                ? PdfColors.white
-                : PdfColor.fromHex('#F3F4F6'),
+            color: isEven ? PdfColors.white : PdfColor.fromHex('#F3F4F6'),
           ),
           children: ordered.map((c) {
             final isDate = c == PdfColumn.date;
             return pw.Container(
-              alignment: isDate
-                  ? pw.Alignment.centerLeft
-                  : pw.Alignment.center,
+              alignment:
+                  isDate ? pw.Alignment.centerLeft : pw.Alignment.center,
               padding: const pw.EdgeInsets.symmetric(
                 horizontal: 2,
                 vertical: 3,
@@ -353,7 +334,6 @@ class PdfBuilder {
       );
     }
 
-    // Column widths — flex.
     final widths = <int, pw.TableColumnWidth>{};
     for (var i = 0; i < ordered.length; i++) {
       widths[i] = ordered[i] == PdfColumn.date
@@ -372,10 +352,6 @@ class PdfBuilder {
     );
   }
 
-  // ─────────────────────────────────────────────
-  // CELL HELPERS
-  // ─────────────────────────────────────────────
-
   String _cellFor(ClusterRow row, PdfColumn col) {
     switch (col) {
       case PdfColumn.date:
@@ -383,9 +359,9 @@ class PdfBuilder {
       case PdfColumn.tahajjud:
         return _shortTime(row.times.lastThirdStart);
       case PdfColumn.sehri:
-        return _dualTimeCell(
-          row.times.sehriActual,
-          row.times.sehriSafety,
+        return _sehriIftarCell(
+          actual: row.times.sehriActual,
+          safety: row.times.sehriSafety,
         );
       case PdfColumn.fajr:
         return _shortTime(row.times.fajr);
@@ -400,9 +376,9 @@ class PdfBuilder {
       case PdfColumn.sunset:
         return _shortTime(row.times.sunset);
       case PdfColumn.iftar:
-        return _dualTimeCell(
-          row.times.iftarActual,
-          row.times.iftarSafety,
+        return _sehriIftarCell(
+          actual: row.times.iftarActual,
+          safety: row.times.iftarSafety,
         );
       case PdfColumn.maghrib:
         return _shortTime(row.times.maghrib);
@@ -413,8 +389,6 @@ class PdfBuilder {
     }
   }
 
-  /// Date cell: English (big) on top, Bangla & Hijri below.
-  /// Multi-day clusters show "1-3".
   String _dateCell(ClusterRow row) {
     final start = row.startDate;
     final end = row.endDate;
@@ -431,10 +405,15 @@ class PdfBuilder {
         '${bangla.toBanglaDigits(hn.hDay)}';
   }
 
-  /// Cell with actual (large) on top and safety (small) below.
-  String _dualTimeCell(DateTime actual, DateTime safety) {
-    if (!options.showSafetyTimes) return _shortTime(actual);
-    return '${_shortTime(actual)}\nসতর্ক ${_shortTime(safety)}';
+  /// Sehri/Iftar cell — single time only. If safety is enabled,
+  /// use the safety time; otherwise the actual time. No label.
+  String _sehriIftarCell({
+    required DateTime actual,
+    required DateTime safety,
+  }) {
+    return _shortTime(
+      options.showSafetyTimes ? safety : actual,
+    );
   }
 
   String _shortTime(DateTime d) {
