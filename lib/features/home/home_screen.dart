@@ -12,6 +12,12 @@ import 'widgets/home_header.dart';
 import 'widgets/live_clock_card.dart';
 
 /// Main dashboard.
+///
+/// Layout:
+///   - HomeHeader (location + settings)
+///   - LiveClockCard (big clock + 3-chip date row)
+///   - CurrentStatusCard (current + next prayer)
+///   - Tools grid (6 tiles)
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -49,7 +55,9 @@ class HomeScreen extends ConsumerWidget {
               ),
 
               const SizedBox(height: AppConstants.spaceLg),
-              const _PdfHeroButton(),
+
+              // ─── Tools Grid ─────────────────────
+              const _ToolsGrid(),
             ],
           ),
         ),
@@ -61,6 +69,7 @@ class HomeScreen extends ConsumerWidget {
 // ─────────────────────────────────────────────
 // BODY
 // ─────────────────────────────────────────────
+
 class _HomeBody extends StatelessWidget {
   final PrayerTimes prayer;
 
@@ -80,8 +89,160 @@ class _HomeBody extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
+// TOOLS GRID — 6 tiles
+// ─────────────────────────────────────────────
+
+class _ToolsGrid extends StatelessWidget {
+  const _ToolsGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    final tools = <_ToolItem>[
+      _ToolItem(
+        icon: Icons.explore_outlined,
+        label: 'কিবলা',
+        route: Routes.qibla,
+      ),
+      _ToolItem(
+        icon: Icons.picture_as_pdf_outlined,
+        label: 'PDF',
+        route: Routes.pdfSettings,
+      ),
+      _ToolItem(
+        icon: Icons.radio_button_checked,
+        label: 'তাসবীহ',
+        route: Routes.tasbih,
+      ),
+      _ToolItem(
+        icon: Icons.auto_awesome_outlined,
+        label: '৯৯ নাম',
+        route: Routes.asma,
+      ),
+      _ToolItem(
+        icon: Icons.calendar_month_outlined,
+        label: 'ক্যালেন্ডার',
+        route: Routes.calendar,
+      ),
+      _ToolItem(
+        icon: Icons.volunteer_activism_outlined,
+        label: 'দুআ',
+        route: Routes.dua,
+      ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(
+            left: AppConstants.spaceXs,
+            bottom: AppConstants.spaceMd,
+          ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.apps,
+                color: AppConstants.emeraldPrimary,
+                size: 18,
+              ),
+              const SizedBox(width: AppConstants.spaceSm),
+              const Text(
+                'টুলস',
+                style: TextStyle(
+                  color: AppConstants.textPrimary,
+                  fontSize: AppConstants.fontSubtitle,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        GridView.count(
+          crossAxisCount: 3,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisSpacing: AppConstants.spaceMd,
+          mainAxisSpacing: AppConstants.spaceMd,
+          childAspectRatio: 1.05,
+          children: tools.map((t) => _ToolTile(item: t)).toList(),
+        ),
+      ],
+    );
+  }
+}
+
+class _ToolItem {
+  final IconData icon;
+  final String label;
+  final String route;
+
+  const _ToolItem({
+    required this.icon,
+    required this.label,
+    required this.route,
+  });
+}
+
+class _ToolTile extends StatelessWidget {
+  final _ToolItem item;
+
+  const _ToolTile({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+        onTap: () => context.push(item.route),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppConstants.surfaceDark,
+            borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+            border: Border.all(
+              color: AppConstants.emeraldPrimary.withValues(alpha: 0.20),
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppConstants.emeraldPrimary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+                ),
+                child: Icon(
+                  item.icon,
+                  color: AppConstants.emeraldPrimary,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(height: AppConstants.spaceSm),
+              Text(
+                item.label,
+                style: const TextStyle(
+                  color: AppConstants.textPrimary,
+                  fontSize: AppConstants.fontCaption,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
 // LOADING / ERROR
 // ─────────────────────────────────────────────
+
 class _HomeLoading extends StatelessWidget {
   const _HomeLoading();
 
@@ -146,77 +307,6 @@ class _HomeError extends StatelessWidget {
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
             label: Text(l10n.retry),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// PDF HERO BUTTON
-// ─────────────────────────────────────────────
-class _PdfHeroButton extends StatelessWidget {
-  const _PdfHeroButton();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppConstants.emeraldPrimary.withValues(alpha: 0.18),
-            AppConstants.emeraldPrimary.withValues(alpha: 0.05),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(AppConstants.radiusLg),
-        border: Border.all(
-          color: AppConstants.emeraldPrimary.withValues(alpha: 0.35),
-        ),
-      ),
-      padding: const EdgeInsets.all(AppConstants.spaceLg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(AppConstants.spaceSm),
-                decoration: BoxDecoration(
-                  color: AppConstants.emeraldPrimary.withValues(alpha: 0.20),
-                  borderRadius: BorderRadius.circular(AppConstants.radiusSm),
-                ),
-                child: const Icon(
-                  Icons.picture_as_pdf_outlined,
-                  color: AppConstants.emeraldPrimary,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: AppConstants.spaceMd),
-              Expanded(
-                child: Text(
-                  l10n.generatePdf,
-                  style: const TextStyle(
-                    color: AppConstants.textPrimary,
-                    fontSize: AppConstants.fontBody,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppConstants.spaceMd),
-          SizedBox(
-            height: 48,
-            child: ElevatedButton.icon(
-              onPressed: () => context.push(Routes.pdfSettings),
-              icon: const Icon(Icons.download_rounded),
-              label: Text(l10n.generatePdfShort),
-            ),
           ),
         ],
       ),
