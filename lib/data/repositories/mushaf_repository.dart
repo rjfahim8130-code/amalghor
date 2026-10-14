@@ -1,12 +1,15 @@
 import 'dart:convert';
 
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/mushaf_models.dart';
 
 class MushafRepository {
   MushafRepository._();
   static final MushafRepository instance = MushafRepository._();
+
+  static const _keyLastPage = 'mushaf_last_page';
 
   MushafConfig? _config;
 
@@ -19,4 +22,17 @@ class MushafRepository {
   }
 
   MushafConfig? get config => _config;
+
+  Future<int> loadLastPage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final page = prefs.getInt(_keyLastPage) ?? 2;
+    final cfg = _config;
+    if (cfg == null) return page.clamp(2, 611);
+    return page.clamp(cfg.firstContentPage, cfg.lastContentPage);
+  }
+
+  Future<void> saveLastPage(int page) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_keyLastPage, page);
+  }
 }
