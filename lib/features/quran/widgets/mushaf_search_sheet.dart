@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants.dart';
+import '../../../data/models/mushaf_models.dart';
 import '../../../providers/mushaf_provider.dart';
 
 class MushafSearchSheet extends ConsumerStatefulWidget {
@@ -43,7 +44,7 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
     widget.onGoToPage(page);
   }
 
-  int? _parse(String raw, dynamic config) {
+  int? _parse(String raw, MushafConfig config) {
     final text = raw
         .replaceAll('পারা', ' ')
         .replaceAll('পৃষ্ঠা', ' ')
@@ -63,7 +64,8 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
       if (config.isValidContentPage(n)) return n;
       // অথবা পারা নম্বর (১–৩০)
       if (n >= 1 && n <= 30) {
-        return config.paraOf(n)?.startPage;
+        final start = config.paraOf(n)?.startPage;
+        return start; // int?
       }
       return null;
     }
@@ -72,7 +74,8 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
       final para = int.tryParse(parts[0]);
       final paraPage = int.tryParse(parts[1]);
       if (para == null || paraPage == null) return null;
-      return config.pageForParaPage(para, paraPage);
+      final page = config.pageForParaPage(para, paraPage);
+      return page; // int?
     }
     return null;
   }
