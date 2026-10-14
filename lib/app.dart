@@ -25,10 +25,12 @@ class AmalghorApp extends ConsumerWidget {
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
 
+      // ─── Theme ─────────────────────────────
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,
 
+      // ─── Localization ──────────────────────
       locale: locale,
       supportedLocales: AppConstants.supportedLocales,
       localizationsDelegates: const [
@@ -46,9 +48,10 @@ class AmalghorApp extends ConsumerWidget {
         return const Locale('bn');
       },
 
+      // ─── Routing ───────────────────────────
       routerConfig: ref.watch(routerProvider),
 
-      // Intercept initial route: show onboarding until completed.
+      // ─── Builder ───────────────────────────
       builder: (context, child) {
         final mediaQuery = MediaQuery.of(context);
         final clamped = MediaQuery(
@@ -60,6 +63,7 @@ class AmalghorApp extends ConsumerWidget {
           child: child ?? const SizedBox.shrink(),
         );
 
+        // Show onboarding until complete.
         if (!onboarded) {
           return OnboardingScreen(onComplete: () {});
         }
