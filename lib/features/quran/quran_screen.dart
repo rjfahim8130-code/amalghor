@@ -8,12 +8,6 @@ import '../../providers/quran_provider.dart';
 import 'widgets/loading_overlay.dart';
 
 /// The Quran module's main screen.
-///
-/// Shows:
-///   - A one-time loading overlay while the SQLite DB is populated
-///   - A "Continue Reading" card if a last-read position exists
-///   - A search bar
-///   - The complete list of 114 Surahs
 class QuranScreen extends ConsumerStatefulWidget {
   const QuranScreen({super.key});
 
@@ -28,7 +22,6 @@ class _QuranScreenState extends ConsumerState<QuranScreen> {
   @override
   void initState() {
     super.initState();
-    // Kick off the one-time load. Safe to call repeatedly.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(quranLoadProvider.notifier).load();
     });
@@ -64,6 +57,11 @@ class _QuranScreenState extends ConsumerState<QuranScreen> {
             : const Text('Al-Quran'),
         actions: [
           IconButton(
+            tooltip: 'তেলাওয়াত (মুসহাফ)',
+            icon: const Icon(Icons.menu_book_rounded),
+            onPressed: () => context.push('/quran/mushaf?page=2'),
+          ),
+          IconButton(
             icon: Icon(_searching ? Icons.close : Icons.search),
             onPressed: () {
               setState(() {
@@ -83,7 +81,6 @@ class _QuranScreenState extends ConsumerState<QuranScreen> {
       ),
       body: Stack(
         children: [
-          // ─── Body content ─────────────────────
           if (!loadState.isLoaded)
             const _LoadingPlaceholder()
           else if (_searching && _searchController.text.trim().isNotEmpty)
@@ -91,7 +88,6 @@ class _QuranScreenState extends ConsumerState<QuranScreen> {
           else
             const _SurahListView(),
 
-          // ─── Loading overlay ──────────────────
           if (!loadState.isLoaded)
             LoadingOverlay(
               stage: loadState.stage,
@@ -103,9 +99,6 @@ class _QuranScreenState extends ConsumerState<QuranScreen> {
   }
 }
 
-// ─────────────────────────────────────────────
-// PLACEHOLDER WHILE LOADING
-// ─────────────────────────────────────────────
 class _LoadingPlaceholder extends StatelessWidget {
   const _LoadingPlaceholder();
 
@@ -115,9 +108,6 @@ class _LoadingPlaceholder extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// MAIN LIST VIEW
-// ─────────────────────────────────────────────
 class _SurahListView extends ConsumerWidget {
   const _SurahListView();
 
@@ -125,6 +115,9 @@ class _SurahListView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final surahsAsync = ref.watch(surahListProvider);
     final lastRead = ref.watch(lastReadProvider);
+
+    final hasLastRead = lastRead != null;
+    final extraCount = hasLastRead ? 2 : 1;
 
     return surahsAsync.when(
       loading: () => const Center(
@@ -143,14 +136,17 @@ class _SurahListView extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(
             vertical: AppConstants.spaceMd,
           ),
-          itemCount: surahs.length + (lastRead != null ? 1 : 0),
+          itemCount: surahs.length + extraCount,
           itemBuilder: (context, i) {
-            // Continue Reading card at the very top.
-            if (lastRead != null && i == 0) {
+            if (hasLastRead && i == 0) {
               return _ContinueReadingCard(lastRead: lastRead);
             }
 
-            final index = lastRead != null ? i - 1 : i;
+            if ((hasLastRead && i == 1) || (!hasLastRead && i == 0)) {
+              return const _MushafBannerCard();
+            }
+
+            final index = i - extraCount;
             final surah = surahs[index];
             return _SurahTile(surah: surah);
           },
@@ -160,9 +156,82 @@ class _SurahListView extends ConsumerWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// CONTINUE READING CARD
-// ─────────────────────────────────────────────
+class _MushafBannerCard extends StatelessWidget {
+  const _MushafBannerCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppConstants.spaceLg,
+        AppConstants.spaceSm,
+        AppConstants.spaceLg,
+        AppConstants.spaceMd,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+          onTap: () => context.push('/quran/mushaf?page=2'),
+          child: Container(
+            padding: const EdgeInsets.all(AppConstants.spaceLg),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppConstants.emeraldPrimary.withValues(alpha: 0.15),
+                  AppConstants.emeraldPrimary.withValues(alpha: 0.03),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+              border: Border.all(
+                color: AppConstants.emeraldPrimary.withValues(alpha: 0.4),
+              ),
+            ),
+            child: const Row(
+              children: [
+                Icon(
+                  Icons.menu_book_rounded,
+                  color: AppConstants.emeraldPrimary,
+                  size: 26,
+                ),
+                SizedBox(width: AppConstants.spaceMd),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'তেলাওয়াত (হাফেজী মুসহাফ)',
+                        style: TextStyle(
+                          color: AppConstants.textPrimary,
+                          fontSize: AppConstants.fontSubtitle,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'পৃষ্ঠাভিত্তিক সরাসরি কুরআন মজিদ পড়ুন',
+                        style: TextStyle(
+                          color: AppConstants.textMuted,
+                          fontSize: AppConstants.fontCaption,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  color: AppConstants.emeraldPrimary,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 class _ContinueReadingCard extends ConsumerWidget {
   final LastReadPosition lastRead;
 
@@ -256,9 +325,6 @@ class _ContinueReadingCard extends ConsumerWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// SURAH TILE
-// ─────────────────────────────────────────────
 class _SurahTile extends StatelessWidget {
   final SurahMeta surah;
 
@@ -277,7 +343,6 @@ class _SurahTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // Number diamond
               Container(
                 width: 44,
                 height: 44,
@@ -285,8 +350,7 @@ class _SurahTile extends StatelessWidget {
                   color: AppConstants.surfaceDark,
                   borderRadius: BorderRadius.circular(AppConstants.radiusMd),
                   border: Border.all(
-                    color:
-                        AppConstants.emeraldPrimary.withValues(alpha: 0.35),
+                    color: AppConstants.emeraldPrimary.withValues(alpha: 0.35),
                   ),
                 ),
                 child: Center(
@@ -301,8 +365,6 @@ class _SurahTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppConstants.spaceMd),
-
-              // Names column
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,8 +426,6 @@ class _SurahTile extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // Arabic name
               Text(
                 surah.nameArabic,
                 style: const TextStyle(
@@ -382,9 +442,6 @@ class _SurahTile extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// SEARCH RESULTS
-// ─────────────────────────────────────────────
 class _SearchResults extends ConsumerWidget {
   final String query;
 
