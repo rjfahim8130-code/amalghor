@@ -10,7 +10,6 @@ import '../../providers/prayer_provider.dart';
 import 'widgets/current_status_card.dart';
 import 'widgets/home_header.dart';
 import 'widgets/live_clock_card.dart';
-import 'widgets/quick_summary_card.dart';
 import 'widgets/tri_calendar_row.dart';
 
 /// Main dashboard.
@@ -78,8 +77,6 @@ class _HomeBody extends StatelessWidget {
         CurrentStatusCard(prayer: prayer),
         const SizedBox(height: AppConstants.spaceLg),
         const TriCalendarRow(),
-        const SizedBox(height: AppConstants.spaceLg),
-        QuickSummaryCard(prayer: prayer),
       ],
     );
   }
