@@ -7,6 +7,14 @@ import '../../../data/models/prayer_times.dart';
 import '../../../providers/clock_provider.dart';
 
 /// Live digital clock card with a 3-chip tri-calendar row underneath.
+///
+/// Visuals:
+///   - Emerald-tinted gradient background
+///   - Soft emerald outer glow
+///   - A thin emerald inner border
+///   - Big clock numbers with tabular figures
+///   - A "——— LOCAL TIME ———" divider line
+///   - 3 outlined mini cards for Gregorian / Bangla / Hijri dates
 class LiveClockCard extends ConsumerWidget {
   final PrayerTimes prayer;
 
@@ -26,18 +34,13 @@ class LiveClockCard extends ConsumerWidget {
         vertical: AppConstants.spaceXl,
       ),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppConstants.surfaceDark,
-            AppConstants.surfaceDarker,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: AppConstants.clockGradient,
         borderRadius: BorderRadius.circular(AppConstants.radiusXl),
         border: Border.all(
-          color: AppConstants.emeraldPrimary.withValues(alpha: 0.18),
+          color: AppConstants.emeraldPrimary.withValues(alpha: 0.45),
+          width: 1.2,
         ),
+        boxShadow: AppConstants.emeraldGlowMedium,
       ),
       child: Column(
         children: [
@@ -49,17 +52,33 @@ class LiveClockCard extends ConsumerWidget {
               fontSize: AppConstants.fontDisplay,
               fontWeight: FontWeight.w700,
               fontFeatures: [FontFeature.tabularFigures()],
-              letterSpacing: 1.0,
+              letterSpacing: 1.2,
+              height: 1.05,
             ),
           ),
           const SizedBox(height: AppConstants.spaceSm),
-          Text(
-            _localeTag(localeCode),
-            style: const TextStyle(
-              color: AppConstants.textFaint,
-              fontSize: AppConstants.fontMicro,
-              letterSpacing: 2.0,
-            ),
+
+          // ─── Divider label ──────────────────
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _line(),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppConstants.spaceSm,
+                ),
+                child: Text(
+                  _localeTag(localeCode),
+                  style: const TextStyle(
+                    color: AppConstants.textMuted,
+                    fontSize: AppConstants.fontMicro,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 3.0,
+                  ),
+                ),
+              ),
+              _line(),
+            ],
           ),
 
           const SizedBox(height: AppConstants.spaceLg),
@@ -68,6 +87,14 @@ class LiveClockCard extends ConsumerWidget {
           _TriCalendarChips(prayer: prayer),
         ],
       ),
+    );
+  }
+
+  Widget _line() {
+    return Container(
+      width: 24,
+      height: 1,
+      color: AppConstants.textFaint.withValues(alpha: 0.5),
     );
   }
 
@@ -104,7 +131,7 @@ class _TriCalendarChips extends StatelessWidget {
             label: 'ইংরেজি',
             value: tri.gregorianFormatted,
             icon: Icons.calendar_month_outlined,
-            accent: AppConstants.textPrimary,
+            accent: AppConstants.emeraldPrimary,
           ),
         ),
         const SizedBox(width: AppConstants.spaceSm),
@@ -113,7 +140,7 @@ class _TriCalendarChips extends StatelessWidget {
             label: 'বাংলা',
             value: tri.banglaFormatted,
             icon: Icons.wb_sunny_outlined,
-            accent: AppConstants.goldAccent,
+            accent: AppConstants.goldBright,
           ),
         ),
         const SizedBox(width: AppConstants.spaceSm),
@@ -122,7 +149,7 @@ class _TriCalendarChips extends StatelessWidget {
             label: 'হিজরি',
             value: tri.hijriFormatted,
             icon: Icons.nightlight_round,
-            accent: AppConstants.emeraldPrimary,
+            accent: AppConstants.cyanAccent,
           ),
         ),
       ],
@@ -146,12 +173,16 @@ class _CalendarChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(AppConstants.spaceMd),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.spaceMd,
+        vertical: AppConstants.spaceMd,
+      ),
       decoration: BoxDecoration(
-        color: AppConstants.amoledBlack.withValues(alpha: 0.45),
+        color: AppConstants.amoledBlack.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(AppConstants.radiusMd),
         border: Border.all(
-          color: AppConstants.dividerColor,
+          color: accent.withValues(alpha: 0.35),
+          width: 1.0,
         ),
       ),
       child: Column(
@@ -159,15 +190,15 @@ class _CalendarChip extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, color: accent, size: 14),
+              Icon(icon, color: accent, size: 13),
               const SizedBox(width: AppConstants.spaceXs),
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(
-                    color: AppConstants.textMuted,
+                  style: TextStyle(
+                    color: accent.withValues(alpha: 0.9),
                     fontSize: AppConstants.fontMicro,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                     letterSpacing: 0.3,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -175,13 +206,14 @@ class _CalendarChip extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppConstants.spaceXs),
+          const SizedBox(height: 6),
           Text(
             value,
             style: const TextStyle(
               color: AppConstants.textPrimary,
               fontSize: AppConstants.fontCaption,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
+              height: 1.3,
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
