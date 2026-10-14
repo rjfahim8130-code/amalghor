@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'constants.dart';
+
 /// Central theme factory.
 ///
-/// Provides:
-/// - [dark] — Deep AMOLED black (default, saves battery on OLED)
-/// - [light] — Clean light theme for daytime/accessibility
+/// Provides two themes:
+/// - [dark] — Deep AMOLED black with emerald accents (default)
+/// - [light] — Clean light theme for daytime / accessibility
 class AppTheme {
   AppTheme._();
 
   // ─────────────────────────────────────────────
-  // DARK THEME
+  // DARK THEME (default)
   // ─────────────────────────────────────────────
   static ThemeData dark() {
     const colorScheme = ColorScheme.dark(
@@ -31,16 +32,18 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: AppConstants.amoledBlack,
-      canvasColor: AppConstants.amoledBlack,
+      scaffoldBackgroundColor: AppConstants.deepDark,
+      canvasColor: AppConstants.deepDark,
       splashFactory: InkSparkle.splashFactory,
     );
 
     return base.copyWith(
+      // ─── Text ────────────────────────────────
       textTheme: _buildTextTheme(base.textTheme, isDark: true),
 
+      // ─── AppBar ──────────────────────────────
       appBarTheme: const AppBarTheme(
-        backgroundColor: AppConstants.amoledBlack,
+        backgroundColor: AppConstants.deepDark,
         foregroundColor: AppConstants.textPrimary,
         elevation: 0,
         centerTitle: false,
@@ -48,19 +51,26 @@ class AppTheme {
         titleTextStyle: TextStyle(
           color: AppConstants.textPrimary,
           fontSize: AppConstants.fontHeading,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.3,
         ),
       ),
 
+      // ─── Cards ───────────────────────────────
       cardTheme: CardThemeData(
         color: AppConstants.surfaceDark,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+          borderRadius: BorderRadius.circular(AppConstants.radiusXl),
+          side: BorderSide(
+            color: AppConstants.emeraldPrimary.withValues(alpha: 0.20),
+            width: 1.0,
+          ),
         ),
       ),
 
+      // ─── Buttons ─────────────────────────────
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppConstants.emeraldPrimary,
@@ -75,7 +85,8 @@ class AppTheme {
           ),
           textStyle: const TextStyle(
             fontSize: AppConstants.fontSubtitle,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.3,
           ),
         ),
       ),
@@ -101,6 +112,7 @@ class AppTheme {
         ),
       ),
 
+      // ─── Inputs ──────────────────────────────
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppConstants.surfaceDark,
@@ -114,7 +126,9 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-          borderSide: const BorderSide(color: AppConstants.dividerColor),
+          borderSide: BorderSide(
+            color: AppConstants.emeraldPrimary.withValues(alpha: 0.20),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppConstants.radiusMd),
@@ -126,6 +140,7 @@ class AppTheme {
         hintStyle: const TextStyle(color: AppConstants.textFaint),
       ),
 
+      // ─── Switches & Sliders ──────────────────
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
@@ -141,34 +156,39 @@ class AppTheme {
         }),
       ),
 
+      // ─── Dividers ────────────────────────────
       dividerTheme: const DividerThemeData(
         color: AppConstants.dividerColor,
         thickness: 0.6,
         space: 0.6,
       ),
 
+      // ─── Bottom Navigation ───────────────────
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppConstants.surfaceDarker,
+        backgroundColor: AppConstants.amoledBlack,
         selectedItemColor: AppConstants.emeraldPrimary,
         unselectedItemColor: AppConstants.textFaint,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
         selectedLabelStyle: TextStyle(
           fontSize: AppConstants.fontMicro,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
         ),
         unselectedLabelStyle: TextStyle(fontSize: AppConstants.fontMicro),
       ),
 
+      // ─── Icons ───────────────────────────────
       iconTheme: const IconThemeData(
         color: AppConstants.textPrimary,
         size: 22,
       ),
 
+      // ─── Progress ────────────────────────────
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: AppConstants.emeraldPrimary,
       ),
 
+      // ─── Snackbar ────────────────────────────
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppConstants.surfaceDark,
         contentTextStyle: const TextStyle(color: AppConstants.textPrimary),
@@ -176,6 +196,17 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppConstants.radiusMd),
         ),
         behavior: SnackBarBehavior.floating,
+      ),
+
+      // ─── Dialog ──────────────────────────────
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppConstants.surfaceDark,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusXl),
+          side: BorderSide(
+            color: AppConstants.emeraldPrimary.withValues(alpha: 0.25),
+          ),
+        ),
       ),
     );
   }
@@ -213,7 +244,7 @@ class AppTheme {
         titleTextStyle: TextStyle(
           color: AppConstants.lightTextPrimary,
           fontSize: AppConstants.fontHeading,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
         ),
       ),
       cardTheme: CardThemeData(
@@ -221,7 +252,7 @@ class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+          borderRadius: BorderRadius.circular(AppConstants.radiusXl),
         ),
       ),
       dividerTheme: const DividerThemeData(
@@ -240,7 +271,7 @@ class AppTheme {
   }
 
   // ─────────────────────────────────────────────
-  // SHARED TEXT THEME BUILDER
+  // SHARED TEXT THEME
   // ─────────────────────────────────────────────
   static TextTheme _buildTextTheme(TextTheme base, {required bool isDark}) {
     final primary = isDark
