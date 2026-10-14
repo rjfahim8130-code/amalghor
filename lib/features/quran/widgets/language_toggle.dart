@@ -7,13 +7,6 @@ import '../../../providers/quran_provider.dart';
 
 /// A compact, always-visible control strip that lets the user toggle
 /// which languages appear in the reader.
-///
-/// Layout:
-///   Row 1: Preset buttons (Arabic only, Bangla only, English only, All)
-///   Row 2: Individual chips — Arabic, Bangla, English
-///
-/// The widget observes [quranDisplayProvider] so its state is always
-/// in sync with the rest of the reader.
 class LanguageToggle extends ConsumerWidget {
   const LanguageToggle({super.key});
 
@@ -77,10 +70,9 @@ class LanguageToggle extends ConsumerWidget {
               children: [
                 _PresetButton(
                   label: 'All',
-                  isSelected: display == QuranDisplayMode.allThree ||
-                      (display.showArabic &&
-                          display.showBangla &&
-                          display.showEnglish),
+                  isSelected: display.showArabic &&
+                      display.showBangla &&
+                      display.showEnglish,
                   onTap: () => notifier.applyPreset(
                     QuranDisplayMode.allThree,
                   ),
