@@ -40,41 +40,6 @@ class SettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: AppConstants.spaceLg),
 
-          // ─── Tools ────────────────────────────
-          const _SectionHeader(title: 'Tools'),
-          _NavigationTile(
-            icon: Icons.explore_outlined,
-            title: 'কিবলা কম্পাস',
-            onTap: () => context.push(Routes.qibla),
-          ),
-          _NavigationTile(
-  icon: Icons.picture_as_pdf_outlined,
-  title: 'PDF ক্যালেন্ডার',
-  onTap: () => context.push(Routes.pdfSettings),
-),
-_NavigationTile(
-  icon: Icons.radio_button_checked,
-  title: 'তাসবীহ কাউন্টার',
-  onTap: () => context.push(Routes.tasbih),
-),
-_NavigationTile(
-  icon: Icons.auto_awesome_outlined,
-  title: 'আল্লাহর ৯৯ নাম',
-  onTap: () => context.push(Routes.asma),
-),
-_NavigationTile(
-  icon: Icons.calendar_month_outlined,
-  title: 'ইসলামিক ক্যালেন্ডার',
-  onTap: () => context.push(Routes.calendar),
-),
-_NavigationTile(
-  icon: Icons.volunteer_activism_outlined,
-  title: 'দুআ সংকলন',
-  onTap: () => context.push(Routes.dua),
-),
-
-const SizedBox(height: AppConstants.spaceLg),
-
           // ─── Language ─────────────────────────
           _SectionHeader(title: l10n.settingsLanguage),
           _RadioTile<Locale>(
@@ -306,7 +271,6 @@ class _NotificationPermissionBanner extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final status = ref.watch(notificationProvider);
 
-    // Hide banner if already granted.
     if (status == NotificationPermissionStatus.granted) {
       return const SizedBox.shrink();
     }
