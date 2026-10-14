@@ -27,13 +27,13 @@ class AppShell extends ConsumerWidget {
       ),
       _NavTab(
         icon: Icons.mosque_outlined,
-        activeIcon: Icons.mosque,
+        activeIcon: Icons.mosque_rounded,
         label: l10n.navPrayer,
         route: Routes.prayer,
       ),
       _NavTab(
         icon: Icons.menu_book_outlined,
-        activeIcon: Icons.menu_book,
+        activeIcon: Icons.menu_book_rounded,
         label: l10n.navQuran,
         route: Routes.quran,
       ),
@@ -44,8 +44,8 @@ class AppShell extends ConsumerWidget {
         route: Routes.ramadan,
       ),
       _NavTab(
-        icon: Icons.check_circle_outline,
-        activeIcon: Icons.check_circle,
+        icon: Icons.favorite_outline,
+        activeIcon: Icons.favorite_rounded,
         label: l10n.navAmol,
         route: Routes.amol,
       ),
@@ -56,25 +56,111 @@ class AppShell extends ConsumerWidget {
     );
 
     return Scaffold(
+      backgroundColor: AppConstants.deepDark,
       body: child,
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
+          color: AppConstants.amoledBlack,
           border: Border(
-            top: BorderSide(color: AppConstants.dividerColor, width: 0.6),
+            top: BorderSide(
+              color: AppConstants.emeraldPrimary.withValues(alpha: 0.15),
+              width: 0.8,
+            ),
           ),
         ),
-        child: BottomNavigationBar(
-          currentIndex: index >= 0 ? index : 0,
-          onTap: (i) => context.go(tabs[i].route),
-          items: tabs
-              .map(
-                (t) => BottomNavigationBarItem(
-                  icon: Icon(t.icon),
-                  activeIcon: Icon(t.activeIcon),
-                  label: t.label,
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppConstants.spaceSm,
+              vertical: 6,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: List.generate(tabs.length, (i) {
+                final tab = tabs[i];
+                final isSelected = i == (index >= 0 ? index : 0);
+                return _NavItem(
+                  tab: tab,
+                  isSelected: isSelected,
+                  onTap: () => context.go(tab.route),
+                );
+              }),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// NAV ITEM
+// ─────────────────────────────────────────────
+
+class _NavItem extends StatelessWidget {
+  final _NavTab tab;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _NavItem({
+    required this.tab,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppConstants.emeraldPrimary
+                            .withValues(alpha: 0.15)
+                        : Colors.transparent,
+                    borderRadius:
+                        BorderRadius.circular(AppConstants.radiusFull),
+                  ),
+                  child: Icon(
+                    isSelected ? tab.activeIcon : tab.icon,
+                    color: isSelected
+                        ? AppConstants.emeraldPrimary
+                        : AppConstants.textFaint,
+                    size: 22,
+                  ),
                 ),
-              )
-              .toList(),
+                const SizedBox(height: 2),
+                Text(
+                  tab.label,
+                  style: TextStyle(
+                    color: isSelected
+                        ? AppConstants.emeraldPrimary
+                        : AppConstants.textFaint,
+                    fontSize: 10,
+                    fontWeight: isSelected
+                        ? FontWeight.w700
+                        : FontWeight.w500,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
