@@ -11,7 +11,7 @@ import '../home/widgets/live_clock_card.dart';
 import '../home/widgets/tri_calendar_row.dart';
 
 /// Prayer timeline screen — mirrors the Home design language and
-/// adds the full daily timings list with live countdowns.
+/// shows the full daily timings list with live countdowns.
 class PrayerScreen extends ConsumerWidget {
   const PrayerScreen({super.key});
 
@@ -36,7 +36,6 @@ class PrayerScreen extends ConsumerWidget {
               AppConstants.space2xl,
             ),
             children: [
-              // ─── Header (same as Home) ──────────
               const HomeHeader(),
               const SizedBox(height: AppConstants.spaceLg),
 
@@ -57,8 +56,9 @@ class PrayerScreen extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────
-// BODY — mirrors Home + adds the full timings list
+// BODY
 // ─────────────────────────────────────────────
+
 class _PrayerBody extends ConsumerWidget {
   final PrayerTimes prayer;
 
@@ -68,8 +68,6 @@ class _PrayerBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncNow = ref.watch(clockProvider);
     final now = asyncNow.value ?? DateTime.now();
-
-    final timings = prayer.allTimings(now);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -83,10 +81,7 @@ class _PrayerBody extends ConsumerWidget {
         const SizedBox(height: AppConstants.spaceLg),
 
         // 3. Full timings list
-        _TimingsListCard(
-          timings: timings,
-          now: now,
-        ),
+        _TimingsListCard(prayer: prayer, now: now),
       ],
     );
   }
@@ -97,16 +92,18 @@ class _PrayerBody extends ConsumerWidget {
 // ─────────────────────────────────────────────
 
 class _TimingsListCard extends StatelessWidget {
-  final List<({String key, DateTime time, String label})> timings;
+  final PrayerTimes prayer;
   final DateTime now;
 
   const _TimingsListCard({
-    required this.timings,
+    required this.prayer,
     required this.now,
   });
 
   @override
   Widget build(BuildContext context) {
+    final entries = _buildEntries(prayer);
+
     return Container(
       decoration: BoxDecoration(
         color: AppConstants.surfaceDark,
@@ -143,8 +140,8 @@ class _TimingsListCard extends StatelessWidget {
             ),
           ),
           const Divider(height: 1),
-          ...timings.asMap().entries.map((e) {
-            final isLast = e.key == timings.length - 1;
+          ...entries.asMap().entries.map((e) {
+            final isLast = e.key == entries.length - 1;
             return _TimingRow(
               entry: e.value,
               now: now,
@@ -155,6 +152,110 @@ class _TimingsListCard extends StatelessWidget {
       ),
     );
   }
+
+  /// Builds the 14 entries in the exact order requested.
+  List<_TimingEntry> _buildEntries(PrayerTimes p) {
+    return [
+      _TimingEntry(
+        key: 'tahajjud',
+        label: 'রাতের শেষ তৃতীয়াংশ / তাহাজ্জুদ',
+        time: p.lastThirdStart,
+        icon: Icons.nightlight_round,
+      ),
+      _TimingEntry(
+        key: 'sehri',
+        label: 'সেহরি শেষ',
+        time: p.sehriActual,
+        icon: Icons.alarm,
+      ),
+      _TimingEntry(
+        key: 'fajr',
+        label: 'ফজর',
+        time: p.fajr,
+        icon: Icons.mosque,
+      ),
+      _TimingEntry(
+        key: 'sunrise',
+        label: 'সূর্যোদয়',
+        time: p.sunrise,
+        icon: Icons.wb_twilight,
+      ),
+      _TimingEntry(
+        key: 'ishraq',
+        label: 'ইশরাক / দুহা',
+        time: p.ishraq,
+        icon: Icons.wb_sunny_outlined,
+      ),
+      _TimingEntry(
+        key: 'solarNoon',
+        label: 'মধ্য আকাশ',
+        time: p.solarNoon,
+        icon: Icons.brightness_high,
+      ),
+      _TimingEntry(
+        key: 'dhuhr',
+        label: 'যোহর',
+        time: p.dhuhr,
+        icon: Icons.mosque,
+      ),
+      _TimingEntry(
+        key: 'asr',
+        label: 'আসর',
+        time: p.asr,
+        icon: Icons.mosque,
+      ),
+      _TimingEntry(
+        key: 'sunset',
+        label: 'সূর্যাস্ত',
+        time: p.sunset,
+        icon: Icons.wb_twilight,
+      ),
+      _TimingEntry(
+        key: 'iftar',
+        label: 'ইফতার',
+        time: p.iftarActual,
+        icon: Icons.restaurant,
+      ),
+      _TimingEntry(
+        key: 'maghrib',
+        label: 'মাগরিব',
+        time: p.maghrib,
+        icon: Icons.mosque,
+      ),
+      _TimingEntry(
+        key: 'isha',
+        label: 'এশা',
+        time: p.isha,
+        icon: Icons.mosque,
+      ),
+      _TimingEntry(
+        key: 'ishaMustahab',
+        label: 'মুস্তাহাব এশা',
+        time: p.ishaMustahab,
+        icon: Icons.star_outline,
+      ),
+      _TimingEntry(
+        key: 'midnight',
+        label: 'ইসলামী মধ্যরাত / রাত অর্ধেক',
+        time: p.islamicMidnight,
+        icon: Icons.dark_mode,
+      ),
+    ];
+  }
+}
+
+class _TimingEntry {
+  final String key;
+  final String label;
+  final DateTime time;
+  final IconData icon;
+
+  const _TimingEntry({
+    required this.key,
+    required this.label,
+    required this.time,
+    required this.icon,
+  });
 }
 
 // ─────────────────────────────────────────────
@@ -162,7 +263,7 @@ class _TimingsListCard extends StatelessWidget {
 // ─────────────────────────────────────────────
 
 class _TimingRow extends StatelessWidget {
-  final ({String key, DateTime time, String label}) entry;
+  final _TimingEntry entry;
   final DateTime now;
   final bool showDivider;
 
@@ -202,7 +303,7 @@ class _TimingRow extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppConstants.radiusSm),
                 ),
                 child: Icon(
-                  _iconFor(entry.key),
+                  entry.icon,
                   color: accent,
                   size: 14,
                 ),
@@ -221,6 +322,7 @@ class _TimingRow extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(width: AppConstants.spaceSm),
               Text(
                 AppDateUtils.formatTimeShort(entry.time),
                 style: TextStyle(
@@ -253,37 +355,6 @@ class _TimingRow extends StatelessWidget {
           const Divider(height: 1, indent: AppConstants.spaceLg),
       ],
     );
-  }
-
-  IconData _iconFor(String key) {
-    switch (key) {
-      case 'tahajjud':
-      case 'lastThird':
-        return Icons.nightlight_round;
-      case 'sehri':
-      case 'imsak':
-        return Icons.alarm;
-      case 'fajr':
-      case 'dhuhr':
-      case 'asr':
-      case 'maghrib':
-      case 'isha':
-        return Icons.mosque;
-      case 'sunrise':
-        return Icons.wb_twilight;
-      case 'sunset':
-        return Icons.wb_twilight;
-      case 'ishraq':
-        return Icons.wb_sunny_outlined;
-      case 'iftar':
-        return Icons.restaurant;
-      case 'midnight':
-        return Icons.dark_mode;
-      case 'ishaMustahab':
-        return Icons.star_outline;
-      default:
-        return Icons.schedule;
-    }
   }
 }
 
