@@ -6,8 +6,9 @@ import '../../../data/models/prayer_times.dart';
 
 /// Compact summary of the day's key prayer times.
 ///
-/// Each row shows the **actual** time (large) followed by the
-/// **safety** time (small, muted) where applicable.
+/// Each row shows the **safety** time (large, primary) followed by
+/// the **actual** time (small, muted) where applicable. This makes
+/// the safer time the visible default for the user.
 class QuickSummaryCard extends StatelessWidget {
   final PrayerTimes prayer;
 
@@ -23,9 +24,9 @@ class QuickSummaryCard extends StatelessWidget {
       _SummaryRow(
         key: 'sehri',
         label: 'সেহরি',
-        primary: prayer.sehriActual,
-        secondary: prayer.sehriSafety,
-        secondaryLabel: 'সতর্ক',
+        primary: prayer.sehriSafety,
+        secondary: prayer.sehriActual,
+        secondaryLabel: 'আসল',
         icon: Icons.alarm,
       ),
       _SummaryRow(
@@ -61,9 +62,9 @@ class QuickSummaryCard extends StatelessWidget {
       _SummaryRow(
         key: 'iftar',
         label: 'ইফতার',
-        primary: prayer.iftarActual,
-        secondary: prayer.iftarSafety,
-        secondaryLabel: 'সতর্ক',
+        primary: prayer.iftarSafety,
+        secondary: prayer.iftarActual,
+        secondaryLabel: 'আসল',
         icon: Icons.restaurant,
       ),
       _SummaryRow(
@@ -177,7 +178,6 @@ class _SummaryTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Icon box
           Container(
             width: 32,
             height: 32,
@@ -188,8 +188,6 @@ class _SummaryTile extends StatelessWidget {
             child: Icon(row.icon, color: accent, size: 16),
           ),
           const SizedBox(width: AppConstants.spaceMd),
-
-          // Label
           Expanded(
             child: Text(
               row.label,
@@ -204,8 +202,6 @@ class _SummaryTile extends StatelessWidget {
               ),
             ),
           ),
-
-          // Indicator dot
           if (isCurrent)
             Container(
               margin: const EdgeInsets.only(right: AppConstants.spaceSm),
@@ -227,7 +223,7 @@ class _SummaryTile extends StatelessWidget {
               ),
             ),
 
-          // Actual time (large) — always the primary
+          // Safety time (large) — this is what the user sees first
           Text(
             AppDateUtils.formatTimeShort(row.primary),
             style: TextStyle(
@@ -240,7 +236,7 @@ class _SummaryTile extends StatelessWidget {
             ),
           ),
 
-          // Safety time (small, muted) below — optional
+          // Actual time (small) below
           if (row.secondary != null) ...[
             const SizedBox(width: AppConstants.spaceSm),
             Text(
