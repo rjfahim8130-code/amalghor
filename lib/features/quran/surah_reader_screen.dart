@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
 import '../../data/models/quran_models.dart';
+import '../../providers/mushaf_provider.dart';
 import '../../providers/quran_provider.dart';
 import 'widgets/ayah_card.dart';
 import 'widgets/language_toggle.dart';
@@ -131,7 +132,7 @@ class _SurahReaderScreenState extends ConsumerState<SurahReaderScreen> {
               ),
               if (surah != null)
                 Text(
-                  '${surah.nameArabic} • ${surah.totalAyahs} ayahs',
+                  '${surah.nameArabic} •${surah.totalAyahs} ayahs',
                   style: const TextStyle(
                     fontSize: AppConstants.fontMicro,
                     color: AppConstants.textMuted,
@@ -141,6 +142,18 @@ class _SurahReaderScreenState extends ConsumerState<SurahReaderScreen> {
           ),
         ),
         actions: [
+          // তেলাওয়াত পৃষ্ঠা (মুসহাফ) রিডাইরেক্ট বাটন
+          IconButton(
+            tooltip: 'তেলাওয়াত পৃষ্ঠা',
+            icon: const Icon(Icons.menu_book_rounded, size: 22),
+            onPressed: () async {
+              final config = await ref.read(mushafConfigProvider.future);
+              final page = config.approximatePageForSurah(widget.surahNumber);
+              if (context.mounted) {
+                context.push('/quran/mushaf?page=$page');
+              }
+            },
+          ),
           IconButton(
             tooltip: 'Font size',
             icon: const Icon(Icons.format_size),
