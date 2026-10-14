@@ -6,7 +6,7 @@ import '../../../core/date_utils.dart';
 import '../../../data/models/prayer_times.dart';
 import '../../../providers/clock_provider.dart';
 
-/// Live digital clock card with tri-calendar date row.
+/// Live digital clock card with a 3-chip tri-calendar row underneath.
 class LiveClockCard extends ConsumerWidget {
   final PrayerTimes prayer;
 
@@ -41,6 +41,7 @@ class LiveClockCard extends ConsumerWidget {
       ),
       child: Column(
         children: [
+          // ─── Big clock ──────────────────────
           Text(
             clockStr,
             style: const TextStyle(
@@ -60,8 +61,11 @@ class LiveClockCard extends ConsumerWidget {
               letterSpacing: 2.0,
             ),
           ),
+
           const SizedBox(height: AppConstants.spaceLg),
-          _DateLine(prayer: prayer),
+
+          // ─── Tri-calendar chips ─────────────
+          _TriCalendarChips(prayer: prayer),
         ],
       ),
     );
@@ -79,73 +83,110 @@ class LiveClockCard extends ConsumerWidget {
   }
 }
 
-class _DateLine extends StatelessWidget {
+// ─────────────────────────────────────────────
+// TRI-CALENDAR CHIPS
+// ─────────────────────────────────────────────
+
+class _TriCalendarChips extends StatelessWidget {
   final PrayerTimes prayer;
 
-  const _DateLine({required this.prayer});
+  const _TriCalendarChips({required this.prayer});
 
   @override
   Widget build(BuildContext context) {
     final localeCode = Localizations.localeOf(context).languageCode;
     final tri = AppDateUtils.buildTriCalendar(prayer.date, localeCode);
 
+    return Row(
+      children: [
+        Expanded(
+          child: _CalendarChip(
+            label: 'ইংরেজি',
+            value: tri.gregorianFormatted,
+            icon: Icons.calendar_month_outlined,
+            accent: AppConstants.textPrimary,
+          ),
+        ),
+        const SizedBox(width: AppConstants.spaceSm),
+        Expanded(
+          child: _CalendarChip(
+            label: 'বাংলা',
+            value: tri.banglaFormatted,
+            icon: Icons.wb_sunny_outlined,
+            accent: AppConstants.goldAccent,
+          ),
+        ),
+        const SizedBox(width: AppConstants.spaceSm),
+        Expanded(
+          child: _CalendarChip(
+            label: 'হিজরি',
+            value: tri.hijriFormatted,
+            icon: Icons.nightlight_round,
+            accent: AppConstants.emeraldPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CalendarChip extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color accent;
+
+  const _CalendarChip({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.spaceMd,
-        vertical: AppConstants.spaceSm,
-      ),
+      padding: const EdgeInsets.all(AppConstants.spaceMd),
       decoration: BoxDecoration(
-        color: AppConstants.amoledBlack.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(AppConstants.radiusFull),
+        color: AppConstants.amoledBlack.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+        border: Border.all(
+          color: AppConstants.dividerColor,
+        ),
       ),
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        spacing: AppConstants.spaceSm,
-        runSpacing: AppConstants.spaceXs,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: [
+              Icon(icon, color: accent, size: 14),
+              const SizedBox(width: AppConstants.spaceXs),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppConstants.textMuted,
+                    fontSize: AppConstants.fontMicro,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.3,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppConstants.spaceXs),
           Text(
-            tri.gregorianFormatted,
+            value,
             style: const TextStyle(
               color: AppConstants.textPrimary,
               fontSize: AppConstants.fontCaption,
               fontWeight: FontWeight.w600,
             ),
-          ),
-          const _Dot(),
-          Text(
-            tri.banglaFormatted,
-            style: const TextStyle(
-              color: AppConstants.textMuted,
-              fontSize: AppConstants.fontCaption,
-            ),
-          ),
-          const _Dot(),
-          Text(
-            tri.hijriFormatted,
-            style: const TextStyle(
-              color: AppConstants.emeraldPrimary,
-              fontSize: AppConstants.fontCaption,
-              fontWeight: FontWeight.w500,
-            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _Dot extends StatelessWidget {
-  const _Dot();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 3,
-      height: 3,
-      decoration: const BoxDecoration(
-        color: AppConstants.textFaint,
-        shape: BoxShape.circle,
       ),
     );
   }
