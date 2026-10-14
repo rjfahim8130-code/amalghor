@@ -124,6 +124,36 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
             ),
             child: const Text('যান'),
           ),
+          const SizedBox(height: 16),
+          const Text(
+            'দ্রুত পারা',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppConstants.textMuted,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 36,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: 30,
+              separatorBuilder: (_, __) => const SizedBox(width: 6),
+              itemBuilder: (context, i) {
+                final para = i + 1;
+                return ActionChip(
+                  label: Text('$para'),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () {
+                    final config = ref.read(mushafConfigProvider).valueOrNull;
+                    final start = config?.paraOf(para)?.startPage;
+                    if (start != null) widget.onGoToPage(start);
+                  },
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
