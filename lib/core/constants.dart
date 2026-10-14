@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 /// Global application constants.
+///
+/// Grouped by concern so that magic numbers/strings never leak into
+/// the widget tree.
 class AppConstants {
   AppConstants._();
 
@@ -10,28 +13,113 @@ class AppConstants {
   static const String appName = 'Amalghor';
   static const String appNameBn = 'আমলঘর';
   static const String appNameAr = 'أملغور';
+  static const String appTaglineBn = 'ইবাদতের পথে, সবসময়';
+  static const String appTaglineEn = 'Always on the path of worship';
   static const String appVersion = '1.0.0';
   static const String packageName = 'com.amalghor.app';
 
   // ─────────────────────────────────────────────
   // COLORS — AMOLED-first palette
   // ─────────────────────────────────────────────
-  static const Color amoledBlack = Color(0xFF0B0F12);
-  static const Color surfaceDark = Color(0xFF161D24);
-  static const Color surfaceDarker = Color(0xFF0F1418);
+  static const Color amoledBlack = Color(0xFF080B0E);
+  static const Color deepDark = Color(0xFF0B0F12);
+  static const Color surfaceDark = Color(0xFF111A1E);
+  static const Color surfaceDarker = Color(0xFF0D1418);
+  static const Color cardEmerald = Color(0xFF0E1A16);
+  static const Color cardEmeraldLight = Color(0xFF0D1F18);
+
+  // Primary emerald palette
   static const Color emeraldPrimary = Color(0xFF10B981);
+  static const Color emeraldBright = Color(0xFF1ED896);
+  static const Color emeraldDeep = Color(0xFF059669);
   static const Color emeraldGlow = Color(0xFF00C853);
+
+  // Accent colors
+  static const Color cyanAccent = Color(0xFF22D3EE);
   static const Color goldAccent = Color(0xFFD4A24A);
+  static const Color goldBright = Color(0xFFE7B85C);
+
+  // Text palette
   static const Color textPrimary = Color(0xFFFFFFFF);
+  static const Color textSecondary = Color(0xFFE5E7EB);
   static const Color textMuted = Color(0xFF9CA3AF);
   static const Color textFaint = Color(0xFF6B7280);
   static const Color dividerColor = Color(0xFF1F2937);
+  static const Color borderEmerald = Color(0xFF1A3D32);
 
   // Light theme palette
   static const Color lightBg = Color(0xFFF9FAFB);
   static const Color lightSurface = Color(0xFFFFFFFF);
   static const Color lightTextPrimary = Color(0xFF111827);
   static const Color lightTextMuted = Color(0xFF6B7280);
+
+  // ─────────────────────────────────────────────
+  // GRADIENTS
+  // ─────────────────────────────────────────────
+  static const LinearGradient clockGradient = LinearGradient(
+    colors: [cardEmerald, surfaceDarker],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  static const LinearGradient prayerCardGradient = LinearGradient(
+    colors: [cardEmeraldLight, surfaceDarker],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient toolsTileGradient = LinearGradient(
+    colors: [Color(0xFF0F1F1A), Color(0xFF0A1310)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient topGlow = LinearGradient(
+    colors: [Color(0x1410B981), Color(0x00000000)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  static const LinearGradient brandChipGradient = LinearGradient(
+    colors: [emeraldPrimary, emeraldDeep],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  // ─────────────────────────────────────────────
+  // GLOW SHADOWS
+  // ─────────────────────────────────────────────
+  static List<BoxShadow> emeraldGlowSmall = [
+    BoxShadow(
+      color: emeraldPrimary.withValues(alpha: 0.15),
+      blurRadius: 16,
+      spreadRadius: 0,
+    ),
+  ];
+
+  static List<BoxShadow> emeraldGlowMedium = [
+    BoxShadow(
+      color: emeraldPrimary.withValues(alpha: 0.22),
+      blurRadius: 24,
+      spreadRadius: 0,
+    ),
+  ];
+
+  static List<BoxShadow> emeraldGlowLarge = [
+    BoxShadow(
+      color: emeraldPrimary.withValues(alpha: 0.30),
+      blurRadius: 32,
+      spreadRadius: 2,
+    ),
+  ];
+
+  static List<BoxShadow> cyanGlow = [
+    BoxShadow(
+      color: cyanAccent.withValues(alpha: 0.20),
+      blurRadius: 20,
+      spreadRadius: 0,
+    ),
+  ];
 
   // ─────────────────────────────────────────────
   // LOCALES
@@ -68,13 +156,14 @@ class AppConstants {
   static const double radiusSm = 8.0;
   static const double radiusMd = 12.0;
   static const double radiusLg = 16.0;
-  static const double radiusXl = 24.0;
+  static const double radiusXl = 20.0;
+  static const double radius2xl = 24.0;
   static const double radiusFull = 999.0;
 
   // ─────────────────────────────────────────────
   // TYPOGRAPHY SIZES
   // ─────────────────────────────────────────────
-  static const double fontDisplay = 48.0;
+  static const double fontDisplay = 44.0;
   static const double fontTitle = 24.0;
   static const double fontHeading = 20.0;
   static const double fontSubtitle = 16.0;
