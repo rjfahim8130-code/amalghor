@@ -7,10 +7,14 @@ import '../../../data/models/prayer_times.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/clock_provider.dart';
 
-/// Home dashboard card showing the currently active prayer window
+/// Home dashboard card — shows the currently active prayer window
 /// and a live countdown to the next prayer.
 ///
-/// The full prayer timeline lives on the "নামায" (Prayer) tab.
+/// Visuals:
+///   - Emerald gradient background with subtle glow
+///   - Large rounded mosque icon on the left
+///   - Prayer name (bold) + "এখন চলছে" subtitle
+///   - Next-prayer block with left emerald accent bar
 class CurrentStatusCard extends ConsumerWidget {
   final PrayerTimes prayer;
 
@@ -27,7 +31,6 @@ class CurrentStatusCard extends ConsumerWidget {
 
     return _MainCard(
       now: now,
-      prayer: prayer,
       current: current,
       next: next,
       l10n: l10n,
@@ -41,14 +44,12 @@ class CurrentStatusCard extends ConsumerWidget {
 
 class _MainCard extends StatelessWidget {
   final DateTime now;
-  final PrayerTimes prayer;
   final ({String key, DateTime start, DateTime end})? current;
   final ({String key, DateTime time}) next;
   final AppLocalizations l10n;
 
   const _MainCard({
     required this.now,
-    required this.prayer,
     required this.current,
     required this.next,
     required this.l10n,
@@ -63,35 +64,35 @@ class _MainCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppConstants.spaceLg),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppConstants.surfaceDark,
-            AppConstants.surfaceDarker,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+        gradient: AppConstants.prayerCardGradient,
+        borderRadius: BorderRadius.circular(AppConstants.radiusXl),
         border: Border.all(
-          color: AppConstants.emeraldPrimary.withValues(alpha: 0.25),
+          color: AppConstants.emeraldPrimary.withValues(alpha: 0.42),
+          width: 1.2,
         ),
+        boxShadow: AppConstants.emeraldGlowSmall,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ─── Current phase ────────────────────
+          // ─── Current prayer header ───────────
           Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 54,
+                height: 54,
                 decoration: BoxDecoration(
-                  color: AppConstants.emeraldPrimary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+                  color: AppConstants.emeraldPrimary.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+                  border: Border.all(
+                    color:
+                        AppConstants.emeraldPrimary.withValues(alpha: 0.35),
+                  ),
                 ),
                 child: Icon(
                   _iconFor(current?.key ?? 'tahajjud'),
                   color: AppConstants.emeraldPrimary,
+                  size: 28,
                 ),
               ),
               const SizedBox(width: AppConstants.spaceMd),
@@ -103,16 +104,18 @@ class _MainCard extends StatelessWidget {
                       currentLabel,
                       style: const TextStyle(
                         color: AppConstants.textPrimary,
-                        fontSize: AppConstants.fontSubtitle,
+                        fontSize: 22,
                         fontWeight: FontWeight.w700,
+                        letterSpacing: 0.2,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 3),
                     Text(
                       l10n.nowRunning,
                       style: const TextStyle(
                         color: AppConstants.textMuted,
                         fontSize: AppConstants.fontCaption,
+                        letterSpacing: 0.3,
                       ),
                     ),
                   ],
@@ -123,12 +126,23 @@ class _MainCard extends StatelessWidget {
 
           const SizedBox(height: AppConstants.spaceLg),
 
-          // ─── Next + countdown ─────────────────
+          // ─── Next prayer block ───────────────
           Container(
-            padding: const EdgeInsets.all(AppConstants.spaceMd),
+            padding: const EdgeInsets.fromLTRB(
+              AppConstants.spaceMd + 2,
+              AppConstants.spaceMd,
+              AppConstants.spaceMd,
+              AppConstants.spaceMd,
+            ),
             decoration: BoxDecoration(
-              color: AppConstants.amoledBlack.withValues(alpha: 0.35),
+              color: AppConstants.amoledBlack.withValues(alpha: 0.50),
               borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+              border: Border(
+                left: BorderSide(
+                  color: AppConstants.emeraldPrimary,
+                  width: 3.0,
+                ),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,7 +152,7 @@ class _MainCard extends StatelessWidget {
                     const Icon(
                       Icons.arrow_forward_rounded,
                       color: AppConstants.emeraldPrimary,
-                      size: 18,
+                      size: 16,
                     ),
                     const SizedBox(width: AppConstants.spaceSm),
                     Expanded(
@@ -163,16 +177,28 @@ class _MainCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: AppConstants.spaceSm),
+
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Text(
-                      'বাকি',
-                      style: TextStyle(
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 4),
+                      child: Icon(
+                        Icons.access_time_rounded,
                         color: AppConstants.textMuted,
-                        fontSize: AppConstants.fontCaption,
+                        size: 16,
                       ),
                     ),
                     const SizedBox(width: AppConstants.spaceSm),
+                    Text(
+                      'বাকি',
+                      style: const TextStyle(
+                        color: AppConstants.textMuted,
+                        fontSize: AppConstants.fontBody,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: AppConstants.spaceMd),
                     Expanded(
                       child: Text(
                         AppDateUtils.formatDuration(remaining),
@@ -181,7 +207,8 @@ class _MainCard extends StatelessWidget {
                           fontSize: AppConstants.fontTitle,
                           fontWeight: FontWeight.w700,
                           fontFeatures: [FontFeature.tabularFigures()],
-                          letterSpacing: 1.0,
+                          letterSpacing: 1.2,
+                          height: 1.0,
                         ),
                       ),
                     ),
@@ -240,24 +267,24 @@ IconData _iconFor(String key) {
       return Icons.nightlight_round;
     case 'sehri':
     case 'imsak':
-      return Icons.alarm;
+      return Icons.alarm_rounded;
     case 'fajr':
     case 'dhuhr':
     case 'asr':
     case 'maghrib':
     case 'isha':
-      return Icons.mosque;
+      return Icons.mosque_rounded;
     case 'sunrise':
-      return Icons.wb_twilight;
+      return Icons.wb_twilight_rounded;
     case 'sunset':
-      return Icons.wb_twilight;
+      return Icons.wb_twilight_rounded;
     case 'ishraq':
       return Icons.wb_sunny_outlined;
     case 'iftar':
-      return Icons.restaurant;
+      return Icons.restaurant_rounded;
     case 'midnight':
-      return Icons.dark_mode;
+      return Icons.dark_mode_rounded;
     default:
-      return Icons.schedule;
+      return Icons.schedule_rounded;
   }
 }
