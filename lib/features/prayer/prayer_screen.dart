@@ -8,7 +8,6 @@ import '../../providers/clock_provider.dart';
 import '../../providers/prayer_provider.dart';
 import '../home/widgets/home_header.dart';
 import '../home/widgets/live_clock_card.dart';
-import '../home/widgets/tri_calendar_row.dart';
 
 /// Prayer timeline screen — mirrors the Home design language and
 /// shows the full daily timings list with live countdowns.
@@ -73,8 +72,6 @@ class _PrayerBody extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         LiveClockCard(prayer: prayer),
-        const SizedBox(height: AppConstants.spaceLg),
-        const TriCalendarRow(),
         const SizedBox(height: AppConstants.spaceLg),
         _TimingsListCard(prayer: prayer, now: now),
       ],
@@ -148,7 +145,6 @@ class _TimingsListCard extends StatelessWidget {
     );
   }
 
-  /// Builds the 14 cleaned-up entries.
   List<_TimingEntry> _buildEntries(PrayerTimes p) {
     return [
       _TimingEntry(
