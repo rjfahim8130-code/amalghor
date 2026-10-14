@@ -7,10 +7,12 @@ import '../../data/models/prayer_times.dart';
 import '../../providers/clock_provider.dart';
 import '../../providers/prayer_provider.dart';
 import '../home/widgets/home_header.dart';
-import '../home/widgets/live_clock_card.dart';
 
-/// Prayer timeline screen — mirrors the Home design language and
-/// shows the full daily timings list with live countdowns.
+/// Prayer timeline screen.
+///
+/// Shows only:
+///   - HomeHeader (location chip + settings)
+///   - Full daily timings list with live countdowns
 class PrayerScreen extends ConsumerWidget {
   const PrayerScreen({super.key});
 
@@ -55,7 +57,7 @@ class PrayerScreen extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────
-// BODY
+// BODY — only the timings list
 // ─────────────────────────────────────────────
 
 class _PrayerBody extends ConsumerWidget {
@@ -68,14 +70,7 @@ class _PrayerBody extends ConsumerWidget {
     final asyncNow = ref.watch(clockProvider);
     final now = asyncNow.value ?? DateTime.now();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        LiveClockCard(prayer: prayer),
-        const SizedBox(height: AppConstants.spaceLg),
-        _TimingsListCard(prayer: prayer, now: now),
-      ],
-    );
+    return _TimingsListCard(prayer: prayer, now: now);
   }
 }
 
