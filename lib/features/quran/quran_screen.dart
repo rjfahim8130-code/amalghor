@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
 import '../../data/models/quran_models.dart';
+import '../../data/repositories/mushaf_repository.dart';
 import '../../providers/quran_provider.dart';
 import 'widgets/loading_overlay.dart';
 
@@ -59,7 +60,12 @@ class _QuranScreenState extends ConsumerState<QuranScreen> {
           IconButton(
             tooltip: 'তেলাওয়াত (মুসহাফ)',
             icon: const Icon(Icons.menu_book_rounded),
-            onPressed: () => context.push('/quran/mushaf?page=2'),
+            onPressed: () async {
+              final page = await MushafRepository.instance.loadLastPage();
+              if (context.mounted) {
+                context.push('/quran/mushaf?page=$page');
+              }
+            },
           ),
           IconButton(
             icon: Icon(_searching ? Icons.close : Icons.search),
@@ -172,7 +178,12 @@ class _MushafBannerCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(AppConstants.radiusLg),
-          onTap: () => context.push('/quran/mushaf?page=2'),
+          onTap: () async {
+            final page = await MushafRepository.instance.loadLastPage();
+            if (context.mounted) {
+              context.push('/quran/mushaf?page=$page');
+            }
+          },
           child: Container(
             padding: const EdgeInsets.all(AppConstants.spaceLg),
             decoration: BoxDecoration(
@@ -232,6 +243,7 @@ class _MushafBannerCard extends StatelessWidget {
     );
   }
 }
+
 class _ContinueReadingCard extends ConsumerWidget {
   final LastReadPosition lastRead;
 
