@@ -14,10 +14,11 @@ import 'widgets/live_clock_card.dart';
 /// Main dashboard.
 ///
 /// Layout:
-///   - HomeHeader (location + settings)
-///   - LiveClockCard (big clock + 3-chip date row)
+///   - Top emerald glow (behind everything)
+///   - HomeHeader (brand + location chip + settings)
+///   - LiveClockCard (clock + tri-calendar chips)
 ///   - CurrentStatusCard (current + next prayer)
-///   - Tools grid (6 tiles)
+///   - Tools grid (6 emerald tiles)
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -26,41 +27,63 @@ class HomeScreen extends ConsumerWidget {
     final prayerAsync = ref.watch(currentDayPrayerProvider);
 
     return Scaffold(
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: AppConstants.emeraldPrimary,
-          backgroundColor: AppConstants.surfaceDark,
-          onRefresh: () async {
-            ref.invalidate(currentDayPrayerProvider);
-            await ref.read(currentDayPrayerProvider.future);
-          },
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(
-              AppConstants.spaceLg,
-              AppConstants.spaceLg,
-              AppConstants.spaceLg,
-              AppConstants.space2xl,
-            ),
-            children: [
-              const HomeHeader(),
-              const SizedBox(height: AppConstants.spaceLg),
-
-              prayerAsync.when(
-                loading: () => const _HomeLoading(),
-                error: (e, _) => _HomeError(
-                  message: e.toString(),
-                  onRetry: () => ref.invalidate(currentDayPrayerProvider),
+      backgroundColor: AppConstants.deepDark,
+      body: Stack(
+        children: [
+          // ─── Top emerald glow ───────────────
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 240,
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: AppConstants.topGlow,
                 ),
-                data: (prayer) => _HomeBody(prayer: prayer),
               ),
-
-              const SizedBox(height: AppConstants.spaceLg),
-
-              // ─── Tools Grid ─────────────────────
-              const _ToolsGrid(),
-            ],
+            ),
           ),
-        ),
+
+          // ─── Main scrollable content ────────
+          SafeArea(
+            child: RefreshIndicator(
+              color: AppConstants.emeraldPrimary,
+              backgroundColor: AppConstants.surfaceDark,
+              onRefresh: () async {
+                ref.invalidate(currentDayPrayerProvider);
+                await ref.read(currentDayPrayerProvider.future);
+              },
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(
+                  AppConstants.spaceLg,
+                  AppConstants.spaceLg,
+                  AppConstants.spaceLg,
+                  AppConstants.space2xl,
+                ),
+                children: [
+                  const HomeHeader(),
+                  const SizedBox(height: AppConstants.spaceXl),
+
+                  prayerAsync.when(
+                    loading: () => const _HomeLoading(),
+                    error: (e, _) => _HomeError(
+                      message: e.toString(),
+                      onRetry: () =>
+                          ref.invalidate(currentDayPrayerProvider),
+                    ),
+                    data: (prayer) => _HomeBody(prayer: prayer),
+                  ),
+
+                  const SizedBox(height: AppConstants.spaceXl),
+
+                  // ─── Tools grid ───────────────
+                  const _ToolsGrid(),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -89,7 +112,7 @@ class _HomeBody extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-// TOOLS GRID — 6 tiles
+// TOOLS GRID
 // ─────────────────────────────────────────────
 
 class _ToolsGrid extends StatelessWidget {
@@ -133,6 +156,7 @@ class _ToolsGrid extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ─── Section header ─────────────────
         Padding(
           padding: const EdgeInsets.only(
             left: AppConstants.spaceXs,
@@ -140,30 +164,62 @@ class _ToolsGrid extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Icon(
-                Icons.apps,
-                color: AppConstants.emeraldPrimary,
-                size: 18,
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: AppConstants.emeraldPrimary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-              const SizedBox(width: AppConstants.spaceSm),
+              const SizedBox(width: 6),
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: AppConstants.emeraldPrimary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color:
+                      AppConstants.emeraldPrimary.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: AppConstants.spaceMd),
               const Text(
                 'টুলস',
                 style: TextStyle(
                   color: AppConstants.textPrimary,
                   fontSize: AppConstants.fontSubtitle,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const SizedBox(width: AppConstants.spaceMd),
+              Expanded(
+                child: Container(
+                  height: 1,
+                  color: AppConstants.emeraldPrimary.withValues(alpha: 0.20),
                 ),
               ),
             ],
           ),
         ),
+
+        // ─── Grid ──────────────────────────
         GridView.count(
           crossAxisCount: 3,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           crossAxisSpacing: AppConstants.spaceMd,
           mainAxisSpacing: AppConstants.spaceMd,
-          childAspectRatio: 1.05,
+          childAspectRatio: 1.0,
           children: tools.map((t) => _ToolTile(item: t)).toList(),
         ),
       ],
@@ -197,11 +253,19 @@ class _ToolTile extends StatelessWidget {
         onTap: () => context.push(item.route),
         child: Container(
           decoration: BoxDecoration(
-            color: AppConstants.surfaceDark,
+            gradient: AppConstants.toolsTileGradient,
             borderRadius: BorderRadius.circular(AppConstants.radiusLg),
             border: Border.all(
-              color: AppConstants.emeraldPrimary.withValues(alpha: 0.20),
+              color: AppConstants.emeraldPrimary.withValues(alpha: 0.35),
+              width: 1.0,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: AppConstants.emeraldPrimary.withValues(alpha: 0.08),
+                blurRadius: 14,
+                spreadRadius: 0,
+              ),
+            ],
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -210,8 +274,13 @@ class _ToolTile extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppConstants.emeraldPrimary.withValues(alpha: 0.12),
+                  color:
+                      AppConstants.emeraldPrimary.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+                  border: Border.all(
+                    color: AppConstants.emeraldPrimary
+                        .withValues(alpha: 0.30),
+                  ),
                 ),
                 child: Icon(
                   item.icon,
@@ -220,16 +289,20 @@ class _ToolTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppConstants.spaceSm),
-              Text(
-                item.label,
-                style: const TextStyle(
-                  color: AppConstants.textPrimary,
-                  fontSize: AppConstants.fontCaption,
-                  fontWeight: FontWeight.w600,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  item.label,
+                  style: const TextStyle(
+                    color: AppConstants.textPrimary,
+                    fontSize: AppConstants.fontCaption,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.2,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
