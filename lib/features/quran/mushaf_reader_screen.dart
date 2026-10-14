@@ -110,15 +110,15 @@ class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
           body: PdfViewer.asset(
             config.pdfAsset,
             controller: _controller ??= PdfViewerController(),
+            initialPageNumber: _currentPage,
             params: PdfViewerParams(
-              initialPageNumber: _currentPage,
-              onPageChanged: (page) {
-                if (page == null) return;
-                final p = page.clamp(
+              onPageChanged: (pageNumber) {
+                if (pageNumber == null) return;
+                final p = pageNumber.clamp(
                   config.firstContentPage,
                   config.lastContentPage,
                 );
-                if (p != page) {
+                if (p != pageNumber) {
                   _controller?.goToPage(pageNumber: p);
                 }
                 setState(() => _currentPage = p);
