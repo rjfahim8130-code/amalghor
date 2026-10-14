@@ -10,16 +10,8 @@ import '../../providers/prayer_provider.dart';
 import 'widgets/current_status_card.dart';
 import 'widgets/home_header.dart';
 import 'widgets/live_clock_card.dart';
-import 'widgets/tri_calendar_row.dart';
 
-/// Main dashboard — shows:
-///   - HomeHeader (location)
-///   - LiveClockCard
-///   - CurrentStatusCard (current + next prayer only)
-///   - TriCalendarRow
-///   - PDF hero button
-///
-/// The full prayer timeline lives on the "নামায" (Prayer) tab.
+/// Main dashboard.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -67,7 +59,7 @@ class HomeScreen extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────
-// BODY — clean, no timings list
+// BODY
 // ─────────────────────────────────────────────
 class _HomeBody extends StatelessWidget {
   final PrayerTimes prayer;
@@ -82,8 +74,6 @@ class _HomeBody extends StatelessWidget {
         LiveClockCard(prayer: prayer),
         const SizedBox(height: AppConstants.spaceLg),
         CurrentStatusCard(prayer: prayer),
-        const SizedBox(height: AppConstants.spaceLg),
-        const TriCalendarRow(),
       ],
     );
   }
