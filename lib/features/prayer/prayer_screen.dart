@@ -72,15 +72,10 @@ class _PrayerBody extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // 1. Live clock
         LiveClockCard(prayer: prayer),
         const SizedBox(height: AppConstants.spaceLg),
-
-        // 2. Tri-calendar row
         const TriCalendarRow(),
         const SizedBox(height: AppConstants.spaceLg),
-
-        // 3. Full timings list
         _TimingsListCard(prayer: prayer, now: now),
       ],
     );
@@ -153,12 +148,12 @@ class _TimingsListCard extends StatelessWidget {
     );
   }
 
-  /// Builds the 14 entries in the exact order requested.
+  /// Builds the 14 cleaned-up entries.
   List<_TimingEntry> _buildEntries(PrayerTimes p) {
     return [
       _TimingEntry(
         key: 'tahajjud',
-        label: 'রাতের শেষ তৃতীয়াংশ / তাহাজ্জুদ',
+        label: 'তাহাজ্জুদ',
         time: p.lastThirdStart,
         icon: Icons.nightlight_round,
       ),
@@ -182,7 +177,7 @@ class _TimingsListCard extends StatelessWidget {
       ),
       _TimingEntry(
         key: 'ishraq',
-        label: 'ইশরাক / দুহা',
+        label: 'ইশরাক',
         time: p.ishraq,
         icon: Icons.wb_sunny_outlined,
       ),
@@ -236,7 +231,7 @@ class _TimingsListCard extends StatelessWidget {
       ),
       _TimingEntry(
         key: 'midnight',
-        label: 'ইসলামী মধ্যরাত / রাত অর্ধেক',
+        label: 'রাত অর্ধেক',
         time: p.islamicMidnight,
         icon: Icons.dark_mode,
       ),
