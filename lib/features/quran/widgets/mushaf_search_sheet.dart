@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/constants.dart';
 import '../../../data/models/mushaf_models.dart';
 
 /// Search: para | para+page | surah name | surah+ayah
@@ -248,7 +247,7 @@ class _MushafSearchSheetState extends State<MushafSearchSheet> {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
+          const Text(
             'পারা · পারা+পৃষ্ঠা · সূরা · সূরা+আয়াত',
             style: TextStyle(color: Colors.white54, fontSize: 12),
           ),
