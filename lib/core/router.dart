@@ -16,6 +16,7 @@ import '../features/prayer/prayer_screen.dart';
 import '../features/qibla/qibla_screen.dart';
 import '../features/quran/bookmark_feature.dart';
 import '../features/quran/mushaf_reader_screen.dart';
+import '../features/quran/quran_mode_select_screen.dart';
 import '../features/quran/quran_screen.dart';
 import '../features/quran/surah_reader_screen.dart';
 import '../features/ramadan/ramadan_screen.dart';
@@ -28,13 +29,13 @@ class Routes {
   static const String home = '/';
   static const String prayer = '/prayer';
   static const String quran = '/quran';
+  static const String quranRegular = '/quran/regular';
+  static const String quranMushaf = '/quran/mushaf';
+  static const String quranBookmarks = '/quran/bookmarks';
   static const String ramadan = '/ramadan';
   static const String amol = '/amol';
   static const String settings = '/settings';
   static const String location = '/location';
-  static const String quranBookmarks = '/quran/bookmarks';
-  static const String quranMushaf = '/quran/mushaf';
-  static const String surahReader = '/quran/:surahNumber';
   static const String pdfSettings = '/pdf';
   static const String pdfPreview = '/pdf/preview';
   static const String qibla = '/qibla';
@@ -67,8 +68,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: Routes.quran,
             pageBuilder: (context, state) =>
-                const NoTransitionPage(child: QuranScreen()),
+                const NoTransitionPage(child: QuranModeSelectScreen()),
             routes: [
+              GoRoute(
+                path: 'regular',
+                builder: (context, state) => const QuranScreen(),
+              ),
               GoRoute(
                 path: 'bookmarks',
                 builder: (context, state) => const BookmarkScreen(),
@@ -77,7 +82,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: 'mushaf',
                 builder: (context, state) {
                   final pageParam = state.uri.queryParameters['page'];
-                  final page = int.tryParse(pageParam ?? '') ?? 2;
+                  final page = int.tryParse(pageParam ?? '');
                   return MushafReaderScreen(initialPage: page);
                 },
               ),
