@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/app_colors.dart';
 import '../../../core/constants.dart';
 import '../../../core/date_utils.dart';
 import '../../../data/models/prayer_times.dart';
@@ -8,13 +9,9 @@ import '../../../providers/clock_provider.dart';
 
 /// Live digital clock card with a 3-chip tri-calendar row underneath.
 ///
-/// Visuals:
-///   - Emerald-tinted gradient background
-///   - Soft emerald outer glow
-///   - A thin emerald inner border
-///   - Big clock numbers with tabular figures
-///   - A "——— LOCAL TIME ———" divider line
-///   - 3 outlined mini cards for Gregorian / Bangla / Hijri dates
+/// Auto-adapts to dark or light mode via [AppColors]:
+///   - Dark: emerald-tinted glass gradient + soft glow
+///   - Light: mint-green cream gradient + soft card shadow
 class LiveClockCard extends ConsumerWidget {
   final PrayerTimes prayer;
 
@@ -22,6 +19,7 @@ class LiveClockCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     final localeCode = Localizations.localeOf(context).languageCode;
     final asyncNow = ref.watch(clockProvider);
     final now = asyncNow.value ?? DateTime.now();
@@ -34,24 +32,24 @@ class LiveClockCard extends ConsumerWidget {
         vertical: AppConstants.spaceXl,
       ),
       decoration: BoxDecoration(
-        gradient: AppConstants.clockGradient,
+        gradient: colors.clockGradient,
         borderRadius: BorderRadius.circular(AppConstants.radiusXl),
         border: Border.all(
-          color: AppConstants.emeraldPrimary.withValues(alpha: 0.45),
+          color: colors.border,
           width: 1.2,
         ),
-        boxShadow: AppConstants.emeraldGlowMedium,
+        boxShadow: colors.cardShadow,
       ),
       child: Column(
         children: [
           // ─── Big clock ──────────────────────
           Text(
             clockStr,
-            style: const TextStyle(
-              color: AppConstants.textPrimary,
+            style: TextStyle(
+              color: colors.textPrimary,
               fontSize: AppConstants.fontDisplay,
               fontWeight: FontWeight.w700,
-              fontFeatures: [FontFeature.tabularFigures()],
+              fontFeatures: const [FontFeature.tabularFigures()],
               letterSpacing: 1.2,
               height: 1.05,
             ),
@@ -62,22 +60,22 @@ class LiveClockCard extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _line(),
+              _line(colors),
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppConstants.spaceSm,
                 ),
                 child: Text(
                   _localeTag(localeCode),
-                  style: const TextStyle(
-                    color: AppConstants.textMuted,
+                  style: TextStyle(
+                    color: colors.textMuted,
                     fontSize: AppConstants.fontMicro,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 3.0,
                   ),
                 ),
               ),
-              _line(),
+              _line(colors),
             ],
           ),
 
@@ -90,11 +88,11 @@ class LiveClockCard extends ConsumerWidget {
     );
   }
 
-  Widget _line() {
+  Widget _line(AppColors colors) {
     return Container(
       width: 24,
       height: 1,
-      color: AppConstants.textFaint.withValues(alpha: 0.5),
+      color: colors.textFaint.withValues(alpha: 0.5),
     );
   }
 
@@ -121,6 +119,7 @@ class _TriCalendarChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final localeCode = Localizations.localeOf(context).languageCode;
     final tri = AppDateUtils.buildTriCalendar(prayer.date, localeCode);
 
@@ -131,7 +130,7 @@ class _TriCalendarChips extends StatelessWidget {
             label: 'ইংরেজি',
             value: tri.gregorianFormatted,
             icon: Icons.calendar_month_outlined,
-            accent: AppConstants.emeraldPrimary,
+            accent: colors.emerald,
           ),
         ),
         const SizedBox(width: AppConstants.spaceSm),
@@ -140,7 +139,7 @@ class _TriCalendarChips extends StatelessWidget {
             label: 'বাংলা',
             value: tri.banglaFormatted,
             icon: Icons.wb_sunny_outlined,
-            accent: AppConstants.goldBright,
+            accent: colors.gold,
           ),
         ),
         const SizedBox(width: AppConstants.spaceSm),
@@ -149,7 +148,7 @@ class _TriCalendarChips extends StatelessWidget {
             label: 'হিজরি',
             value: tri.hijriFormatted,
             icon: Icons.nightlight_round,
-            accent: AppConstants.cyanAccent,
+            accent: colors.cyan,
           ),
         ),
       ],
@@ -172,16 +171,18 @@ class _CalendarChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppConstants.spaceMd,
         vertical: AppConstants.spaceMd,
       ),
       decoration: BoxDecoration(
-        color: AppConstants.amoledBlack.withValues(alpha: 0.55),
+        color: colors.calendarChip,
         borderRadius: BorderRadius.circular(AppConstants.radiusMd),
         border: Border.all(
-          color: accent.withValues(alpha: 0.35),
+          color: accent.withValues(alpha: colors.isDark ? 0.35 : 0.55),
           width: 1.0,
         ),
       ),
@@ -196,9 +197,9 @@ class _CalendarChip extends StatelessWidget {
                 child: Text(
                   label,
                   style: TextStyle(
-                    color: accent.withValues(alpha: 0.9),
+                    color: accent.withValues(alpha: 0.95),
                     fontSize: AppConstants.fontMicro,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: 0.3,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -209,8 +210,8 @@ class _CalendarChip extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             value,
-            style: const TextStyle(
-              color: AppConstants.textPrimary,
+            style: TextStyle(
+              color: colors.textPrimary,
               fontSize: AppConstants.fontCaption,
               fontWeight: FontWeight.w700,
               height: 1.3,
