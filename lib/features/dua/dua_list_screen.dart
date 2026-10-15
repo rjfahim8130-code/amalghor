@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/app_colors.dart';
 import '../../core/constants.dart';
 import '../../data/models/dua_models.dart';
 import '../../providers/dua_provider.dart';
@@ -26,28 +27,41 @@ class _DuaListScreenState extends ConsumerState<DuaListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+
     return Scaffold(
+      backgroundColor: colors.pageBackground,
       appBar: AppBar(
+        backgroundColor: colors.pageBackground,
         title: _searching
             ? TextField(
                 controller: _searchController,
                 autofocus: true,
-                style: const TextStyle(
-                  color: AppConstants.textPrimary,
+                style: TextStyle(
+                  color: colors.textPrimary,
                   fontSize: AppConstants.fontBody,
                 ),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'দুআ খুঁজুন...',
                   border: InputBorder.none,
-                  hintStyle: TextStyle(color: AppConstants.textFaint),
+                  hintStyle: TextStyle(color: colors.textFaint),
                 ),
                 onChanged: (v) =>
                     ref.read(duaSearchProvider.notifier).update(v),
               )
-            : const Text('দুআ সংকলন'),
+            : Text(
+                'দুআ সংকলন',
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
         actions: [
           IconButton(
-            icon: Icon(_searching ? Icons.close : Icons.search),
+            icon: Icon(
+              _searching ? Icons.close : Icons.search,
+              color: colors.textPrimary,
+            ),
             onPressed: () {
               setState(() {
                 if (_searching) {
@@ -60,18 +74,14 @@ class _DuaListScreenState extends ConsumerState<DuaListScreen> {
           ),
         ],
       ),
-      body: _searching
-          ? _SearchResults()
-          : _CategoryList(),
+      body: _searching ? const _SearchResults() : const _CategoryList(),
     );
   }
 }
 
-// ─────────────────────────────────────────────
-// CATEGORY LIST
-// ─────────────────────────────────────────────
-
 class _CategoryList extends ConsumerWidget {
+  const _CategoryList();
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final categories = ref.watch(duaCategoriesProvider);
@@ -96,20 +106,21 @@ class _CategoryTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     final count = ref.watch(duasByCategoryProvider(category.id)).length;
-    final color = Color(category.colorValue);
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+        borderRadius: BorderRadius.circular(AppConstants.radiusXl),
         onTap: () => context.push('/dua/category/${category.id}'),
         child: Container(
           padding: const EdgeInsets.all(AppConstants.spaceLg),
           decoration: BoxDecoration(
-            color: AppConstants.surfaceDark,
-            borderRadius: BorderRadius.circular(AppConstants.radiusLg),
-            border: Border.all(color: AppConstants.dividerColor),
+            color: colors.cardBackground,
+            borderRadius: BorderRadius.circular(AppConstants.radiusXl),
+            border: Border.all(color: colors.border, width: 1.0),
+            boxShadow: colors.cardShadow,
           ),
           child: Row(
             children: [
@@ -117,9 +128,10 @@ class _CategoryTile extends ConsumerWidget {
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
+                  color: colors.iconBackground,
                   borderRadius:
                       BorderRadius.circular(AppConstants.radiusMd),
+                  border: Border.all(color: colors.iconBorder),
                 ),
                 child: Center(
                   child: Text(
@@ -135,8 +147,8 @@ class _CategoryTile extends ConsumerWidget {
                   children: [
                     Text(
                       category.titleBn,
-                      style: const TextStyle(
-                        color: AppConstants.textPrimary,
+                      style: TextStyle(
+                        color: colors.textPrimary,
                         fontSize: AppConstants.fontSubtitle,
                         fontWeight: FontWeight.w600,
                       ),
@@ -144,17 +156,17 @@ class _CategoryTile extends ConsumerWidget {
                     const SizedBox(height: 2),
                     Text(
                       '$count দুআ',
-                      style: const TextStyle(
-                        color: AppConstants.textMuted,
+                      style: TextStyle(
+                        color: colors.textMuted,
                         fontSize: AppConstants.fontCaption,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right,
-                color: AppConstants.textMuted,
+                color: colors.textMuted,
               ),
             ],
           ),
@@ -164,21 +176,20 @@ class _CategoryTile extends ConsumerWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// SEARCH RESULTS
-// ─────────────────────────────────────────────
-
 class _SearchResults extends ConsumerWidget {
+  const _SearchResults();
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     final results = ref.watch(duaFilteredProvider);
     final query = ref.watch(duaSearchProvider);
 
     if (query.trim().isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'টাইপ করে দুআ খুঁজুন',
-          style: TextStyle(color: AppConstants.textMuted),
+          style: TextStyle(color: colors.textMuted),
         ),
       );
     }
@@ -188,15 +199,15 @@ class _SearchResults extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.search_off,
-              color: AppConstants.textFaint,
+              color: colors.textFaint,
               size: 48,
             ),
             const SizedBox(height: AppConstants.spaceMd),
             Text(
               '"$query" এর জন্য কোনো দুআ নেই',
-              style: const TextStyle(color: AppConstants.textMuted),
+              style: TextStyle(color: colors.textMuted),
             ),
           ],
         ),
@@ -216,10 +227,6 @@ class _SearchResults extends ConsumerWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// DUA CARD
-// ─────────────────────────────────────────────
-
 class _DuaCard extends StatelessWidget {
   final Dua dua;
 
@@ -227,25 +234,28 @@ class _DuaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+        borderRadius: BorderRadius.circular(AppConstants.radiusXl),
         onTap: () => context.push('/dua/detail/${dua.id}'),
         child: Container(
           padding: const EdgeInsets.all(AppConstants.spaceLg),
           decoration: BoxDecoration(
-            color: AppConstants.surfaceDark,
-            borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-            border: Border.all(color: AppConstants.dividerColor),
+            color: colors.cardBackground,
+            borderRadius: BorderRadius.circular(AppConstants.radiusXl),
+            border: Border.all(color: colors.border, width: 1.0),
+            boxShadow: colors.cardShadow,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 dua.titleBn,
-                style: const TextStyle(
-                  color: AppConstants.textPrimary,
+                style: TextStyle(
+                  color: colors.textPrimary,
                   fontSize: AppConstants.fontBody,
                   fontWeight: FontWeight.w600,
                 ),
@@ -255,8 +265,8 @@ class _DuaCard extends StatelessWidget {
                 textDirection: TextDirection.rtl,
                 child: Text(
                   dua.arabic,
-                  style: const TextStyle(
-                    color: AppConstants.goldAccent,
+                  style: TextStyle(
+                    color: colors.gold,
                     fontSize: 20,
                     fontFamily: 'NotoNaskhArabic',
                     height: 1.6,
