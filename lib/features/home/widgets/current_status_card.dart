@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/app_colors.dart';
 import '../../../core/constants.dart';
 import '../../../core/date_utils.dart';
 import '../../../data/models/prayer_times.dart';
@@ -10,11 +11,7 @@ import '../../../providers/clock_provider.dart';
 /// Home dashboard card — shows the currently active prayer window
 /// and a live countdown to the next prayer.
 ///
-/// Visuals:
-///   - Emerald gradient background with subtle glow
-///   - Large rounded mosque icon on the left
-///   - Prayer name (bold) + "এখন চলছে" subtitle
-///   - Next-prayer block with left emerald accent bar
+/// Auto-adapts to dark or light mode via [AppColors].
 class CurrentStatusCard extends ConsumerWidget {
   final PrayerTimes prayer;
 
@@ -57,6 +54,7 @@ class _MainCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final remaining = next.time.difference(now);
     final currentLabel = _localizedName(l10n, current?.key ?? 'tahajjud');
     final nextLabel = _localizedName(l10n, next.key);
@@ -64,13 +62,13 @@ class _MainCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppConstants.spaceLg),
       decoration: BoxDecoration(
-        gradient: AppConstants.prayerCardGradient,
+        gradient: colors.prayerCardGradient,
         borderRadius: BorderRadius.circular(AppConstants.radiusXl),
         border: Border.all(
-          color: AppConstants.emeraldPrimary.withValues(alpha: 0.42),
+          color: colors.border,
           width: 1.2,
         ),
-        boxShadow: AppConstants.emeraldGlowSmall,
+        boxShadow: colors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,16 +80,15 @@ class _MainCard extends StatelessWidget {
                 width: 54,
                 height: 54,
                 decoration: BoxDecoration(
-                  color: AppConstants.emeraldPrimary.withValues(alpha: 0.14),
+                  color: colors.iconBackground,
                   borderRadius: BorderRadius.circular(AppConstants.radiusLg),
                   border: Border.all(
-                    color:
-                        AppConstants.emeraldPrimary.withValues(alpha: 0.35),
+                    color: colors.iconBorder,
                   ),
                 ),
                 child: Icon(
                   _iconFor(current?.key ?? 'tahajjud'),
-                  color: AppConstants.emeraldPrimary,
+                  color: colors.emerald,
                   size: 28,
                 ),
               ),
@@ -102,8 +99,8 @@ class _MainCard extends StatelessWidget {
                   children: [
                     Text(
                       currentLabel,
-                      style: const TextStyle(
-                        color: AppConstants.textPrimary,
+                      style: TextStyle(
+                        color: colors.textPrimary,
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.2,
@@ -112,8 +109,8 @@ class _MainCard extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       l10n.nowRunning,
-                      style: const TextStyle(
-                        color: AppConstants.textMuted,
+                      style: TextStyle(
+                        color: colors.textMuted,
                         fontSize: AppConstants.fontCaption,
                         letterSpacing: 0.3,
                       ),
@@ -135,11 +132,11 @@ class _MainCard extends StatelessWidget {
               AppConstants.spaceMd,
             ),
             decoration: BoxDecoration(
-              color: AppConstants.amoledBlack.withValues(alpha: 0.50),
+              color: colors.innerCard,
               borderRadius: BorderRadius.circular(AppConstants.radiusMd),
               border: Border(
                 left: BorderSide(
-                  color: AppConstants.emeraldPrimary,
+                  color: colors.emerald,
                   width: 3.0,
                 ),
               ),
@@ -149,17 +146,17 @@ class _MainCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward_rounded,
-                      color: AppConstants.emeraldPrimary,
+                      color: colors.emerald,
                       size: 16,
                     ),
                     const SizedBox(width: AppConstants.spaceSm),
                     Expanded(
                       child: Text(
                         'পরবর্তী: $nextLabel',
-                        style: const TextStyle(
-                          color: AppConstants.textPrimary,
+                        style: TextStyle(
+                          color: colors.textPrimary,
                           fontSize: AppConstants.fontBody,
                           fontWeight: FontWeight.w600,
                         ),
@@ -167,11 +164,11 @@ class _MainCard extends StatelessWidget {
                     ),
                     Text(
                       AppDateUtils.formatTimeShort(next.time),
-                      style: const TextStyle(
-                        color: AppConstants.emeraldPrimary,
+                      style: TextStyle(
+                        color: colors.emerald,
                         fontSize: AppConstants.fontBody,
                         fontWeight: FontWeight.w700,
-                        fontFeatures: [FontFeature.tabularFigures()],
+                        fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
                   ],
@@ -181,19 +178,19 @@ class _MainCard extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
                       child: Icon(
                         Icons.access_time_rounded,
-                        color: AppConstants.textMuted,
+                        color: colors.textMuted,
                         size: 16,
                       ),
                     ),
                     const SizedBox(width: AppConstants.spaceSm),
                     Text(
                       'বাকি',
-                      style: const TextStyle(
-                        color: AppConstants.textMuted,
+                      style: TextStyle(
+                        color: colors.textMuted,
                         fontSize: AppConstants.fontBody,
                         fontWeight: FontWeight.w500,
                       ),
@@ -202,11 +199,11 @@ class _MainCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         AppDateUtils.formatDuration(remaining),
-                        style: const TextStyle(
-                          color: AppConstants.emeraldPrimary,
+                        style: TextStyle(
+                          color: colors.emerald,
                           fontSize: AppConstants.fontTitle,
                           fontWeight: FontWeight.w700,
-                          fontFeatures: [FontFeature.tabularFigures()],
+                          fontFeatures: const [FontFeature.tabularFigures()],
                           letterSpacing: 1.2,
                           height: 1.0,
                         ),
