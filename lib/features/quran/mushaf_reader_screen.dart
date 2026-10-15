@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/app_colors.dart';
-import '../../core/constants.dart';
 import '../../data/models/mushaf_models.dart';
 import '../../data/repositories/mushaf_repository.dart';
 import '../../providers/mushaf_provider.dart';
@@ -21,8 +20,10 @@ class MushafReaderScreen extends ConsumerStatefulWidget {
 
 class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
   PageController? _pageController;
+  final TransformationController _transformCtrl = TransformationController();
   int _currentPage = 502;
   bool _ready = false;
+  Orientation? _lastOrientation;
 
   @override
   void initState() {
@@ -47,12 +48,18 @@ class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
   @override
   void dispose() {
     _pageController?.dispose();
+    _transformCtrl.dispose();
     super.dispose();
+  }
+
+  void _resetZoom() {
+    _transformCtrl.value = Matrix4.identity();
   }
 
   void _onPageChanged(int index, MushafConfig cfg) {
     final page = cfg.firstPage + index;
     setState(() => _currentPage = page);
+    _resetZoom();
     MushafRepository.instance.saveLastPage(page);
   }
 
@@ -61,6 +68,7 @@ class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
     final index = p - cfg.firstPage;
     _pageController?.jumpToPage(index);
     setState(() => _currentPage = p);
+    _resetZoom();
     MushafRepository.instance.saveLastPage(p);
   }
 
@@ -68,7 +76,7 @@ class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppConstants.surfaceDark,
+      backgroundColor: const Color(0xFF1A1A1A),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -80,6 +88,15 @@ class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
         },
       ),
     );
+  }
+
+  /// Rebuild PageController when orientation changes (H ↔ V).
+  void _ensureController(Orientation orientation, MushafConfig cfg) {
+    if (_lastOrientation == orientation && _pageController != null) return;
+    _lastOrientation = orientation;
+    final index = _currentPage - cfg.firstPage;
+    _pageController?.dispose();
+    _pageController = PageController(initialPage: index);
   }
 
   @override
@@ -129,10 +146,7 @@ class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
                 ),
                 Text(
                   subtitle,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: colors.textMuted,
-                  ),
+                  style: TextStyle(fontSize: 11, color: colors.textMuted),
                 ),
               ],
             ),
@@ -144,43 +158,113 @@ class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
               ),
             ],
           ),
-          body: PageView.builder(
-            controller: _pageController,
-            // RTL: swipe right → next page (like real mushaf)
-            reverse: true,
-            itemCount: cfg.lastPage - cfg.firstPage + 1,
-            onPageChanged: (i) => _onPageChanged(i, cfg),
-            itemBuilder: (context, index) {
-              final page = cfg.firstPage + index;
-              final pageInfo = cfg.pageInfo(page);
-              if (pageInfo == null) {
-                return const Center(
-                  child: Text('পৃষ্ঠা পাওয়া যায়নি',
-                      style: TextStyle(color: Colors.white70)),
-                );
-              }
-              return InteractiveViewer(
-                minScale: 1.0,
-                maxScale: 4.0,
-                child: Center(
-                  child: Image.asset(
-                    pageInfo.assetPath,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Padding(
-                      padding: EdgeInsets.all(24),
+          body: OrientationBuilder(
+            builder: (context, orientation) {
+              _ensureController(orientation, cfg);
+
+              final isPortrait = orientation == Orientation.portrait;
+
+              return PageView.builder(
+                key: ValueKey('pv_$orientation'),
+                controller: _pageController,
+                // Portrait: horizontal, RTL (বাম←ডান = পরের পৃষ্ঠা)
+                // Landscape: vertical (উপর↔নিচ = আগের/পরের পৃষ্ঠা)
+                scrollDirection:
+                    isPortrait ? Axis.horizontal : Axis.vertical,
+                reverse: isPortrait, // শুধু পোর্ট্রেটে RTL
+                physics: const BouncingScrollPhysics(
+                  parent: PageScrollPhysics(),
+                ),
+                itemCount: cfg.lastPage - cfg.firstPage + 1,
+                onPageChanged: (i) => _onPageChanged(i, cfg),
+                itemBuilder: (context, index) {
+                  final page = cfg.firstPage + index;
+                  final pageInfo = cfg.pageInfo(page);
+                  if (pageInfo == null) {
+                    return const Center(
                       child: Text(
-                        'ছবি লোড হয়নি\nফাইল আছে কিনা চেক করুন',
-                        textAlign: TextAlign.center,
+                        'পৃষ্ঠা পাওয়া যায়নি',
                         style: TextStyle(color: Colors.white70),
                       ),
-                    ),
-                  ),
-                ),
+                    );
+                  }
+                  return _MushafPage(
+                    assetPath: pageInfo.assetPath,
+                    transformCtrl: _transformCtrl,
+                    onDoubleTapZoom: _toggleZoom,
+                  );
+                },
               );
             },
           ),
         );
       },
+    );
+  }
+
+  void _toggleZoom() {
+    final m = _transformCtrl.value;
+    final isZoomed = m.getMaxScaleOnAxis() > 1.05;
+    if (isZoomed) {
+      _resetZoom();
+    } else {
+      // \~2x zoom from center
+      final size = MediaQuery.of(context).size;
+      final zoomed = Matrix4.identity()
+        ..translate(size.width / 2, size.height / 2)
+        ..scale(2.0)
+        ..translate(-size.width / 2, -size.height / 2);
+      _transformCtrl.value = zoomed;
+    }
+  }
+}
+
+/// One page: equalized size + polished zoom
+class _MushafPage extends StatelessWidget {
+  final String assetPath;
+  final TransformationController transformCtrl;
+  final VoidCallback onDoubleTapZoom;
+
+  const _MushafPage({
+    required this.assetPath,
+    required this.transformCtrl,
+    required this.onDoubleTapZoom,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onDoubleTap: onDoubleTapZoom,
+      child: InteractiveViewer(
+        transformationController: transformCtrl,
+        minScale: 1.0,
+        maxScale: 4.0,
+        // প্যান শুধু জুম অবস্থায়
+        panEnabled: true,
+        scaleEnabled: true,
+        clipBehavior: Clip.hardEdge,
+        child: ColoredBox(
+          color: Colors.black,
+          child: Center(
+            child: Image.asset(
+              assetPath,
+              // সব পৃষ্ঠা একইভাবে স্ক্রিনে ফিট — ছোট/বড় সোর্স একই দেখাবে
+              fit: BoxFit.contain,
+              width: double.infinity,
+              height: double.infinity,
+              filterQuality: FilterQuality.high,
+              errorBuilder: (_, __, ___) => const Padding(
+                padding: EdgeInsets.all(24),
+                child: Text(
+                  'ছবি লোড হয়নি\nফাইল আছে কিনা চেক করুন',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white70),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
