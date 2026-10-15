@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/app_colors.dart';
 import '../../core/constants.dart';
 import '../../core/date_utils.dart';
 import '../../data/models/prayer_times.dart';
@@ -8,26 +9,36 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../providers/clock_provider.dart';
 import '../../providers/prayer_provider.dart';
 
+/// Ramadan screen — shows Sehri end, Iftar time, and a countdown.
 class RamadanScreen extends ConsumerWidget {
   const RamadanScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context);
     final prayerAsync = ref.watch(currentDayPrayerProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.ramadanTitle)),
-      body: prayerAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(
-            color: AppConstants.emeraldPrimary,
+      backgroundColor: colors.pageBackground,
+      appBar: AppBar(
+        backgroundColor: colors.pageBackground,
+        title: Text(
+          l10n.ramadanTitle,
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontWeight: FontWeight.w700,
           ),
+        ),
+      ),
+      body: prayerAsync.when(
+        loading: () => Center(
+          child: CircularProgressIndicator(color: colors.emerald),
         ),
         error: (e, _) => Center(
           child: Text(
             '$e',
-            style: const TextStyle(color: AppConstants.textMuted),
+            style: TextStyle(color: colors.textMuted),
           ),
         ),
         data: (prayer) => _RamadanBody(prayer: prayer),
@@ -43,6 +54,7 @@ class _RamadanBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context);
     final asyncNow = ref.watch(clockProvider);
     final now = asyncNow.value ?? DateTime.now();
@@ -52,9 +64,11 @@ class _RamadanBody extends ConsumerWidget {
     final daysUntil = AppDateUtils.daysUntilRamadan(now);
 
     return ListView(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.spaceLg,
-        vertical: AppConstants.spaceLg,
+      padding: const EdgeInsets.fromLTRB(
+        AppConstants.spaceLg,
+        AppConstants.spaceLg,
+        AppConstants.spaceLg,
+        AppConstants.space2xl,
       ),
       children: [
         _Banner(
@@ -69,18 +83,18 @@ class _RamadanBody extends ConsumerWidget {
         _TimeRow(
           title: l10n.ramadanSehriEnds,
           time: AppDateUtils.formatTimeShort(prayer.sehriSafety),
-          icon: Icons.alarm,
-          accent: AppConstants.goldAccent,
+          icon: Icons.alarm_rounded,
+          accent: colors.gold,
         ),
         const SizedBox(height: AppConstants.spaceMd),
         _TimeRow(
           title: l10n.ramadanIftarAt,
           time: AppDateUtils.formatTimeShort(prayer.iftarSafety),
-          icon: Icons.restaurant,
-          accent: AppConstants.emeraldPrimary,
+          icon: Icons.restaurant_rounded,
+          accent: colors.emerald,
         ),
         const SizedBox(height: AppConstants.spaceXl),
-        _DurationCard(prayer: prayer, l10n: l10n),
+        _DurationCard(prayer: prayer),
       ],
     );
   }
@@ -101,6 +115,7 @@ class _Banner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     String title;
     if (isRamadan && ramadanDay != null) {
       title = l10n.ramadanDay(ramadanDay!);
@@ -113,18 +128,10 @@ class _Banner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppConstants.spaceXl),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppConstants.emeraldPrimary.withValues(alpha: 0.18),
-            AppConstants.goldAccent.withValues(alpha: 0.08),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(AppConstants.radiusLg),
-        border: Border.all(
-          color: AppConstants.emeraldPrimary.withValues(alpha: 0.30),
-        ),
+        gradient: colors.prayerCardGradient,
+        borderRadius: BorderRadius.circular(AppConstants.radiusXl),
+        border: Border.all(color: colors.border, width: 1.2),
+        boxShadow: colors.cardShadow,
       ),
       child: Row(
         children: [
@@ -132,12 +139,13 @@ class _Banner extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: AppConstants.emeraldPrimary.withValues(alpha: 0.18),
+              color: colors.iconBackground,
               shape: BoxShape.circle,
+              border: Border.all(color: colors.iconBorder),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.nightlight_round,
-              color: AppConstants.emeraldPrimary,
+              color: colors.emerald,
               size: 26,
             ),
           ),
@@ -145,8 +153,8 @@ class _Banner extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
-                color: AppConstants.textPrimary,
+              style: TextStyle(
+                color: colors.textPrimary,
                 fontSize: AppConstants.fontHeading,
                 fontWeight: FontWeight.w700,
               ),
@@ -171,6 +179,7 @@ class _CountdownCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final sehriEnds = prayer.sehriSafety;
     final iftar = prayer.iftarSafety;
     final isBeforeSehriEnd = now.isBefore(sehriEnds);
@@ -182,36 +191,38 @@ class _CountdownCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppConstants.spaceXl),
       decoration: BoxDecoration(
-        color: AppConstants.surfaceDark,
-        borderRadius: BorderRadius.circular(AppConstants.radiusLg),
-        border: Border.all(color: AppConstants.dividerColor),
+        gradient: colors.clockGradient,
+        borderRadius: BorderRadius.circular(AppConstants.radiusXl),
+        border: Border.all(color: colors.border, width: 1.2),
+        boxShadow: colors.cardShadow,
       ),
       child: Column(
         children: [
           Text(
             l10n.ramadanCountdown,
-            style: const TextStyle(
-              color: AppConstants.textMuted,
+            style: TextStyle(
+              color: colors.textMuted,
               fontSize: AppConstants.fontCaption,
               letterSpacing: 1.5,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: AppConstants.spaceMd),
           Text(
             AppDateUtils.formatDuration(diff),
-            style: const TextStyle(
-              color: AppConstants.emeraldPrimary,
+            style: TextStyle(
+              color: colors.emerald,
               fontSize: AppConstants.fontDisplay,
               fontWeight: FontWeight.w700,
-              fontFeatures: [FontFeature.tabularFigures()],
+              fontFeatures: const [FontFeature.tabularFigures()],
               letterSpacing: 2.0,
             ),
           ),
           const SizedBox(height: AppConstants.spaceSm),
           Text(
             label,
-            style: const TextStyle(
-              color: AppConstants.textMuted,
+            style: TextStyle(
+              color: colors.textMuted,
               fontSize: AppConstants.fontCaption,
             ),
           ),
@@ -236,20 +247,22 @@ class _TimeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.all(AppConstants.spaceLg),
       decoration: BoxDecoration(
-        color: AppConstants.surfaceDark,
-        borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-        border: Border.all(color: AppConstants.dividerColor),
+        color: colors.cardBackground,
+        borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+        border: Border.all(color: colors.border, width: 1.0),
+        boxShadow: colors.cardShadow,
       ),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.14),
+              color: accent.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(AppConstants.radiusMd),
             ),
             child: Icon(icon, color: accent, size: 20),
@@ -258,8 +271,8 @@ class _TimeRow extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
-                color: AppConstants.textPrimary,
+              style: TextStyle(
+                color: colors.textPrimary,
                 fontSize: AppConstants.fontBody,
                 fontWeight: FontWeight.w500,
               ),
@@ -282,12 +295,12 @@ class _TimeRow extends StatelessWidget {
 
 class _DurationCard extends StatelessWidget {
   final PrayerTimes prayer;
-  final AppLocalizations l10n;
 
-  const _DurationCard({required this.prayer, required this.l10n});
+  const _DurationCard({required this.prayer});
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final fastDuration = prayer.maghrib.difference(prayer.fajr);
     final h = fastDuration.inHours;
     final m = fastDuration.inMinutes % 60;
@@ -295,27 +308,27 @@ class _DurationCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppConstants.spaceLg),
       decoration: BoxDecoration(
-        color: AppConstants.surfaceDarker,
-        borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-        border: Border.all(color: AppConstants.dividerColor),
+        color: colors.cardBackgroundSubtle,
+        borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+        border: Border.all(color: colors.borderSubtle),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
+          Text(
             'Fast duration',
             style: TextStyle(
-              color: AppConstants.textMuted,
+              color: colors.textMuted,
               fontSize: AppConstants.fontBody,
             ),
           ),
           Text(
             '${h}h ${m}m',
-            style: const TextStyle(
-              color: AppConstants.textPrimary,
+            style: TextStyle(
+              color: colors.textPrimary,
               fontSize: AppConstants.fontSubtitle,
               fontWeight: FontWeight.w600,
-              fontFeatures: [FontFeature.tabularFigures()],
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
         ],
