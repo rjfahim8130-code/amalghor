@@ -2,13 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/app_colors.dart';
 import '../../core/constants.dart';
 import '../../data/models/quran_models.dart';
-import '../../data/repositories/mushaf_repository.dart';
 import '../../providers/quran_provider.dart';
 import 'widgets/loading_overlay.dart';
 
 /// The Quran module's main screen.
+///
+/// Shows:
+///   - Loading overlay during first-time DB build
+///   - Continue Reading card (if a last-read position exists)
+///   - Search bar
+///   - The complete list of 114 Surahs
 class QuranScreen extends ConsumerStatefulWidget {
   const QuranScreen({super.key});
 
@@ -36,51 +42,51 @@ class _QuranScreenState extends ConsumerState<QuranScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final loadState = ref.watch(quranLoadProvider);
 
     return Scaffold(
+      backgroundColor: colors.pageBackground,
       appBar: AppBar(
+        backgroundColor: colors.pageBackground,
         title: _searching
             ? TextField(
                 controller: _searchController,
                 autofocus: true,
-                style: const TextStyle(
-                  color: AppConstants.textPrimary,
+                style: TextStyle(
+                  color: colors.textPrimary,
                   fontSize: AppConstants.fontBody,
                 ),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Search the Quran...',
                   border: InputBorder.none,
-                  hintStyle: TextStyle(color: AppConstants.textFaint),
+                  hintStyle: TextStyle(color: colors.textFaint),
                 ),
                 onChanged: (_) => setState(() {}),
               )
-            : const Text('Al-Quran'),
+            : Text(
+                'আল-কুরআন',
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
         actions: [
           IconButton(
-            tooltip: 'তেলাওয়াত (মুসহাফ)',
-            icon: const Icon(Icons.menu_book_rounded),
-            onPressed: () async {
-              final page = await MushafRepository.instance.loadLastPage();
-              if (context.mounted) {
-                context.push('/quran/mushaf?page=$page');
-              }
-            },
-          ),
-          IconButton(
-            icon: Icon(_searching ? Icons.close : Icons.search),
+            icon: Icon(
+              _searching ? Icons.close : Icons.search,
+              color: colors.textPrimary,
+            ),
             onPressed: () {
               setState(() {
-                if (_searching) {
-                  _searchController.clear();
-                }
+                if (_searching) _searchController.clear();
                 _searching = !_searching;
               });
             },
           ),
           IconButton(
             tooltip: 'Bookmarks',
-            icon: const Icon(Icons.bookmark_border),
+            icon: Icon(Icons.bookmark_border, color: colors.textPrimary),
             onPressed: () => context.push('/quran/bookmarks'),
           ),
         ],
@@ -88,7 +94,7 @@ class _QuranScreenState extends ConsumerState<QuranScreen> {
       body: Stack(
         children: [
           if (!loadState.isLoaded)
-            const _LoadingPlaceholder()
+            const SizedBox.shrink()
           else if (_searching && _searchController.text.trim().isNotEmpty)
             _SearchResults(query: _searchController.text.trim())
           else
@@ -105,36 +111,27 @@ class _QuranScreenState extends ConsumerState<QuranScreen> {
   }
 }
 
-class _LoadingPlaceholder extends StatelessWidget {
-  const _LoadingPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox.shrink();
-  }
-}
+// ─────────────────────────────────────────────
+// MAIN LIST
+// ─────────────────────────────────────────────
 
 class _SurahListView extends ConsumerWidget {
   const _SurahListView();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     final surahsAsync = ref.watch(surahListProvider);
     final lastRead = ref.watch(lastReadProvider);
 
-    final hasLastRead = lastRead != null;
-    final extraCount = hasLastRead ? 2 : 1;
-
     return surahsAsync.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(
-          color: AppConstants.emeraldPrimary,
-        ),
+      loading: () => Center(
+        child: CircularProgressIndicator(color: colors.emerald),
       ),
       error: (e, _) => Center(
         child: Text(
           'Failed to load: $e',
-          style: const TextStyle(color: AppConstants.textMuted),
+          style: TextStyle(color: colors.textMuted),
         ),
       ),
       data: (surahs) {
@@ -142,19 +139,13 @@ class _SurahListView extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(
             vertical: AppConstants.spaceMd,
           ),
-          itemCount: surahs.length + extraCount,
+          itemCount: surahs.length + (lastRead != null ? 1 : 0),
           itemBuilder: (context, i) {
-            if (hasLastRead && i == 0) {
+            if (lastRead != null && i == 0) {
               return _ContinueReadingCard(lastRead: lastRead);
             }
-
-            if ((hasLastRead && i == 1) || (!hasLastRead && i == 0)) {
-              return const _MushafBannerCard();
-            }
-
-            final index = i - extraCount;
-            final surah = surahs[index];
-            return _SurahTile(surah: surah);
+            final index = lastRead != null ? i - 1 : i;
+            return _SurahTile(surah: surahs[index]);
           },
         );
       },
@@ -162,87 +153,9 @@ class _SurahListView extends ConsumerWidget {
   }
 }
 
-class _MushafBannerCard extends StatelessWidget {
-  const _MushafBannerCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppConstants.spaceLg,
-        AppConstants.spaceSm,
-        AppConstants.spaceLg,
-        AppConstants.spaceMd,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppConstants.radiusLg),
-          onTap: () async {
-            final page = await MushafRepository.instance.loadLastPage();
-            if (context.mounted) {
-              context.push('/quran/mushaf?page=$page');
-            }
-          },
-          child: Container(
-            padding: const EdgeInsets.all(AppConstants.spaceLg),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppConstants.emeraldPrimary.withValues(alpha: 0.15),
-                  AppConstants.emeraldPrimary.withValues(alpha: 0.03),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(AppConstants.radiusLg),
-              border: Border.all(
-                color: AppConstants.emeraldPrimary.withValues(alpha: 0.4),
-              ),
-            ),
-            child: const Row(
-              children: [
-                Icon(
-                  Icons.menu_book_rounded,
-                  color: AppConstants.emeraldPrimary,
-                  size: 26,
-                ),
-                SizedBox(width: AppConstants.spaceMd),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'তেলাওয়াত (হাফেজী মুসহাফ)',
-                        style: TextStyle(
-                          color: AppConstants.textPrimary,
-                          fontSize: AppConstants.fontSubtitle,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        'পৃষ্ঠাভিত্তিক সরাসরি কুরআন মজিদ পড়ুন',
-                        style: TextStyle(
-                          color: AppConstants.textMuted,
-                          fontSize: AppConstants.fontCaption,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.chevron_right,
-                  color: AppConstants.emeraldPrimary,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+// ─────────────────────────────────────────────
+// CONTINUE READING CARD
+// ─────────────────────────────────────────────
 
 class _ContinueReadingCard extends ConsumerWidget {
   final LastReadPosition lastRead;
@@ -251,6 +164,7 @@ class _ContinueReadingCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     final surahAsync = ref.watch(surahMetaProvider(lastRead.surahNumber));
     final surah = surahAsync.value;
 
@@ -271,18 +185,10 @@ class _ContinueReadingCard extends ConsumerWidget {
           child: Container(
             padding: const EdgeInsets.all(AppConstants.spaceLg),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppConstants.emeraldPrimary.withValues(alpha: 0.18),
-                  AppConstants.emeraldPrimary.withValues(alpha: 0.05),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              gradient: colors.prayerCardGradient,
               borderRadius: BorderRadius.circular(AppConstants.radiusLg),
-              border: Border.all(
-                color: AppConstants.emeraldPrimary.withValues(alpha: 0.4),
-              ),
+              border: Border.all(color: colors.border, width: 1.2),
+              boxShadow: colors.cardShadow,
             ),
             child: Row(
               children: [
@@ -290,12 +196,14 @@ class _ContinueReadingCard extends ConsumerWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: AppConstants.emeraldPrimary.withValues(alpha: 0.20),
-                    borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+                    color: colors.iconBackground,
+                    borderRadius:
+                        BorderRadius.circular(AppConstants.radiusMd),
+                    border: Border.all(color: colors.iconBorder),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.play_arrow_rounded,
-                    color: AppConstants.emeraldPrimary,
+                    color: colors.emerald,
                     size: 26,
                   ),
                 ),
@@ -304,10 +212,10 @@ class _ContinueReadingCard extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Continue Reading',
                         style: TextStyle(
-                          color: AppConstants.textPrimary,
+                          color: colors.textPrimary,
                           fontSize: AppConstants.fontSubtitle,
                           fontWeight: FontWeight.w700,
                         ),
@@ -316,17 +224,17 @@ class _ContinueReadingCard extends ConsumerWidget {
                       Text(
                         '${surah?.nameEnglish ?? 'Surah ${lastRead.surahNumber}'}'
                         ' — Ayah ${lastRead.ayahNumber}',
-                        style: const TextStyle(
-                          color: AppConstants.textMuted,
+                        style: TextStyle(
+                          color: colors.textMuted,
                           fontSize: AppConstants.fontCaption,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.chevron_right,
-                  color: AppConstants.emeraldPrimary,
+                  color: colors.emerald,
                 ),
               ],
             ),
@@ -337,6 +245,10 @@ class _ContinueReadingCard extends ConsumerWidget {
   }
 }
 
+// ─────────────────────────────────────────────
+// SURAH TILE
+// ─────────────────────────────────────────────
+
 class _SurahTile extends StatelessWidget {
   final SurahMeta surah;
 
@@ -344,6 +256,8 @@ class _SurahTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -359,17 +273,15 @@ class _SurahTile extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppConstants.surfaceDark,
+                  color: colors.iconBackground,
                   borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-                  border: Border.all(
-                    color: AppConstants.emeraldPrimary.withValues(alpha: 0.35),
-                  ),
+                  border: Border.all(color: colors.iconBorder),
                 ),
                 child: Center(
                   child: Text(
                     '${surah.number}',
-                    style: const TextStyle(
-                      color: AppConstants.emeraldPrimary,
+                    style: TextStyle(
+                      color: colors.emerald,
                       fontSize: AppConstants.fontBody,
                       fontWeight: FontWeight.w700,
                     ),
@@ -383,8 +295,8 @@ class _SurahTile extends StatelessWidget {
                   children: [
                     Text(
                       surah.nameEnglish,
-                      style: const TextStyle(
-                        color: AppConstants.textPrimary,
+                      style: TextStyle(
+                        color: colors.textPrimary,
                         fontSize: AppConstants.fontSubtitle,
                         fontWeight: FontWeight.w600,
                       ),
@@ -394,42 +306,28 @@ class _SurahTile extends StatelessWidget {
                       children: [
                         Text(
                           surah.nameTransliteration,
-                          style: const TextStyle(
-                            color: AppConstants.textMuted,
+                          style: TextStyle(
+                            color: colors.textMuted,
                             fontSize: AppConstants.fontCaption,
                           ),
                         ),
                         const SizedBox(width: AppConstants.spaceSm),
-                        Container(
-                          width: 3,
-                          height: 3,
-                          decoration: const BoxDecoration(
-                            color: AppConstants.textFaint,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
+                        _dot(colors),
                         const SizedBox(width: AppConstants.spaceSm),
                         Text(
                           surah.isMakki ? 'Makki' : 'Madani',
-                          style: const TextStyle(
-                            color: AppConstants.textFaint,
+                          style: TextStyle(
+                            color: colors.textFaint,
                             fontSize: AppConstants.fontMicro,
                           ),
                         ),
                         const SizedBox(width: AppConstants.spaceSm),
-                        Container(
-                          width: 3,
-                          height: 3,
-                          decoration: const BoxDecoration(
-                            color: AppConstants.textFaint,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
+                        _dot(colors),
                         const SizedBox(width: AppConstants.spaceSm),
                         Text(
                           '${surah.totalAyahs} ayahs',
-                          style: const TextStyle(
-                            color: AppConstants.textFaint,
+                          style: TextStyle(
+                            color: colors.textFaint,
                             fontSize: AppConstants.fontMicro,
                           ),
                         ),
@@ -440,8 +338,8 @@ class _SurahTile extends StatelessWidget {
               ),
               Text(
                 surah.nameArabic,
-                style: const TextStyle(
-                  color: AppConstants.goldAccent,
+                style: TextStyle(
+                  color: colors.gold,
                   fontSize: 20,
                   fontFamily: 'NotoNaskhArabic',
                 ),
@@ -452,7 +350,22 @@ class _SurahTile extends StatelessWidget {
       ),
     );
   }
+
+  Widget _dot(AppColors colors) {
+    return Container(
+      width: 3,
+      height: 3,
+      decoration: BoxDecoration(
+        color: colors.textFaint,
+        shape: BoxShape.circle,
+      ),
+    );
+  }
 }
+
+// ─────────────────────────────────────────────
+// SEARCH RESULTS
+// ─────────────────────────────────────────────
 
 class _SearchResults extends ConsumerWidget {
   final String query;
@@ -461,18 +374,17 @@ class _SearchResults extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     final resultsAsync = ref.watch(quranSearchProvider(query));
 
     return resultsAsync.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(
-          color: AppConstants.emeraldPrimary,
-        ),
+      loading: () => Center(
+        child: CircularProgressIndicator(color: colors.emerald),
       ),
       error: (e, _) => Center(
         child: Text(
           'Search failed: $e',
-          style: const TextStyle(color: AppConstants.textMuted),
+          style: TextStyle(color: colors.textMuted),
         ),
       ),
       data: (results) {
@@ -483,16 +395,16 @@ class _SearchResults extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.search_off,
-                    color: AppConstants.textFaint,
+                    color: colors.textFaint,
                     size: 48,
                   ),
                   const SizedBox(height: AppConstants.spaceMd),
                   Text(
                     'No results for "$query"',
-                    style: const TextStyle(
-                      color: AppConstants.textMuted,
+                    style: TextStyle(
+                      color: colors.textMuted,
                       fontSize: AppConstants.fontBody,
                     ),
                   ),
@@ -506,9 +418,13 @@ class _SearchResults extends ConsumerWidget {
             vertical: AppConstants.spaceMd,
           ),
           itemCount: results.length,
-          separatorBuilder: (_, __) =>
-              const Divider(height: 1, indent: AppConstants.spaceLg),
-          itemBuilder: (context, i) => _SearchResultTile(result: results[i]),
+          separatorBuilder: (_, __) => Divider(
+            height: 1,
+            indent: AppConstants.spaceLg,
+            color: colors.divider,
+          ),
+          itemBuilder: (context, i) =>
+              _SearchResultTile(result: results[i]),
         );
       },
     );
@@ -522,6 +438,8 @@ class _SearchResultTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -544,15 +462,15 @@ class _SearchResultTile extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: AppConstants.emeraldPrimary
-                          .withValues(alpha: 0.15),
+                      color: colors.iconBackground,
                       borderRadius:
                           BorderRadius.circular(AppConstants.radiusSm),
+                      border: Border.all(color: colors.iconBorder),
                     ),
                     child: Text(
                       '${result.surahNumber}:${result.ayahNumber}',
-                      style: const TextStyle(
-                        color: AppConstants.emeraldPrimary,
+                      style: TextStyle(
+                        color: colors.emerald,
                         fontSize: AppConstants.fontMicro,
                         fontWeight: FontWeight.w700,
                       ),
@@ -562,8 +480,8 @@ class _SearchResultTile extends StatelessWidget {
                   Expanded(
                     child: Text(
                       result.surahName,
-                      style: const TextStyle(
-                        color: AppConstants.textPrimary,
+                      style: TextStyle(
+                        color: colors.textPrimary,
                         fontSize: AppConstants.fontBody,
                         fontWeight: FontWeight.w600,
                       ),
@@ -575,8 +493,8 @@ class _SearchResultTile extends StatelessWidget {
               const SizedBox(height: AppConstants.spaceSm),
               Text(
                 result.snippet,
-                style: const TextStyle(
-                  color: AppConstants.textMuted,
+                style: TextStyle(
+                  color: colors.textMuted,
                   fontSize: AppConstants.fontBody,
                   height: 1.5,
                 ),
