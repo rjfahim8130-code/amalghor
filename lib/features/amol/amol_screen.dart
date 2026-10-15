@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/app_colors.dart';
 import '../../core/constants.dart';
 import '../../data/models/amol_models.dart';
 import '../../l10n/generated/app_localizations.dart';
 
-/// Daily Amol tracker. Shows the shipped default Amols and lets the
-/// user tick them off. (Persistence is wired in a later iteration —
-/// the UI is fully functional with in-memory state.)
+/// Daily Amol tracker with progress bar and per-item tapping.
 class AmolScreen extends ConsumerStatefulWidget {
   const AmolScreen({super.key});
 
@@ -16,11 +15,11 @@ class AmolScreen extends ConsumerStatefulWidget {
 }
 
 class _AmolScreenState extends ConsumerState<AmolScreen> {
-  /// Local in-memory state; replaced with DB later.
   final Map<String, int> _counts = {};
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context);
     final localeCode = Localizations.localeOf(context).languageCode;
     final amols = DefaultAmols.all;
@@ -31,7 +30,17 @@ class _AmolScreenState extends ConsumerState<AmolScreen> {
     }).length;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.amolTitle)),
+      backgroundColor: colors.pageBackground,
+      appBar: AppBar(
+        backgroundColor: colors.pageBackground,
+        title: Text(
+          l10n.amolTitle,
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
       body: Column(
         children: [
           _ProgressHeader(
@@ -41,9 +50,11 @@ class _AmolScreenState extends ConsumerState<AmolScreen> {
           ),
           Expanded(
             child: ListView.separated(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.spaceLg,
-                vertical: AppConstants.spaceLg,
+              padding: const EdgeInsets.fromLTRB(
+                AppConstants.spaceLg,
+                AppConstants.spaceLg,
+                AppConstants.spaceLg,
+                AppConstants.space2xl,
               ),
               itemCount: amols.length,
               separatorBuilder: (_, __) =>
@@ -85,31 +96,38 @@ class _ProgressHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final progress = total == 0 ? 0.0 : done / total;
 
     return Container(
+      margin: const EdgeInsets.fromLTRB(
+        AppConstants.spaceLg,
+        AppConstants.spaceSm,
+        AppConstants.spaceLg,
+        0,
+      ),
       padding: const EdgeInsets.all(AppConstants.spaceLg),
-      decoration: const BoxDecoration(
-        color: AppConstants.surfaceDark,
-        border: Border(
-          bottom: BorderSide(color: AppConstants.dividerColor, width: 0.6),
-        ),
+      decoration: BoxDecoration(
+        gradient: colors.prayerCardGradient,
+        borderRadius: BorderRadius.circular(AppConstants.radiusXl),
+        border: Border.all(color: colors.border, width: 1.2),
+        boxShadow: colors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.check_circle_outline,
-                color: AppConstants.emeraldPrimary,
+                color: colors.emerald,
                 size: 20,
               ),
               const SizedBox(width: AppConstants.spaceSm),
               Text(
                 l10n.amolTracker,
-                style: const TextStyle(
-                  color: AppConstants.textPrimary,
+                style: TextStyle(
+                  color: colors.textPrimary,
                   fontSize: AppConstants.fontSubtitle,
                   fontWeight: FontWeight.w600,
                 ),
@@ -117,11 +135,11 @@ class _ProgressHeader extends StatelessWidget {
               const Spacer(),
               Text(
                 '$done / $total',
-                style: const TextStyle(
-                  color: AppConstants.emeraldPrimary,
+                style: TextStyle(
+                  color: colors.emerald,
                   fontSize: AppConstants.fontSubtitle,
                   fontWeight: FontWeight.w700,
-                  fontFeatures: [FontFeature.tabularFigures()],
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
             ],
@@ -132,10 +150,8 @@ class _ProgressHeader extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 6,
-              backgroundColor: AppConstants.surfaceDarker,
-              valueColor: const AlwaysStoppedAnimation(
-                AppConstants.emeraldPrimary,
-              ),
+              backgroundColor: colors.surfaceInset,
+              valueColor: AlwaysStoppedAnimation(colors.emerald),
             ),
           ),
         ],
@@ -159,39 +175,41 @@ class _AmolTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final target = amol.targetCount ?? 1;
     final isDone = count >= target;
 
     return InkWell(
       onTap: onIncrement,
-      borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+      borderRadius: BorderRadius.circular(AppConstants.radiusLg),
       child: Container(
         padding: const EdgeInsets.all(AppConstants.spaceLg),
         decoration: BoxDecoration(
-          color: AppConstants.surfaceDark,
-          borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+          color: colors.cardBackground,
+          borderRadius: BorderRadius.circular(AppConstants.radiusLg),
           border: Border.all(
-            color: isDone
-                ? AppConstants.emeraldPrimary.withValues(alpha: 0.5)
-                : AppConstants.dividerColor,
+            color: isDone ? colors.borderStrong : colors.border,
+            width: 1.2,
           ),
+          boxShadow: colors.cardShadow,
         ),
         child: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
                 color: isDone
-                    ? AppConstants.emeraldPrimary.withValues(alpha: 0.18)
-                    : AppConstants.surfaceDarker,
+                    ? colors.emerald.withValues(alpha: 0.15)
+                    : colors.iconBackground,
                 borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+                border: isDone
+                    ? Border.all(color: colors.iconBorder)
+                    : null,
               ),
               child: Icon(
                 _iconFor(amol.category),
-                color: isDone
-                    ? AppConstants.emeraldPrimary
-                    : AppConstants.textMuted,
+                color: isDone ? colors.emerald : colors.textMuted,
                 size: 20,
               ),
             ),
@@ -202,8 +220,8 @@ class _AmolTile extends StatelessWidget {
                 children: [
                   Text(
                     amol.titleFor(localeCode),
-                    style: const TextStyle(
-                      color: AppConstants.textPrimary,
+                    style: TextStyle(
+                      color: colors.textPrimary,
                       fontSize: AppConstants.fontBody,
                       fontWeight: FontWeight.w600,
                     ),
@@ -213,8 +231,8 @@ class _AmolTile extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
                         amol.arabicText!,
-                        style: const TextStyle(
-                          color: AppConstants.goldAccent,
+                        style: TextStyle(
+                          color: colors.gold,
                           fontSize: AppConstants.fontSubtitle,
                           fontFamily: 'NotoNaskhArabic',
                         ),
@@ -231,16 +249,20 @@ class _AmolTile extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: isDone
-                      ? AppConstants.emeraldPrimary
-                      : AppConstants.surfaceDarker,
-                  borderRadius: BorderRadius.circular(AppConstants.radiusFull),
+                      ? colors.emerald
+                      : colors.iconBackground,
+                  borderRadius:
+                      BorderRadius.circular(AppConstants.radiusFull),
+                  border: isDone
+                      ? null
+                      : Border.all(color: colors.iconBorder),
                 ),
                 child: Text(
                   '$count/$target',
                   style: TextStyle(
                     color: isDone
-                        ? Colors.black
-                        : AppConstants.textPrimary,
+                        ? colors.textOnEmerald
+                        : colors.textPrimary,
                     fontSize: AppConstants.fontCaption,
                     fontWeight: FontWeight.w700,
                     fontFeatures: const [FontFeature.tabularFigures()],
@@ -250,9 +272,7 @@ class _AmolTile extends StatelessWidget {
             else
               Icon(
                 isDone ? Icons.check_circle : Icons.radio_button_unchecked,
-                color: isDone
-                    ? AppConstants.emeraldPrimary
-                    : AppConstants.textFaint,
+                color: isDone ? colors.emerald : colors.textFaint,
               ),
           ],
         ),
