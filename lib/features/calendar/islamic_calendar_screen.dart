@@ -377,4 +377,92 @@ class _DayCell extends StatelessWidget {
       case CalendarPrimaryDisplay.hijri:
         primaryValue = hi;
         sec1Value = en;
-        sec2
+        sec2Value = bn;
+        primaryColor = colors.cyan;
+        break;
+    }
+
+    return AspectRatio(
+      aspectRatio: 0.85,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isToday
+              ? colors.emerald.withValues(alpha: 0.15)
+              : colors.cardBackground,
+          borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+          border: Border.all(
+            color: isToday
+                ? colors.emerald
+                : (isFriday
+                    ? colors.gold.withValues(alpha: 0.4)
+                    : colors.border),
+            width: isToday ? 1.6 : 1.0,
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '$primaryValue',
+              style: TextStyle(
+                color: primaryColor,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                height: 1.0,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+            const SizedBox(height: 3),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '$sec1Value',
+                  style: TextStyle(
+                    color: colors.textMuted,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                    height: 1.0,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Container(
+                  width: 2,
+                  height: 2,
+                  decoration: BoxDecoration(
+                    color: colors.textFaint,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '$sec2Value',
+                  style: TextStyle(
+                    color: colors.textMuted,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                    height: 1.0,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ],
+            ),
+            if (isFriday) ...[
+              const SizedBox(height: 3),
+              Container(
+                width: 4,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colors.gold,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
