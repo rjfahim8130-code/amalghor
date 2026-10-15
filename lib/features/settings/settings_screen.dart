@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/app_colors.dart';
 import '../../core/constants.dart';
 import '../../core/router.dart';
 import '../../data/models/settings_model.dart';
@@ -10,19 +11,30 @@ import '../../providers/location_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../providers/settings_provider.dart';
 
-/// Settings screen.
+/// Settings screen — auto-adapts to dark or light mode.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context);
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
     final location = ref.watch(currentLocationProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.settings)),
+      backgroundColor: colors.pageBackground,
+      appBar: AppBar(
+        backgroundColor: colors.pageBackground,
+        title: Text(
+          l10n.settings,
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
       body: ListView(
         padding: const EdgeInsets.symmetric(
           vertical: AppConstants.spaceLg,
@@ -33,7 +45,8 @@ class SettingsScreen extends ConsumerWidget {
           _NavigationTile(
             icon: Icons.location_on_outlined,
             title: location.shortLabel,
-            subtitle: '${location.latitude.toStringAsFixed(4)}°, '
+            subtitle:
+                '${location.latitude.toStringAsFixed(4)}°, '
                 '${location.longitude.toStringAsFixed(4)}°',
             onTap: () => context.push(Routes.location),
           ),
@@ -235,17 +248,17 @@ class SettingsScreen extends ConsumerWidget {
               children: [
                 Text(
                   '${AppConstants.appName} v${AppConstants.appVersion}',
-                  style: const TextStyle(
-                    color: AppConstants.textPrimary,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontSize: AppConstants.fontBody,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'Offline-first. No servers. No accounts.',
                   style: TextStyle(
-                    color: AppConstants.textMuted,
+                    color: colors.textMuted,
                     fontSize: AppConstants.fontCaption,
                   ),
                 ),
@@ -261,7 +274,7 @@ class SettingsScreen extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────
-// NOTIFICATION PERMISSION BANNER
+// PERMISSION BANNER
 // ─────────────────────────────────────────────
 
 class _NotificationPermissionBanner extends ConsumerWidget {
@@ -269,6 +282,7 @@ class _NotificationPermissionBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     final status = ref.watch(notificationProvider);
 
     if (status == NotificationPermissionStatus.granted) {
@@ -297,46 +311,46 @@ class _NotificationPermissionBanner extends ConsumerWidget {
           child: Container(
             padding: const EdgeInsets.all(AppConstants.spaceLg),
             decoration: BoxDecoration(
-              color: AppConstants.goldAccent.withValues(alpha: 0.10),
+              color: colors.gold.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(AppConstants.radiusMd),
               border: Border.all(
-                color: AppConstants.goldAccent.withValues(alpha: 0.4),
+                color: colors.gold.withValues(alpha: 0.45),
               ),
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.notifications_active_outlined,
-                  color: AppConstants.goldAccent,
+                  color: colors.gold,
                   size: 22,
                 ),
                 const SizedBox(width: AppConstants.spaceMd),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Enable Notifications',
                         style: TextStyle(
-                          color: AppConstants.textPrimary,
+                          color: colors.textPrimary,
                           fontSize: AppConstants.fontBody,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Text(
                         'Tap to allow prayer time alerts',
                         style: TextStyle(
-                          color: AppConstants.textMuted,
+                          color: colors.textMuted,
                           fontSize: AppConstants.fontCaption,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.chevron_right,
-                  color: AppConstants.goldAccent,
+                  color: colors.gold,
                   size: 20,
                 ),
               ],
@@ -359,6 +373,7 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppConstants.spaceLg,
@@ -368,8 +383,8 @@ class _SectionHeader extends StatelessWidget {
       ),
       child: Text(
         title.toUpperCase(),
-        style: const TextStyle(
-          color: AppConstants.emeraldPrimary,
+        style: TextStyle(
+          color: colors.emerald,
           fontSize: AppConstants.fontMicro,
           fontWeight: FontWeight.w700,
           letterSpacing: 1.4,
@@ -394,6 +409,7 @@ class _RadioTile<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final selected = value == group;
 
     return InkWell(
@@ -409,9 +425,7 @@ class _RadioTile<T> extends StatelessWidget {
               selected
                   ? Icons.radio_button_checked
                   : Icons.radio_button_unchecked,
-              color: selected
-                  ? AppConstants.emeraldPrimary
-                  : AppConstants.textFaint,
+              color: selected ? colors.emerald : colors.textFaint,
               size: 20,
             ),
             const SizedBox(width: AppConstants.spaceMd),
@@ -419,11 +433,11 @@ class _RadioTile<T> extends StatelessWidget {
               child: Text(
                 title,
                 style: TextStyle(
-                  color: selected
-                      ? AppConstants.textPrimary
-                      : AppConstants.textMuted,
+                  color:
+                      selected ? colors.textPrimary : colors.textMuted,
                   fontSize: AppConstants.fontBody,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                  fontWeight:
+                      selected ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
             ),
@@ -447,6 +461,7 @@ class _SwitchTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppConstants.spaceLg,
@@ -457,16 +472,13 @@ class _SwitchTile extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
-                color: AppConstants.textPrimary,
+              style: TextStyle(
+                color: colors.textPrimary,
                 fontSize: AppConstants.fontBody,
               ),
             ),
           ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-          ),
+          Switch(value: value, onChanged: onChanged),
         ],
       ),
     );
@@ -488,28 +500,27 @@ class _NavigationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppConstants.spaceLg,
         vertical: AppConstants.spaceSm,
       ),
       child: Material(
-        color: AppConstants.surfaceDark,
-        borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+        color: colors.cardBackground,
+        borderRadius: BorderRadius.circular(AppConstants.radiusLg),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+          borderRadius: BorderRadius.circular(AppConstants.radiusLg),
           child: Container(
             padding: const EdgeInsets.all(AppConstants.spaceLg),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-              border: Border.all(
-                color: AppConstants.emeraldPrimary.withValues(alpha: 0.25),
-              ),
+              borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+              border: Border.all(color: colors.border, width: 1.0),
             ),
             child: Row(
               children: [
-                Icon(icon, color: AppConstants.emeraldPrimary, size: 22),
+                Icon(icon, color: colors.emerald, size: 22),
                 const SizedBox(width: AppConstants.spaceMd),
                 Expanded(
                   child: Column(
@@ -517,8 +528,8 @@ class _NavigationTile extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
-                          color: AppConstants.textPrimary,
+                        style: TextStyle(
+                          color: colors.textPrimary,
                           fontSize: AppConstants.fontBody,
                           fontWeight: FontWeight.w600,
                         ),
@@ -528,8 +539,8 @@ class _NavigationTile extends StatelessWidget {
                           padding: const EdgeInsets.only(top: 2),
                           child: Text(
                             subtitle!,
-                            style: const TextStyle(
-                              color: AppConstants.textMuted,
+                            style: TextStyle(
+                              color: colors.textMuted,
                               fontSize: AppConstants.fontCaption,
                             ),
                           ),
@@ -537,9 +548,9 @@ class _NavigationTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.chevron_right,
-                  color: AppConstants.textMuted,
+                  color: colors.textMuted,
                   size: 20,
                 ),
               ],
