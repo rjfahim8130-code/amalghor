@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/app_colors.dart';
 import '../../core/constants.dart';
 import '../../core/router.dart';
 import '../../l10n/generated/app_localizations.dart';
 
 /// Shell wrapper that hosts the persistent bottom navigation bar
 /// across the five primary tabs.
+///
+/// Auto-adapts to dark or light mode via [AppColors].
 class AppShell extends ConsumerWidget {
   final Widget child;
 
@@ -15,6 +18,7 @@ class AppShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context);
     final location = GoRouterState.of(context).uri.toString();
 
@@ -56,17 +60,26 @@ class AppShell extends ConsumerWidget {
     );
 
     return Scaffold(
-      backgroundColor: AppConstants.deepDark,
+      backgroundColor: colors.pageBackground,
       body: child,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: AppConstants.amoledBlack,
+          color: colors.navBackground,
           border: Border(
             top: BorderSide(
-              color: AppConstants.emeraldPrimary.withValues(alpha: 0.15),
+              color: colors.border.withValues(alpha: 0.35),
               width: 0.8,
             ),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: colors.isDark
+                  ? Colors.black.withValues(alpha: 0.30)
+                  : Colors.black.withValues(alpha: 0.05),
+              blurRadius: 12,
+              offset: const Offset(0, -2),
+            ),
+          ],
         ),
         child: SafeArea(
           top: false,
@@ -111,6 +124,8 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+
     return Expanded(
       child: Material(
         color: Colors.transparent,
@@ -130,8 +145,7 @@ class _NavItem extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? AppConstants.emeraldPrimary
-                            .withValues(alpha: 0.15)
+                        ? colors.emerald.withValues(alpha: 0.15)
                         : Colors.transparent,
                     borderRadius:
                         BorderRadius.circular(AppConstants.radiusFull),
@@ -139,8 +153,8 @@ class _NavItem extends StatelessWidget {
                   child: Icon(
                     isSelected ? tab.activeIcon : tab.icon,
                     color: isSelected
-                        ? AppConstants.emeraldPrimary
-                        : AppConstants.textFaint,
+                        ? colors.emerald
+                        : colors.textFaint,
                     size: 22,
                   ),
                 ),
@@ -149,8 +163,8 @@ class _NavItem extends StatelessWidget {
                   tab.label,
                   style: TextStyle(
                     color: isSelected
-                        ? AppConstants.emeraldPrimary
-                        : AppConstants.textFaint,
+                        ? colors.emerald
+                        : colors.textFaint,
                     fontSize: 10,
                     fontWeight: isSelected
                         ? FontWeight.w700
