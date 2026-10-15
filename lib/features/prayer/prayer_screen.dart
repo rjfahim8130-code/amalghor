@@ -1,54 +1,60 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/app_colors.dart';
 import '../../core/constants.dart';
 import '../../core/date_utils.dart';
 import '../../data/models/prayer_times.dart';
 import '../../providers/clock_provider.dart';
 import '../../providers/prayer_provider.dart';
-import '../home/widgets/home_header.dart';
 
 /// Prayer timeline screen.
 ///
-/// Shows only:
-///   - HomeHeader (location chip + settings)
+/// Layout:
+///   - Section title: "আজকের সময়সূচি"
 ///   - Full daily timings list with live countdowns
+///
+/// NO location chip, NO settings icon (both live on the Home tab).
 class PrayerScreen extends ConsumerWidget {
   const PrayerScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     final prayerAsync = ref.watch(currentDayPrayerProvider);
 
     return Scaffold(
+      backgroundColor: colors.pageBackground,
       body: SafeArea(
         child: RefreshIndicator(
-          color: AppConstants.emeraldPrimary,
-          backgroundColor: AppConstants.surfaceDark,
+          color: colors.emerald,
+          backgroundColor: colors.cardBackground,
           onRefresh: () async {
             ref.invalidate(currentDayPrayerProvider);
             await ref.read(currentDayPrayerProvider.future);
           },
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(
-              AppConstants.spaceLg,
-              AppConstants.spaceLg,
-              AppConstants.spaceLg,
-              AppConstants.space2xl,
+          child: prayerAsync.when(
+            loading: () => ListView(
+              // Allow pull-to-refresh even while loading.
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  child: const _PrayerLoading(),
+                ),
+              ],
             ),
-            children: [
-              const HomeHeader(),
-              const SizedBox(height: AppConstants.spaceLg),
-
-              prayerAsync.when(
-                loading: () => const _PrayerLoading(),
-                error: (e, _) => _PrayerError(
+            error: (e, _) => ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(AppConstants.spaceLg),
+              children: [
+                _PrayerError(
                   message: e.toString(),
                   onRetry: () => ref.invalidate(currentDayPrayerProvider),
                 ),
-                data: (prayer) => _PrayerBody(prayer: prayer),
-              ),
-            ],
+              ],
+            ),
+            data: (prayer) => _PrayerBody(prayer: prayer),
           ),
         ),
       ),
@@ -57,7 +63,7 @@ class PrayerScreen extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────
-// BODY — only the timings list
+// BODY
 // ─────────────────────────────────────────────
 
 class _PrayerBody extends ConsumerWidget {
@@ -67,79 +73,103 @@ class _PrayerBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     final asyncNow = ref.watch(clockProvider);
     final now = asyncNow.value ?? DateTime.now();
 
-    return _TimingsListCard(prayer: prayer, now: now);
-  }
-}
-
-// ─────────────────────────────────────────────
-// TIMINGS LIST CARD
-// ─────────────────────────────────────────────
-
-class _TimingsListCard extends StatelessWidget {
-  final PrayerTimes prayer;
-  final DateTime now;
-
-  const _TimingsListCard({
-    required this.prayer,
-    required this.now,
-  });
-
-  @override
-  Widget build(BuildContext context) {
     final entries = _buildEntries(prayer);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppConstants.surfaceDark,
-        borderRadius: BorderRadius.circular(AppConstants.radiusLg),
-        border: Border.all(color: AppConstants.dividerColor),
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(
+        AppConstants.spaceLg,
+        AppConstants.spaceLg,
+        AppConstants.spaceLg,
+        AppConstants.space2xl,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(
-              AppConstants.spaceLg,
-              AppConstants.spaceLg,
-              AppConstants.spaceLg,
-              AppConstants.spaceSm,
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.schedule,
-                  color: AppConstants.emeraldPrimary,
-                  size: 18,
-                ),
-                SizedBox(width: AppConstants.spaceSm),
-                Text(
-                  'আজকের সময়সূচি',
-                  style: TextStyle(
-                    color: AppConstants.textPrimary,
-                    fontSize: AppConstants.fontSubtitle,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
+      children: [
+        // ─── Section header ────────────────
+        Padding(
+          padding: const EdgeInsets.only(
+            left: AppConstants.spaceXs,
+            bottom: AppConstants.spaceMd,
           ),
-          const Divider(height: 1),
-          ...entries.asMap().entries.map((e) {
-            final isLast = e.key == entries.length - 1;
-            return _TimingRow(
-              entry: e.value,
-              now: now,
-              showDivider: !isLast,
-            );
-          }),
-        ],
-      ),
+          child: Row(
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: colors.emerald,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: colors.emerald,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: colors.emerald.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: AppConstants.spaceMd),
+              Text(
+                'আজকের সময়সূচি',
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: AppConstants.fontSubtitle,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const SizedBox(width: AppConstants.spaceMd),
+              Expanded(
+                child: Container(
+                  height: 1,
+                  color: colors.border.withValues(alpha: 0.35),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // ─── Timings list card ─────────────
+        Container(
+          decoration: BoxDecoration(
+            gradient: colors.prayerCardGradient,
+            borderRadius: BorderRadius.circular(AppConstants.radiusXl),
+            border: Border.all(
+              color: colors.border,
+              width: 1.2,
+            ),
+            boxShadow: colors.cardShadow,
+          ),
+          child: Column(
+            children: [
+              for (var i = 0; i < entries.length; i++)
+                _TimingRow(
+                  entry: entries[i],
+                  now: now,
+                  showDivider: i < entries.length - 1,
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
+  /// ১৪টি সারি — আপনার আগের list অনুযায়ী।
   List<_TimingEntry> _buildEntries(PrayerTimes p) {
     return [
       _TimingEntry(
@@ -152,19 +182,19 @@ class _TimingsListCard extends StatelessWidget {
         key: 'sehri',
         label: 'সেহরি শেষ',
         time: p.sehriActual,
-        icon: Icons.alarm,
+        icon: Icons.alarm_rounded,
       ),
       _TimingEntry(
         key: 'fajr',
         label: 'ফজর',
         time: p.fajr,
-        icon: Icons.mosque,
+        icon: Icons.mosque_rounded,
       ),
       _TimingEntry(
         key: 'sunrise',
         label: 'সূর্যোদয়',
         time: p.sunrise,
-        icon: Icons.wb_twilight,
+        icon: Icons.wb_twilight_rounded,
       ),
       _TimingEntry(
         key: 'ishraq',
@@ -176,55 +206,55 @@ class _TimingsListCard extends StatelessWidget {
         key: 'solarNoon',
         label: 'মধ্য আকাশ',
         time: p.solarNoon,
-        icon: Icons.brightness_high,
+        icon: Icons.brightness_high_rounded,
       ),
       _TimingEntry(
         key: 'dhuhr',
         label: 'যোহর',
         time: p.dhuhr,
-        icon: Icons.mosque,
+        icon: Icons.mosque_rounded,
       ),
       _TimingEntry(
         key: 'asr',
         label: 'আসর',
         time: p.asr,
-        icon: Icons.mosque,
+        icon: Icons.mosque_rounded,
       ),
       _TimingEntry(
         key: 'sunset',
         label: 'সূর্যাস্ত',
         time: p.sunset,
-        icon: Icons.wb_twilight,
+        icon: Icons.wb_twilight_rounded,
       ),
       _TimingEntry(
         key: 'iftar',
         label: 'ইফতার',
         time: p.iftarActual,
-        icon: Icons.restaurant,
+        icon: Icons.restaurant_rounded,
       ),
       _TimingEntry(
         key: 'maghrib',
         label: 'মাগরিব',
         time: p.maghrib,
-        icon: Icons.mosque,
+        icon: Icons.mosque_rounded,
       ),
       _TimingEntry(
         key: 'isha',
         label: 'এশা',
         time: p.isha,
-        icon: Icons.mosque,
+        icon: Icons.mosque_rounded,
       ),
       _TimingEntry(
         key: 'ishaMustahab',
         label: 'মুস্তাহাব এশা',
         time: p.ishaMustahab,
-        icon: Icons.star_outline,
+        icon: Icons.star_outline_rounded,
       ),
       _TimingEntry(
         key: 'midnight',
         label: 'রাত অর্ধেক',
         time: p.islamicMidnight,
-        icon: Icons.dark_mode,
+        icon: Icons.dark_mode_rounded,
       ),
     ];
   }
@@ -261,6 +291,7 @@ class _TimingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final isPast = entry.time.isBefore(now);
     final isNext = !isPast;
 
@@ -268,9 +299,8 @@ class _TimingRow extends StatelessWidget {
     final countdownText =
         isPast ? '✓' : AppDateUtils.formatDuration(diff);
 
-    final accent = isPast
-        ? AppConstants.textFaint
-        : AppConstants.emeraldPrimary;
+    final accent =
+        isPast ? colors.textFaint : colors.emerald;
 
     return Column(
       children: [
@@ -285,8 +315,13 @@ class _TimingRow extends StatelessWidget {
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.12),
+                  color: isPast
+                      ? colors.textFaint.withValues(alpha: 0.08)
+                      : colors.iconBackground,
                   borderRadius: BorderRadius.circular(AppConstants.radiusSm),
+                  border: isPast
+                      ? null
+                      : Border.all(color: colors.iconBorder),
                 ),
                 child: Icon(
                   entry.icon,
@@ -300,8 +335,8 @@ class _TimingRow extends StatelessWidget {
                   entry.label,
                   style: TextStyle(
                     color: isPast
-                        ? AppConstants.textFaint
-                        : AppConstants.textPrimary,
+                        ? colors.textFaint
+                        : colors.textPrimary,
                     fontSize: AppConstants.fontBody,
                     fontWeight:
                         isNext ? FontWeight.w600 : FontWeight.w400,
@@ -313,8 +348,8 @@ class _TimingRow extends StatelessWidget {
                 AppDateUtils.formatTimeShort(entry.time),
                 style: TextStyle(
                   color: isPast
-                      ? AppConstants.textFaint
-                      : AppConstants.textPrimary,
+                      ? colors.textFaint
+                      : colors.textPrimary,
                   fontSize: AppConstants.fontBody,
                   fontWeight: FontWeight.w600,
                   fontFeatures: const [FontFeature.tabularFigures()],
@@ -338,7 +373,11 @@ class _TimingRow extends StatelessWidget {
           ),
         ),
         if (showDivider)
-          const Divider(height: 1, indent: AppConstants.spaceLg),
+          Divider(
+            height: 1,
+            indent: AppConstants.spaceLg,
+            color: colors.divider,
+          ),
       ],
     );
   }
@@ -353,12 +392,10 @@ class _PrayerLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 64),
-      child: Center(
-        child: CircularProgressIndicator(
-          color: AppConstants.emeraldPrimary,
-        ),
+    final colors = AppColors.of(context);
+    return Center(
+      child: CircularProgressIndicator(
+        color: colors.emerald,
       ),
     );
   }
@@ -375,11 +412,13 @@ class _PrayerError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.all(AppConstants.spaceXl),
       decoration: BoxDecoration(
-        color: AppConstants.surfaceDark,
+        color: colors.cardBackground,
         borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         children: [
@@ -389,10 +428,10 @@ class _PrayerError extends StatelessWidget {
             size: 40,
           ),
           const SizedBox(height: AppConstants.spaceMd),
-          const Text(
+          Text(
             'ত্রুটি',
             style: TextStyle(
-              color: AppConstants.textPrimary,
+              color: colors.textPrimary,
               fontSize: AppConstants.fontSubtitle,
               fontWeight: FontWeight.w600,
             ),
@@ -401,8 +440,8 @@ class _PrayerError extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppConstants.textMuted,
+            style: TextStyle(
+              color: colors.textMuted,
               fontSize: AppConstants.fontCaption,
             ),
           ),
