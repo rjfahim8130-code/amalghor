@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/app_colors.dart';
 import '../../../core/constants.dart';
 import '../../../core/router.dart';
 import '../../../data/models/location_model.dart';
@@ -9,21 +10,17 @@ import '../../../providers/location_provider.dart';
 
 /// Top header for the Home screen.
 ///
-/// Layout (left → right):
-///   1. Brand mark — small emerald-square with mosque icon
-///   2. App name — "আমলঘর" (emerald) + tagline (muted)
-///   3. Location chip — tappable to refresh GPS; long-press opens picker
-///   4. Settings icon
+/// Auto-adapts to dark or light mode via [AppColors].
 class HomeHeader extends ConsumerWidget {
   const HomeHeader({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     final loc = ref.watch(currentLocationProvider);
     final isRefreshing = ref.watch(isRefreshingLocationProvider);
     final notifier = ref.read(locationProvider.notifier);
 
-    // Show any refresh error as a snackbar.
     ref.listen<LocationState>(locationProvider, (prev, next) {
       if (next.lastError != null && prev?.lastError != next.lastError) {
         _showError(context, next.lastError!);
@@ -33,14 +30,14 @@ class HomeHeader extends ConsumerWidget {
 
     return Row(
       children: [
-        // ─── 1. Brand mark ────────────────────
+        // ─── Brand mark ───────────────────────
         Container(
           width: 42,
           height: 42,
           decoration: BoxDecoration(
-            gradient: AppConstants.brandChipGradient,
+            gradient: colors.brandGradient,
             borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-            boxShadow: AppConstants.emeraldGlowSmall,
+            boxShadow: colors.emeraldGlowSmall,
           ),
           child: const Icon(
             Icons.mosque_rounded,
@@ -50,8 +47,8 @@ class HomeHeader extends ConsumerWidget {
         ),
         const SizedBox(width: AppConstants.spaceMd),
 
-        // ─── 2. App name + tagline ────────────
-        const Expanded(
+        // ─── App name + tagline ───────────────
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -59,17 +56,17 @@ class HomeHeader extends ConsumerWidget {
               Text(
                 'আমলঘর',
                 style: TextStyle(
-                  color: AppConstants.emeraldPrimary,
+                  color: colors.emerald,
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.3,
                 ),
               ),
-              SizedBox(height: 1),
+              const SizedBox(height: 1),
               Text(
                 'ইবাদতের পথে, সবসময়',
                 style: TextStyle(
-                  color: AppConstants.textMuted,
+                  color: colors.textMuted,
                   fontSize: 10.5,
                   letterSpacing: 0.2,
                 ),
@@ -79,11 +76,9 @@ class HomeHeader extends ConsumerWidget {
           ),
         ),
 
-        // ─── 3. Location chip ─────────────────
+        // ─── Location chip ────────────────────
         InkWell(
-          onTap: isRefreshing
-              ? null
-              : () => _handleRefresh(context, ref),
+          onTap: isRefreshing ? null : () => _handleRefresh(context, ref),
           onLongPress: () => context.push(Routes.location),
           borderRadius: BorderRadius.circular(AppConstants.radiusFull),
           child: Container(
@@ -92,24 +87,24 @@ class HomeHeader extends ConsumerWidget {
               vertical: 6,
             ),
             decoration: BoxDecoration(
-              color: AppConstants.surfaceDark,
+              color: colors.surfaceElevated,
               borderRadius: BorderRadius.circular(AppConstants.radiusFull),
               border: Border.all(
-                color: AppConstants.emeraldPrimary.withValues(alpha: 0.35),
+                color: colors.border,
                 width: 1.0,
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _locationIcon(isRefreshing),
+                _locationIcon(colors, isRefreshing),
                 const SizedBox(width: 5),
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 78),
                   child: Text(
                     _chipLabel(loc, isRefreshing),
-                    style: const TextStyle(
-                      color: AppConstants.textPrimary,
+                    style: TextStyle(
+                      color: colors.textPrimary,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
@@ -117,10 +112,10 @@ class HomeHeader extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 2),
-                const Icon(
+                Icon(
                   Icons.keyboard_arrow_down_rounded,
                   size: 14,
-                  color: AppConstants.textMuted,
+                  color: colors.textMuted,
                 ),
               ],
             ),
@@ -129,13 +124,13 @@ class HomeHeader extends ConsumerWidget {
 
         const SizedBox(width: AppConstants.spaceXs),
 
-        // ─── 4. Settings ──────────────────────
+        // ─── Settings ─────────────────────────
         IconButton(
           tooltip: 'Settings',
           onPressed: () => context.push(Routes.settings),
-          icon: const Icon(
+          icon: Icon(
             Icons.settings_outlined,
-            color: AppConstants.textPrimary,
+            color: colors.textPrimary,
             size: 22,
           ),
           splashRadius: 20,
@@ -149,24 +144,20 @@ class HomeHeader extends ConsumerWidget {
     );
   }
 
-  // ─────────────────────────────────────────────
-  // HELPERS
-  // ─────────────────────────────────────────────
-
-  Widget _locationIcon(bool isRefreshing) {
+  Widget _locationIcon(AppColors colors, bool isRefreshing) {
     if (isRefreshing) {
-      return const SizedBox(
+      return SizedBox(
         width: 14,
         height: 14,
         child: CircularProgressIndicator(
           strokeWidth: 2,
-          color: AppConstants.emeraldPrimary,
+          color: colors.emerald,
         ),
       );
     }
-    return const Icon(
+    return Icon(
       Icons.location_on_rounded,
-      color: AppConstants.emeraldPrimary,
+      color: colors.emerald,
       size: 14,
     );
   }
@@ -176,7 +167,6 @@ class HomeHeader extends ConsumerWidget {
     if (loc.source == LocationSource.fallback) {
       return 'লোকেশন';
     }
-    // Prefer city name only; fall back to first segment of displayName.
     final label = loc.city ?? loc.displayName.split(',').first.trim();
     return label;
   }
