@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/app_colors.dart';
 import '../../core/constants.dart';
 import '../../data/models/asma_models.dart';
 import '../../providers/asma_provider.dart';
@@ -25,15 +26,23 @@ class _AsmaScreenState extends ConsumerState<AsmaScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final names = ref.watch(asmaFilteredProvider);
 
     return Scaffold(
+      backgroundColor: colors.pageBackground,
       appBar: AppBar(
-        title: const Text('আল্লাহর ৯৯ নাম'),
+        backgroundColor: colors.pageBackground,
+        title: Text(
+          'আল্লাহর ৯৯ নাম',
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ),
       body: Column(
         children: [
-          // ─── Search bar ──────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(
               AppConstants.spaceLg,
@@ -45,12 +54,12 @@ class _AsmaScreenState extends ConsumerState<AsmaScreen> {
               controller: _controller,
               onChanged: (v) =>
                   ref.read(asmaSearchProvider.notifier).update(v),
-              style: const TextStyle(color: AppConstants.textPrimary),
+              style: TextStyle(color: colors.textPrimary),
               decoration: InputDecoration(
                 hintText: 'খুঁজুন (নাম / অর্থ / নম্বর)',
-                prefixIcon: const Icon(
+                prefixIcon: Icon(
                   Icons.search,
-                  color: AppConstants.textMuted,
+                  color: colors.textMuted,
                 ),
                 suffixIcon: _controller.text.isEmpty
                     ? null
@@ -64,8 +73,6 @@ class _AsmaScreenState extends ConsumerState<AsmaScreen> {
               ),
             ),
           ),
-
-          // ─── List ────────────────────────────
           Expanded(
             child: names.isEmpty
                 ? const _EmptyState()
@@ -86,10 +93,6 @@ class _AsmaScreenState extends ConsumerState<AsmaScreen> {
   }
 }
 
-// ─────────────────────────────────────────────
-// TILE
-// ─────────────────────────────────────────────
-
 class _AsmaTile extends StatelessWidget {
   final AsmaName name;
 
@@ -97,58 +100,53 @@ class _AsmaTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final localeCode = Localizations.localeOf(context).languageCode;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onLongPress: () => _copy(context, localeCode),
-        borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+        borderRadius: BorderRadius.circular(AppConstants.radiusXl),
         child: Container(
           padding: const EdgeInsets.all(AppConstants.spaceLg),
           decoration: BoxDecoration(
-            color: AppConstants.surfaceDark,
-            borderRadius: BorderRadius.circular(AppConstants.radiusLg),
-            border: Border.all(color: AppConstants.dividerColor),
+            color: colors.cardBackground,
+            borderRadius: BorderRadius.circular(AppConstants.radiusXl),
+            border: Border.all(color: colors.border, width: 1.0),
+            boxShadow: colors.cardShadow,
           ),
           child: Row(
             children: [
-              // Number badge
               Container(
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: AppConstants.emeraldPrimary.withValues(alpha: 0.15),
+                  color: colors.iconBackground,
                   borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-                  border: Border.all(
-                    color:
-                        AppConstants.emeraldPrimary.withValues(alpha: 0.4),
-                  ),
+                  border: Border.all(color: colors.iconBorder),
                 ),
                 child: Center(
                   child: Text(
                     '${name.number}',
-                    style: const TextStyle(
-                      color: AppConstants.emeraldPrimary,
+                    style: TextStyle(
+                      color: colors.emerald,
                       fontSize: AppConstants.fontBody,
                       fontWeight: FontWeight.w700,
-                      fontFeatures: [FontFeature.tabularFigures()],
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: AppConstants.spaceMd),
-
-              // Content
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Arabic
                     Text(
                       name.arabic,
-                      style: const TextStyle(
-                        color: AppConstants.goldAccent,
+                      style: TextStyle(
+                        color: colors.gold,
                         fontSize: 26,
                         fontFamily: 'NotoNaskhArabic',
                         fontWeight: FontWeight.w700,
@@ -156,34 +154,30 @@ class _AsmaTile extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    // Transliteration
                     Text(
                       name.transliteration,
-                      style: const TextStyle(
-                        color: AppConstants.textPrimary,
+                      style: TextStyle(
+                        color: colors.textPrimary,
                         fontSize: AppConstants.fontBody,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 2),
-                    // Meaning
                     Text(
                       name.meaningFor(localeCode),
-                      style: const TextStyle(
-                        color: AppConstants.textMuted,
+                      style: TextStyle(
+                        color: colors.textMuted,
                         fontSize: AppConstants.fontCaption,
                       ),
                     ),
                   ],
                 ),
               ),
-
-              // Copy button
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.copy,
                   size: 16,
-                  color: AppConstants.textFaint,
+                  color: colors.textFaint,
                 ),
                 onPressed: () => _copy(context, localeCode),
               ),
@@ -209,29 +203,26 @@ class _AsmaTile extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// EMPTY STATE
-// ─────────────────────────────────────────────
-
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.search_off,
-            color: AppConstants.textFaint,
+            color: colors.textFaint,
             size: 48,
           ),
           const SizedBox(height: AppConstants.spaceMd),
-          const Text(
+          Text(
             'কোনো নাম পাওয়া যায়নি',
             style: TextStyle(
-              color: AppConstants.textMuted,
+              color: colors.textMuted,
               fontSize: AppConstants.fontBody,
             ),
           ),
