@@ -2,16 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/app_colors.dart';
 import '../../core/constants.dart';
 import '../../data/models/tasbih_models.dart';
 import '../../providers/tasbih_provider.dart';
 
-/// Main Tasbih counter screen.
-///
-/// Layout:
-///   - Top: horizontal scroll of Tasbih chips (one per dhikr)
-///   - Center: big circular counter with tap target
-///   - Bottom: reset + lifetime stats
+/// Tasbih counter screen — auto-adapts to dark or light mode.
 class TasbihScreen extends ConsumerStatefulWidget {
   const TasbihScreen({super.key});
 
@@ -24,16 +20,25 @@ class _TasbihScreenState extends ConsumerState<TasbihScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final tasbihs = ref.watch(tasbihListProvider);
     final selected = ref.watch(tasbihByIdProvider(_selectedId));
 
     return Scaffold(
+      backgroundColor: colors.pageBackground,
       appBar: AppBar(
-        title: const Text('তাসবীহ'),
+        backgroundColor: colors.pageBackground,
+        title: Text(
+          'তাসবীহ',
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         actions: [
           IconButton(
             tooltip: 'Reset',
-            icon: const Icon(Icons.refresh),
+            icon: Icon(Icons.refresh, color: colors.textPrimary),
             onPressed: () => _confirmReset(context),
           ),
         ],
@@ -41,7 +46,7 @@ class _TasbihScreenState extends ConsumerState<TasbihScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ─── Tasbih chips ─────────────────
+            // ─── Tasbih chips row ─────────────
             SizedBox(
               height: 56,
               child: ListView.separated(
@@ -66,12 +71,10 @@ class _TasbihScreenState extends ConsumerState<TasbihScreen> {
 
             const Spacer(),
 
-            // ─── Big circular counter ─────────
             if (selected != null) _CounterSection(tasbih: selected),
 
             const Spacer(),
 
-            // ─── Footer stats ────────────────
             if (selected != null) _StatsFooter(tasbihId: selected.id),
 
             const SizedBox(height: AppConstants.spaceXl),
@@ -82,22 +85,26 @@ class _TasbihScreenState extends ConsumerState<TasbihScreen> {
   }
 
   Future<void> _confirmReset(BuildContext context) async {
+    final colors = AppColors.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppConstants.surfaceDark,
-        title: const Text(
+        backgroundColor: colors.cardBackground,
+        title: Text(
           'Reset today\'s count?',
-          style: TextStyle(color: AppConstants.textPrimary),
+          style: TextStyle(color: colors.textPrimary),
         ),
-        content: const Text(
+        content: Text(
           'This will set today\'s counter back to zero.',
-          style: TextStyle(color: AppConstants.textMuted),
+          style: TextStyle(color: colors.textMuted),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: colors.textMuted),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -133,6 +140,8 @@ class _TasbihChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -146,13 +155,11 @@ class _TasbihChip extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             color: selected
-                ? AppConstants.emeraldPrimary.withValues(alpha: 0.20)
-                : AppConstants.surfaceDark,
+                ? colors.emerald.withValues(alpha: 0.15)
+                : colors.cardBackground,
             borderRadius: BorderRadius.circular(AppConstants.radiusFull),
             border: Border.all(
-              color: selected
-                  ? AppConstants.emeraldPrimary
-                  : AppConstants.dividerColor,
+              color: selected ? colors.emerald : colors.border,
               width: selected ? 1.4 : 1.0,
             ),
           ),
@@ -162,9 +169,7 @@ class _TasbihChip extends StatelessWidget {
               Text(
                 tasbih.titleAr,
                 style: TextStyle(
-                  color: selected
-                      ? AppConstants.emeraldPrimary
-                      : AppConstants.textPrimary,
+                  color: selected ? colors.emerald : colors.textPrimary,
                   fontSize: AppConstants.fontBody,
                   fontFamily: 'NotoNaskhArabic',
                 ),
@@ -173,9 +178,7 @@ class _TasbihChip extends StatelessWidget {
               Text(
                 tasbih.titleBn,
                 style: TextStyle(
-                  color: selected
-                      ? AppConstants.emeraldPrimary
-                      : AppConstants.textMuted,
+                  color: selected ? colors.emerald : colors.textMuted,
                   fontSize: AppConstants.fontCaption,
                 ),
               ),
@@ -198,6 +201,7 @@ class _CounterSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     final count = ref.watch(tasbihSessionProvider(tasbih.id));
 
     return Column(
@@ -206,8 +210,8 @@ class _CounterSection extends ConsumerWidget {
         // Arabic title
         Text(
           tasbih.titleAr,
-          style: const TextStyle(
-            color: AppConstants.goldAccent,
+          style: TextStyle(
+            color: colors.gold,
             fontSize: 32,
             fontFamily: 'NotoNaskhArabic',
             fontWeight: FontWeight.w700,
@@ -216,11 +220,10 @@ class _CounterSection extends ConsumerWidget {
         ),
         const SizedBox(height: AppConstants.spaceSm),
 
-        // Transliteration + meaning
         Text(
           tasbih.transliteration,
-          style: const TextStyle(
-            color: AppConstants.textPrimary,
+          style: TextStyle(
+            color: colors.textPrimary,
             fontSize: AppConstants.fontSubtitle,
             fontWeight: FontWeight.w600,
           ),
@@ -229,8 +232,8 @@ class _CounterSection extends ConsumerWidget {
           const SizedBox(height: 4),
           Text(
             tasbih.meaning!,
-            style: const TextStyle(
-              color: AppConstants.textMuted,
+            style: TextStyle(
+              color: colors.textMuted,
               fontSize: AppConstants.fontCaption,
             ),
           ),
@@ -249,21 +252,15 @@ class _CounterSection extends ConsumerWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  AppConstants.emeraldPrimary.withValues(alpha: 0.20),
-                  AppConstants.surfaceDark,
+                  colors.emerald.withValues(alpha: 0.20),
+                  colors.cardBackground,
                 ],
               ),
               border: Border.all(
-                color: AppConstants.emeraldPrimary,
+                color: colors.emerald,
                 width: 3,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppConstants.emeraldPrimary.withValues(alpha: 0.25),
-                  blurRadius: 30,
-                  spreadRadius: 4,
-                ),
-              ],
+              boxShadow: colors.emeraldGlowMedium,
             ),
             child: Center(
               child: Column(
@@ -271,19 +268,19 @@ class _CounterSection extends ConsumerWidget {
                 children: [
                   Text(
                     '$count',
-                    style: const TextStyle(
-                      color: AppConstants.emeraldPrimary,
+                    style: TextStyle(
+                      color: colors.emerald,
                       fontSize: 72,
                       fontWeight: FontWeight.w700,
-                      fontFeatures: [FontFeature.tabularFigures()],
+                      fontFeatures: const [FontFeature.tabularFigures()],
                       letterSpacing: 2,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '/ ${tasbih.target}',
-                    style: const TextStyle(
-                      color: AppConstants.textMuted,
+                    style: TextStyle(
+                      color: colors.textMuted,
                       fontSize: AppConstants.fontSubtitle,
                     ),
                   ),
@@ -295,11 +292,10 @@ class _CounterSection extends ConsumerWidget {
 
         const SizedBox(height: AppConstants.spaceLg),
 
-        // Tap hint
-        const Text(
+        Text(
           'Tap to count  •  Long press to undo',
           style: TextStyle(
-            color: AppConstants.textFaint,
+            color: colors.textFaint,
             fontSize: AppConstants.fontMicro,
             letterSpacing: 0.5,
           ),
@@ -330,6 +326,7 @@ class _StatsFooter extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     final lifetimeAsync = ref.watch(tasbihLifetimeProvider(tasbihId));
 
     return Padding(
@@ -339,44 +336,45 @@ class _StatsFooter extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(AppConstants.spaceLg),
         decoration: BoxDecoration(
-          color: AppConstants.surfaceDark,
-          borderRadius: BorderRadius.circular(AppConstants.radiusLg),
-          border: Border.all(color: AppConstants.dividerColor),
+          color: colors.cardBackground,
+          borderRadius: BorderRadius.circular(AppConstants.radiusXl),
+          border: Border.all(color: colors.border, width: 1.0),
+          boxShadow: colors.cardShadow,
         ),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.emoji_events_outlined,
-              color: AppConstants.goldAccent,
+              color: colors.gold,
               size: 22,
             ),
             const SizedBox(width: AppConstants.spaceMd),
-            const Expanded(
+            Expanded(
               child: Text(
                 'Lifetime total',
                 style: TextStyle(
-                  color: AppConstants.textMuted,
+                  color: colors.textMuted,
                   fontSize: AppConstants.fontBody,
                 ),
               ),
             ),
             lifetimeAsync.when(
-              loading: () => const SizedBox(
+              loading: () => SizedBox(
                 width: 16,
                 height: 16,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: AppConstants.goldAccent,
+                  color: colors.gold,
                 ),
               ),
               error: (_, __) => const Text('—'),
               data: (total) => Text(
                 '$total',
-                style: const TextStyle(
-                  color: AppConstants.goldAccent,
+                style: TextStyle(
+                  color: colors.gold,
                   fontSize: AppConstants.fontSubtitle,
                   fontWeight: FontWeight.w700,
-                  fontFeatures: [FontFeature.tabularFigures()],
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
             ),
