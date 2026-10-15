@@ -36,10 +36,9 @@ dependencies:
   path_provider: ^2.1.4
   shared_preferences: ^2.3.2
 
-  # PDF Generation & Viewing
+  # PDF Generation & Printing (নামাজ PDF-এর জন্য)
   pdf: ^3.11.1
   printing: ^5.13.2
-  pdfrx: ^1.0.82
 
   # Notifications
   flutter_local_notifications: ^17.2.2
@@ -67,7 +66,11 @@ flutter:
   assets:
     - assets/icons/
     - assets/data/
-    - assets/quran_mushaf/
+    - assets/quran_mushaf/para_26/
+    - assets/quran_mushaf/para_27/
+    - assets/quran_mushaf/para_28/
+    - assets/quran_mushaf/para_29/
+    - assets/quran_mushaf/para_30/
 
   fonts:
     - family: Inter
