@@ -148,10 +148,19 @@ class _SurahReaderScreenState extends ConsumerState<SurahReaderScreen> {
             icon: const Icon(Icons.menu_book_rounded, size: 22),
             onPressed: () async {
               final config = await ref.read(mushafConfigProvider.future);
-              final page = config.approximatePageForSurah(widget.surahNumber);
-              if (context.mounted) {
-                context.push('/quran/mushaf?page=$page');
+              final page = config.firstPageOfSurah(widget.surahNumber);
+              if (!context.mounted) return;
+              if (page == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'এই সূরা এখনো হাফিজী পারায় নেই (শুধু পারা ২৬–৩০)',
+                    ),
+                  ),
+                );
+                return;
               }
+              context.push('/quran/mushaf?page=$page');
             },
           ),
           IconButton(
@@ -327,8 +336,7 @@ class _AyahListState extends ConsumerState<_AyahList> {
               }
 
               final ayah = ayahs[i - 1];
-              final key = widget.ayahKeys[ayah.ayahNumber] ??
-                  GlobalKey();
+              final key = widget.ayahKeys[ayah.ayahNumber] ?? GlobalKey();
               final isHighlighted = widget.initialAyah == ayah.ayahNumber;
 
               return Padding(
