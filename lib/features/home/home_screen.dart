@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/app_colors.dart';
 import '../../core/constants.dart';
 import '../../core/router.dart';
 import '../../data/models/prayer_times.dart';
@@ -11,23 +12,17 @@ import 'widgets/current_status_card.dart';
 import 'widgets/home_header.dart';
 import 'widgets/live_clock_card.dart';
 
-/// Main dashboard.
-///
-/// Layout:
-///   - Top emerald glow (behind everything)
-///   - HomeHeader (brand + location chip + settings)
-///   - LiveClockCard (clock + tri-calendar chips)
-///   - CurrentStatusCard (current + next prayer)
-///   - Tools grid (6 emerald tiles)
+/// Main dashboard — auto-adapts to dark or light mode.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     final prayerAsync = ref.watch(currentDayPrayerProvider);
 
     return Scaffold(
-      backgroundColor: AppConstants.deepDark,
+      backgroundColor: colors.pageBackground,
       body: Stack(
         children: [
           // ─── Top emerald glow ───────────────
@@ -39,7 +34,7 @@ class HomeScreen extends ConsumerWidget {
             child: IgnorePointer(
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  gradient: AppConstants.topGlow,
+                  gradient: colors.topGlow,
                 ),
               ),
             ),
@@ -48,8 +43,8 @@ class HomeScreen extends ConsumerWidget {
           // ─── Main scrollable content ────────
           SafeArea(
             child: RefreshIndicator(
-              color: AppConstants.emeraldPrimary,
-              backgroundColor: AppConstants.surfaceDark,
+              color: colors.emerald,
+              backgroundColor: colors.cardBackground,
               onRefresh: () async {
                 ref.invalidate(currentDayPrayerProvider);
                 await ref.read(currentDayPrayerProvider.future);
@@ -120,6 +115,7 @@ class _ToolsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final tools = <_ToolItem>[
       _ToolItem(
         icon: Icons.explore_outlined,
@@ -164,38 +160,16 @@ class _ToolsGrid extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: AppConstants.emeraldPrimary,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+              _dot(colors, 1.0),
               const SizedBox(width: 6),
-              Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: AppConstants.emeraldPrimary,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+              _dot(colors, 1.0),
               const SizedBox(width: 6),
-              Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color:
-                      AppConstants.emeraldPrimary.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+              _dot(colors, 0.5),
               const SizedBox(width: AppConstants.spaceMd),
-              const Text(
+              Text(
                 'টুলস',
                 style: TextStyle(
-                  color: AppConstants.textPrimary,
+                  color: colors.textPrimary,
                   fontSize: AppConstants.fontSubtitle,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.3,
@@ -205,7 +179,7 @@ class _ToolsGrid extends StatelessWidget {
               Expanded(
                 child: Container(
                   height: 1,
-                  color: AppConstants.emeraldPrimary.withValues(alpha: 0.20),
+                  color: colors.border.withValues(alpha: 0.35),
                 ),
               ),
             ],
@@ -223,6 +197,17 @@ class _ToolsGrid extends StatelessWidget {
           children: tools.map((t) => _ToolTile(item: t)).toList(),
         ),
       ],
+    );
+  }
+
+  Widget _dot(AppColors colors, double alpha) {
+    return Container(
+      width: 6,
+      height: 6,
+      decoration: BoxDecoration(
+        color: colors.emerald.withValues(alpha: alpha),
+        borderRadius: BorderRadius.circular(2),
+      ),
     );
   }
 }
@@ -246,6 +231,8 @@ class _ToolTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -253,19 +240,13 @@ class _ToolTile extends StatelessWidget {
         onTap: () => context.push(item.route),
         child: Container(
           decoration: BoxDecoration(
-            gradient: AppConstants.toolsTileGradient,
+            gradient: colors.toolTileGradient,
             borderRadius: BorderRadius.circular(AppConstants.radiusLg),
             border: Border.all(
-              color: AppConstants.emeraldPrimary.withValues(alpha: 0.35),
+              color: colors.border,
               width: 1.0,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: AppConstants.emeraldPrimary.withValues(alpha: 0.08),
-                blurRadius: 14,
-                spreadRadius: 0,
-              ),
-            ],
+            boxShadow: colors.cardShadow,
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -274,17 +255,15 @@ class _ToolTile extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color:
-                      AppConstants.emeraldPrimary.withValues(alpha: 0.14),
+                  color: colors.iconBackground,
                   borderRadius: BorderRadius.circular(AppConstants.radiusMd),
                   border: Border.all(
-                    color: AppConstants.emeraldPrimary
-                        .withValues(alpha: 0.30),
+                    color: colors.iconBorder,
                   ),
                 ),
                 child: Icon(
                   item.icon,
-                  color: AppConstants.emeraldPrimary,
+                  color: colors.emerald,
                   size: 22,
                 ),
               ),
@@ -293,8 +272,8 @@ class _ToolTile extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Text(
                   item.label,
-                  style: const TextStyle(
-                    color: AppConstants.textPrimary,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontSize: AppConstants.fontCaption,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.2,
@@ -321,11 +300,12 @@ class _HomeLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 64),
+    final colors = AppColors.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 64),
       child: Center(
         child: CircularProgressIndicator(
-          color: AppConstants.emeraldPrimary,
+          color: colors.emerald,
         ),
       ),
     );
@@ -343,12 +323,14 @@ class _HomeError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(AppConstants.spaceXl),
       decoration: BoxDecoration(
-        color: AppConstants.surfaceDark,
+        color: colors.cardBackground,
         borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         children: [
@@ -360,8 +342,8 @@ class _HomeError extends StatelessWidget {
           const SizedBox(height: AppConstants.spaceMd),
           Text(
             l10n.error,
-            style: const TextStyle(
-              color: AppConstants.textPrimary,
+            style: TextStyle(
+              color: colors.textPrimary,
               fontSize: AppConstants.fontSubtitle,
               fontWeight: FontWeight.w600,
             ),
@@ -370,8 +352,8 @@ class _HomeError extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppConstants.textMuted,
+            style: TextStyle(
+              color: colors.textMuted,
               fontSize: AppConstants.fontCaption,
             ),
           ),
