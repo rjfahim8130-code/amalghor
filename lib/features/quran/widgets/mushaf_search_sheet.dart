@@ -182,6 +182,12 @@ class _MushafSearchSheetState extends State<MushafSearchSheet> {
     final hasSurah = surahText.isNotEmpty;
     final hasAyah = ayahText.isNotEmpty;
 
+    // Check if user provided only Ayah without Surah
+    if (hasAyah && !hasSurah) {
+      setState(() => _error = 'সূরার নাম লিখুন, তারপর আয়াত নম্বর দিন');
+      return;
+    }
+
     // Priority: surah(+ayah) > para(+page) > page only > para only
     if (hasSurah) {
       final surah = _resolveSurah(surahText);
@@ -197,8 +203,7 @@ class _MushafSearchSheetState extends State<MushafSearchSheet> {
         }
         final page = cfg.pageForAyah(surah, ayah);
         if (page == null) {
-          setState(() =>
-              _error = 'এই আয়াত পারা ২৬–৩০-এ নেই');
+          setState(() => _error = 'এই আয়াত পারা ২৬–৩০-এ নেই');
           return;
         }
         widget.onGoToPage(page);
@@ -348,7 +353,7 @@ class _MushafSearchSheetState extends State<MushafSearchSheet> {
                 ),
               ),
               const Spacer(),
-              Text(
+              const Text(
                 'পারা ২৬–৩০',
                 style: TextStyle(color: Colors.white38, fontSize: 11),
               ),
