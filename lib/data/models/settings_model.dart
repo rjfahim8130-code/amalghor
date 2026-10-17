@@ -1,46 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
-/// School of jurisprudence for Asr calculation.
-enum MadhhabType {
-  /// Asr shadow factor = 2 (Hanafi).
-  hanafi,
+enum MadhhabType { hanafi, shafii }
 
-  /// Asr shadow factor = 1 (Shafi'i, Maliki, Hanbali).
-  shafii,
-}
-
-/// Astronomical calculation method standard.
 enum CalcMethodType {
-  /// University of Islamic Sciences, Karachi — widely used in South Asia.
   karachi,
-
-  /// Muslim World League — Europe and Far East.
   mwl,
-
-  /// Umm al-Qura, Makkah — Arabian Peninsula.
   ummAlQura,
-
-  /// Egyptian General Authority of Survey.
   egyptian,
-
-  /// Islamic Society of North America.
   isna,
-
-  /// Institute of Geophysics, University of Tehran.
   tehran,
-
-  /// Shia Ithna-Ashari, Leva Institute, Qum.
   shiaIthnaAshari,
 }
 
-/// Primary calendar used for display and PDF headers.
-enum CalendarPrimary {
-  english,
-  bangla,
-  hijri,
-}
+enum CalendarPrimary { english, bangla, hijri }
 
-/// User-selectable app-wide configuration.
 @immutable
 class SettingsModel {
   final Locale locale;
@@ -49,7 +23,7 @@ class SettingsModel {
   final CalcMethodType calcMethod;
   final CalendarPrimary calendarPrimary;
 
-  // Notification toggles
+  // ─── Prayer notification toggles ─────────────
   final bool notifFajr;
   final bool notifDhuhr;
   final bool notifAsr;
@@ -57,9 +31,21 @@ class SettingsModel {
   final bool notifIsha;
   final bool notifSehri;
   final bool notifIftar;
+  final bool notifTahajjud;
+
+  // ─── Per-prayer reminder offsets (minutes) ───
+  /// Positive = before the prayer (notification arrives X minutes earlier).
+  final int offsetFajr;
+  final int offsetDhuhr;
+  final int offsetAsr;
+  final int offsetMaghrib;
+  final int offsetIsha;
+  final int offsetSehri;
+  final int offsetIftar;
+  final int offsetTahajjud;
 
   const SettingsModel({
-    this.locale = const Locale('en'),
+    this.locale = const Locale('bn'),
     this.themeMode = ThemeMode.dark,
     this.madhhab = MadhhabType.hanafi,
     this.calcMethod = CalcMethodType.karachi,
@@ -71,9 +57,41 @@ class SettingsModel {
     this.notifIsha = true,
     this.notifSehri = true,
     this.notifIftar = true,
+    this.notifTahajjud = false,
+    this.offsetFajr = 0,
+    this.offsetDhuhr = 0,
+    this.offsetAsr = 0,
+    this.offsetMaghrib = 0,
+    this.offsetIsha = 0,
+    this.offsetSehri = 15,
+    this.offsetIftar = 10,
+    this.offsetTahajjud = 0,
   });
 
   String get languageCode => locale.languageCode;
+
+  int offsetFor(String key) {
+    switch (key) {
+      case 'fajr':
+        return offsetFajr;
+      case 'dhuhr':
+        return offsetDhuhr;
+      case 'asr':
+        return offsetAsr;
+      case 'maghrib':
+        return offsetMaghrib;
+      case 'isha':
+        return offsetIsha;
+      case 'sehri':
+        return offsetSehri;
+      case 'iftar':
+        return offsetIftar;
+      case 'tahajjud':
+        return offsetTahajjud;
+      default:
+        return 0;
+    }
+  }
 
   Map<String, dynamic> toMap() => {
         'locale': locale.languageCode,
@@ -88,11 +106,20 @@ class SettingsModel {
         'notifIsha': notifIsha,
         'notifSehri': notifSehri,
         'notifIftar': notifIftar,
+        'notifTahajjud': notifTahajjud,
+        'offsetFajr': offsetFajr,
+        'offsetDhuhr': offsetDhuhr,
+        'offsetAsr': offsetAsr,
+        'offsetMaghrib': offsetMaghrib,
+        'offsetIsha': offsetIsha,
+        'offsetSehri': offsetSehri,
+        'offsetIftar': offsetIftar,
+        'offsetTahajjud': offsetTahajjud,
       };
 
   factory SettingsModel.fromMap(Map<String, dynamic> m) {
     return SettingsModel(
-      locale: Locale(m['locale'] as String? ?? 'en'),
+      locale: Locale(m['locale'] as String? ?? 'bn'),
       themeMode: ThemeMode.values.firstWhere(
         (e) => e.name == m['themeMode'],
         orElse: () => ThemeMode.dark,
@@ -116,6 +143,15 @@ class SettingsModel {
       notifIsha: m['notifIsha'] as bool? ?? true,
       notifSehri: m['notifSehri'] as bool? ?? true,
       notifIftar: m['notifIftar'] as bool? ?? true,
+      notifTahajjud: m['notifTahajjud'] as bool? ?? false,
+      offsetFajr: m['offsetFajr'] as int? ?? 0,
+      offsetDhuhr: m['offsetDhuhr'] as int? ?? 0,
+      offsetAsr: m['offsetAsr'] as int? ?? 0,
+      offsetMaghrib: m['offsetMaghrib'] as int? ?? 0,
+      offsetIsha: m['offsetIsha'] as int? ?? 0,
+      offsetSehri: m['offsetSehri'] as int? ?? 15,
+      offsetIftar: m['offsetIftar'] as int? ?? 10,
+      offsetTahajjud: m['offsetTahajjud'] as int? ?? 0,
     );
   }
 
@@ -132,6 +168,15 @@ class SettingsModel {
     bool? notifIsha,
     bool? notifSehri,
     bool? notifIftar,
+    bool? notifTahajjud,
+    int? offsetFajr,
+    int? offsetDhuhr,
+    int? offsetAsr,
+    int? offsetMaghrib,
+    int? offsetIsha,
+    int? offsetSehri,
+    int? offsetIftar,
+    int? offsetTahajjud,
   }) {
     return SettingsModel(
       locale: locale ?? this.locale,
@@ -146,6 +191,15 @@ class SettingsModel {
       notifIsha: notifIsha ?? this.notifIsha,
       notifSehri: notifSehri ?? this.notifSehri,
       notifIftar: notifIftar ?? this.notifIftar,
+      notifTahajjud: notifTahajjud ?? this.notifTahajjud,
+      offsetFajr: offsetFajr ?? this.offsetFajr,
+      offsetDhuhr: offsetDhuhr ?? this.offsetDhuhr,
+      offsetAsr: offsetAsr ?? this.offsetAsr,
+      offsetMaghrib: offsetMaghrib ?? this.offsetMaghrib,
+      offsetIsha: offsetIsha ?? this.offsetIsha,
+      offsetSehri: offsetSehri ?? this.offsetSehri,
+      offsetIftar: offsetIftar ?? this.offsetIftar,
+      offsetTahajjud: offsetTahajjud ?? this.offsetTahajjud,
     );
   }
 
@@ -157,28 +211,14 @@ class SettingsModel {
           other.themeMode == themeMode &&
           other.madhhab == madhhab &&
           other.calcMethod == calcMethod &&
-          other.calendarPrimary == calendarPrimary &&
-          other.notifFajr == notifFajr &&
-          other.notifDhuhr == notifDhuhr &&
-          other.notifAsr == notifAsr &&
-          other.notifMaghrib == notifMaghrib &&
-          other.notifIsha == notifIsha &&
-          other.notifSehri == notifSehri &&
-          other.notifIftar == notifIftar;
+          other.calendarPrimary == calendarPrimary;
 
   @override
-  int get hashCode => Object.hashAll([
+  int get hashCode => Object.hash(
         locale,
         themeMode,
         madhhab,
         calcMethod,
         calendarPrimary,
-        notifFajr,
-        notifDhuhr,
-        notifAsr,
-        notifMaghrib,
-        notifIsha,
-        notifSehri,
-        notifIftar,
-      ]);
+      );
 }
