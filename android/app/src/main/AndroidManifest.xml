@@ -9,11 +9,7 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.INTERNET" />
-
-    <!-- Battery optimization: request user to allow unrestricted background scheduling -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-
-    <!-- Full-screen intent permission (Android 14+) for full alarm behavior -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
     <uses-feature
@@ -52,13 +48,10 @@
             </intent-filter>
         </activity>
 
-        <!-- Override the default Flutter launch meta-data to force our
-             AMOLED background instead of the default white. -->
         <meta-data
             android:name="io.flutter.embedding.android.SplashScreenDrawable"
             android:resource="@drawable/launch_background" />
 
-        <!-- flutter_local_notifications receivers -->
         <receiver
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"
             android:exported="false" />
@@ -74,7 +67,6 @@
             </intent-filter>
         </receiver>
 
-        <!-- Exact alarm receiver (Android 14+ needs this) -->
         <receiver
             android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver"
             android:exported="false" />
