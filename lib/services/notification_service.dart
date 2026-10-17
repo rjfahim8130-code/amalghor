@@ -9,6 +9,12 @@ import '../core/constants.dart';
 import '../data/models/prayer_times.dart';
 
 /// Singleton wrapper around flutter_local_notifications.
+///
+/// Provides scheduling for:
+///   - the 5 daily prayers
+///   - Sehri reminder (15 min before Imsak)
+///   - Iftar reminder (10 min before Maghrib)
+///   - Tahajjud reminder (last third of night)
 class NotificationService {
   NotificationService._();
   static final NotificationService instance = NotificationService._();
@@ -26,6 +32,7 @@ class NotificationService {
   static const int _idSehri = 1101;
   static const int _idIftar = 1102;
   static const int _idTahajjud = 1103;
+  static const int _idTest = 9999;
 
   Future<void> initialize() async {
     if (_initialized) return;
@@ -50,15 +57,33 @@ class NotificationService {
     );
 
     await _createAndroidChannel();
+    await _requestExactAlarmPermission();
     _initialized = true;
   }
 
+  /// Ask for exact-alarm permission (Android 12+).
+  Future<void> _requestExactAlarmPermission() async {
+    if (!Platform.isAndroid) return;
+
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    await android?.requestExactAlarmsPermission();
+  }
+
+  /// Ask the OS for notification permission (Android 13+ / iOS).
   Future<bool> requestPermissions() async {
     if (Platform.isAndroid) {
       final android = _plugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
-      final granted = await android?.requestNotificationsPermission();
-      return granted ?? false;
+
+      // Notifications permission
+      final notificationsGranted =
+          await android?.requestNotificationsPermission();
+
+      // Exact alarms permission
+      await android?.requestExactAlarmsPermission();
+
+      return notificationsGranted ?? false;
     }
     if (Platform.isIOS) {
       final ios = _plugin.resolvePlatformSpecificImplementation<
@@ -75,6 +100,7 @@ class NotificationService {
 
   Future<void> cancelAll() => _plugin.cancelAll();
 
+  /// Schedule the daily prayer + reminder notifications for [times].
   Future<void> scheduleDaily({
     required PrayerTimes times,
     required String Function(String key) labelBuilder,
@@ -160,10 +186,25 @@ class NotificationService {
           id: _idTahajjud,
           when: t,
           title: labelBuilder('tahajjud'),
-          body: 'রাতের শেষ ১/৩ শুরু — তাহাজ্জুদের সময়।',
+          body: 'রাতের শেষ ১/৩ শুরু।',
         );
       }
     }
+  }
+
+  /// Schedule a single test notification 10 seconds from now.
+  /// Useful for verifying the whole pipeline works.
+  Future<void> scheduleTest({int seconds = 10}) async {
+    if (!_initialized) await initialize();
+    await _plugin.cancel(_idTest);
+
+    final when = DateTime.now().add(Duration(seconds: seconds));
+    await _scheduleAt(
+      id: _idTest,
+      when: when,
+      title: 'আমলঘর',
+      body: 'টেস্ট নোটিফিকেশন — কাজ করছে! 🕌',
+    );
   }
 
   Future<void> _scheduleAt({
@@ -186,10 +227,11 @@ class NotificationService {
           AppConstants.notifChannelId,
           AppConstants.notifChannelName,
           channelDescription: AppConstants.notifChannelDesc,
-          importance: Importance.high,
-          priority: Priority.high,
+          importance: Importance.max,
+          priority: Priority.max,
           playSound: true,
           enableVibration: true,
+          category: AndroidNotificationCategory.alarm,
         ),
         iOS: DarwinNotificationDetails(
           presentAlert: true,
@@ -200,7 +242,6 @@ class NotificationService {
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.time,
     );
   }
 
@@ -210,7 +251,7 @@ class NotificationService {
       AppConstants.notifChannelId,
       AppConstants.notifChannelName,
       description: AppConstants.notifChannelDesc,
-      importance: Importance.high,
+      importance: Importance.max,
       playSound: true,
     );
     await _plugin
