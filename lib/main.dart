@@ -56,3 +56,20 @@ Future<void> main() async {
   runApp(
     UncontrolledProviderScope(
       container: container,
+      child: const AmalghorApp(),
+    ),
+  );
+}
+
+Future<void> _bootstrapPrayerNotifications(
+  ProviderContainer container,
+) async {
+  try {
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    await container.read(notificationProvider.notifier).requestPermission();
+    await container.read(currentDayPrayerProvider.future);
+    await container.read(notificationProvider.notifier).reschedule();
+  } catch (_) {
+    // Never block the app.
+  }
+}
