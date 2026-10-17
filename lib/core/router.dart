@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/alarm/alarm_screen.dart';
 import '../features/amol/amol_screen.dart';
 import '../features/asma/asma_screen.dart';
 import '../features/calendar/islamic_calendar_screen.dart';
@@ -10,13 +11,12 @@ import '../features/dua/dua_detail_screen.dart';
 import '../features/dua/dua_list_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/location/location_picker_screen.dart';
+import '../features/notification/notification_screen.dart';
 import '../features/pdf/pdf_preview_screen.dart';
 import '../features/pdf/pdf_settings_screen.dart';
 import '../features/prayer/prayer_screen.dart';
 import '../features/qibla/qibla_screen.dart';
 import '../features/quran/bookmark_feature.dart';
-import '../features/quran/mushaf_reader_screen.dart';
-import '../features/quran/quran_mode_select_screen.dart';
 import '../features/quran/quran_screen.dart';
 import '../features/quran/surah_reader_screen.dart';
 import '../features/ramadan/ramadan_screen.dart';
@@ -29,13 +29,12 @@ class Routes {
   static const String home = '/';
   static const String prayer = '/prayer';
   static const String quran = '/quran';
-  static const String quranRegular = '/quran/regular';
-  static const String quranMushaf = '/quran/mushaf';
-  static const String quranBookmarks = '/quran/bookmarks';
   static const String ramadan = '/ramadan';
   static const String amol = '/amol';
   static const String settings = '/settings';
   static const String location = '/location';
+  static const String quranBookmarks = '/quran/bookmarks';
+  static const String surahReader = '/quran/:surahNumber';
   static const String pdfSettings = '/pdf';
   static const String pdfPreview = '/pdf/preview';
   static const String qibla = '/qibla';
@@ -45,6 +44,8 @@ class Routes {
   static const String dua = '/dua';
   static const String duaCategory = '/dua/category/:categoryId';
   static const String duaDetail = '/dua/detail/:duaId';
+  static const String alarms = '/alarms';
+  static const String notifications = '/notifications';
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -68,23 +69,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: Routes.quran,
             pageBuilder: (context, state) =>
-                const NoTransitionPage(child: QuranModeSelectScreen()),
+                const NoTransitionPage(child: QuranScreen()),
             routes: [
-              GoRoute(
-                path: 'regular',
-                builder: (context, state) => const QuranScreen(),
-              ),
               GoRoute(
                 path: 'bookmarks',
                 builder: (context, state) => const BookmarkScreen(),
-              ),
-              GoRoute(
-                path: 'mushaf',
-                builder: (context, state) {
-                  final pageParam = state.uri.queryParameters['page'];
-                  final page = int.tryParse(pageParam ?? '');
-                  return MushafReaderScreen(initialPage: page);
-                },
               ),
               GoRoute(
                 path: ':surahNumber',
@@ -115,7 +104,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
-
       GoRoute(
         path: Routes.settings,
         builder: (context, state) => const SettingsScreen(),
@@ -154,18 +142,27 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: Routes.duaCategory,
-        builder: (context, state) => DuaCategoryScreen(
-          categoryId: state.pathParameters['categoryId'] ?? '',
-        ),
+        builder: (context, state) {
+          final id = state.pathParameters['categoryId'] ?? '';
+          return DuaCategoryScreen(categoryId: id);
+        },
       ),
       GoRoute(
         path: Routes.duaDetail,
-        builder: (context, state) => DuaDetailScreen(
-          duaId: state.pathParameters['duaId'] ?? '',
-        ),
+        builder: (context, state) {
+          final id = state.pathParameters['duaId'] ?? '';
+          return DuaDetailScreen(duaId: id);
+        },
+      ),
+      GoRoute(
+        path: Routes.alarms,
+        builder: (context, state) => const AlarmScreen(),
+      ),
+      GoRoute(
+        path: Routes.notifications,
+        builder: (context, state) => const NotificationScreen(),
       ),
     ],
-
     errorBuilder: (context, state) => Scaffold(
       backgroundColor: const Color(0xFF0B0F12),
       body: Center(
@@ -186,15 +183,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '${state.uri}',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF9CA3AF),
-                  fontSize: 12,
                 ),
               ),
               const SizedBox(height: 24),
