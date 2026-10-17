@@ -57,6 +57,10 @@ class SettingsNotifier extends StateNotifier<SettingsModel> {
     await _repo.save(state);
   }
 
+  // ─────────────────────────────────────────────
+  // NOTIFICATION TOGGLES
+  // ─────────────────────────────────────────────
+
   Future<void> setNotifFajr(bool v) async {
     state = state.copyWith(notifFajr: v);
     await _repo.save(state);
@@ -89,6 +93,48 @@ class SettingsNotifier extends StateNotifier<SettingsModel> {
 
   Future<void> setNotifIftar(bool v) async {
     state = state.copyWith(notifIftar: v);
+    await _repo.save(state);
+  }
+
+  Future<void> setNotifTahajjud(bool v) async {
+    state = state.copyWith(notifTahajjud: v);
+    await _repo.save(state);
+  }
+
+  // ─────────────────────────────────────────────
+  // NOTIFICATION OFFSETS (minutes before prayer)
+  // ─────────────────────────────────────────────
+
+  /// Set the reminder offset (minutes) for a specific prayer.
+  /// `minutes` must be 0..120.
+  Future<void> setOffset(String key, int minutes) async {
+    final clamped = minutes.clamp(0, 120);
+    switch (key) {
+      case 'fajr':
+        state = state.copyWith(offsetFajr: clamped);
+        break;
+      case 'dhuhr':
+        state = state.copyWith(offsetDhuhr: clamped);
+        break;
+      case 'asr':
+        state = state.copyWith(offsetAsr: clamped);
+        break;
+      case 'maghrib':
+        state = state.copyWith(offsetMaghrib: clamped);
+        break;
+      case 'isha':
+        state = state.copyWith(offsetIsha: clamped);
+        break;
+      case 'sehri':
+        state = state.copyWith(offsetSehri: clamped);
+        break;
+      case 'iftar':
+        state = state.copyWith(offsetIftar: clamped);
+        break;
+      case 'tahajjud':
+        state = state.copyWith(offsetTahajjud: clamped);
+        break;
+    }
     await _repo.save(state);
   }
 
