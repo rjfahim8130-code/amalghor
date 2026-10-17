@@ -10,6 +10,12 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Battery optimization: request user to allow unrestricted background scheduling -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!-- Full-screen intent permission (Android 14+) for full alarm behavior -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+
     <uses-feature
         android:name="android.hardware.sensor.compass"
         android:required="false" />
@@ -32,6 +38,8 @@
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
             android:windowSoftInputMode="adjustResize">
 
             <meta-data
@@ -50,6 +58,7 @@
             android:name="io.flutter.embedding.android.SplashScreenDrawable"
             android:resource="@drawable/launch_background" />
 
+        <!-- flutter_local_notifications receivers -->
         <receiver
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"
             android:exported="false" />
@@ -64,6 +73,11 @@
                 <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
             </intent-filter>
         </receiver>
+
+        <!-- Exact alarm receiver (Android 14+ needs this) -->
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver"
+            android:exported="false" />
 
         <meta-data
             android:name="flutterEmbedding"
