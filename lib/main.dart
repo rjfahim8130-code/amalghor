@@ -9,9 +9,10 @@ import 'core/constants.dart';
 import 'providers/notification_provider.dart';
 import 'providers/prayer_provider.dart';
 import 'providers/settings_provider.dart';
+import 'services/alarm_service.dart';
+import 'services/custom_notification_service.dart';
 import 'services/notification_service.dart';
 
-/// Application entry point.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -33,11 +34,13 @@ Future<void> main() async {
 
   final prefs = await SharedPreferences.getInstance();
 
-  // Initialize notifications (non-fatal on failure).
+  // Initialize all three notification channels.
   try {
     await NotificationService.instance.initialize();
+    await AlarmService.instance.initialize(prefs);
+    await CustomNotificationService.instance.initialize(prefs);
   } catch (_) {
-    // Ignore — app still works without notifications.
+    // Non-fatal.
   }
 
   final container = ProviderContainer(
@@ -46,35 +49,10 @@ Future<void> main() async {
     ],
   );
 
-  // Schedule prayer notifications in the background on launch.
   WidgetsBinding.instance.addPostFrameCallback((_) {
-    _bootstrapNotifications(container);
+    _bootstrapPrayerNotifications(container);
   });
 
   runApp(
     UncontrolledProviderScope(
       container: container,
-      child: const AmalghorApp(),
-    ),
-  );
-}
-
-/// Ask for permissions once (silently — Android will prompt), then
-/// schedule today's prayer notifications.
-Future<void> _bootstrapNotifications(ProviderContainer container) async {
-  try {
-    // Small delay to let the first frame settle.
-    await Future<void>.delayed(const Duration(milliseconds: 600));
-
-    // Ask for permission (silent no-op if already granted).
-    await container.read(notificationProvider.notifier).requestPermission();
-
-    // Wait for prayer times to be available.
-    await container.read(currentDayPrayerProvider.future);
-
-    // Schedule notifications.
-    await container.read(notificationProvider.notifier).reschedule();
-  } catch (_) {
-    // Never block the app on a notification failure.
-  }
-}
