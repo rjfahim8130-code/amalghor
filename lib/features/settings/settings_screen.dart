@@ -105,13 +105,19 @@ class SettingsScreen extends ConsumerWidget {
             title: l10n.madhhabHanafi,
             value: MadhhabType.hanafi,
             group: settings.madhhab,
-            onChanged: notifier.setMadhhab,
+            onChanged: (v) async {
+              await notifier.setMadhhab(v);
+              await ref.read(notificationProvider.notifier).reschedule();
+            },
           ),
           _RadioTile<MadhhabType>(
             title: l10n.madhhabShafii,
             value: MadhhabType.shafii,
             group: settings.madhhab,
-            onChanged: notifier.setMadhhab,
+            onChanged: (v) async {
+              await notifier.setMadhhab(v);
+              await ref.read(notificationProvider.notifier).reschedule();
+            },
           ),
 
           const SizedBox(height: AppConstants.spaceLg),
@@ -122,31 +128,46 @@ class SettingsScreen extends ConsumerWidget {
             title: l10n.methodKarachi,
             value: CalcMethodType.karachi,
             group: settings.calcMethod,
-            onChanged: notifier.setCalcMethod,
+            onChanged: (v) async {
+              await notifier.setCalcMethod(v);
+              await ref.read(notificationProvider.notifier).reschedule();
+            },
           ),
           _RadioTile<CalcMethodType>(
             title: l10n.methodMWL,
             value: CalcMethodType.mwl,
             group: settings.calcMethod,
-            onChanged: notifier.setCalcMethod,
+            onChanged: (v) async {
+              await notifier.setCalcMethod(v);
+              await ref.read(notificationProvider.notifier).reschedule();
+            },
           ),
           _RadioTile<CalcMethodType>(
             title: l10n.methodUmmAlQura,
             value: CalcMethodType.ummAlQura,
             group: settings.calcMethod,
-            onChanged: notifier.setCalcMethod,
+            onChanged: (v) async {
+              await notifier.setCalcMethod(v);
+              await ref.read(notificationProvider.notifier).reschedule();
+            },
           ),
           _RadioTile<CalcMethodType>(
             title: l10n.methodEgyptian,
             value: CalcMethodType.egyptian,
             group: settings.calcMethod,
-            onChanged: notifier.setCalcMethod,
+            onChanged: (v) async {
+              await notifier.setCalcMethod(v);
+              await ref.read(notificationProvider.notifier).reschedule();
+            },
           ),
           _RadioTile<CalcMethodType>(
             title: l10n.methodISNA,
             value: CalcMethodType.isna,
             group: settings.calcMethod,
-            onChanged: notifier.setCalcMethod,
+            onChanged: (v) async {
+              await notifier.setCalcMethod(v);
+              await ref.read(notificationProvider.notifier).reschedule();
+            },
           ),
 
           const SizedBox(height: AppConstants.spaceLg),
@@ -170,68 +191,6 @@ class SettingsScreen extends ConsumerWidget {
             value: CalendarPrimary.hijri,
             group: settings.calendarPrimary,
             onChanged: notifier.setCalendarPrimary,
-          ),
-
-          const SizedBox(height: AppConstants.spaceLg),
-
-          // ─── Notifications ────────────────────
-          _SectionHeader(title: l10n.settingsNotifications),
-          const _NotificationPermissionBanner(),
-          _SwitchTile(
-            title: l10n.notificationFajr,
-            value: settings.notifFajr,
-            onChanged: (v) async {
-              await notifier.setNotifFajr(v);
-              ref.read(notificationProvider.notifier).reschedule();
-            },
-          ),
-          _SwitchTile(
-            title: l10n.notificationDhuhr,
-            value: settings.notifDhuhr,
-            onChanged: (v) async {
-              await notifier.setNotifDhuhr(v);
-              ref.read(notificationProvider.notifier).reschedule();
-            },
-          ),
-          _SwitchTile(
-            title: l10n.notificationAsr,
-            value: settings.notifAsr,
-            onChanged: (v) async {
-              await notifier.setNotifAsr(v);
-              ref.read(notificationProvider.notifier).reschedule();
-            },
-          ),
-          _SwitchTile(
-            title: l10n.notificationMaghrib,
-            value: settings.notifMaghrib,
-            onChanged: (v) async {
-              await notifier.setNotifMaghrib(v);
-              ref.read(notificationProvider.notifier).reschedule();
-            },
-          ),
-          _SwitchTile(
-            title: l10n.notificationIsha,
-            value: settings.notifIsha,
-            onChanged: (v) async {
-              await notifier.setNotifIsha(v);
-              ref.read(notificationProvider.notifier).reschedule();
-            },
-          ),
-          _SwitchTile(
-            title: l10n.notificationSehri,
-            value: settings.notifSehri,
-            onChanged: (v) async {
-              await notifier.setNotifSehri(v);
-              ref.read(notificationProvider.notifier).reschedule();
-            },
-          ),
-          _SwitchTile(
-            title: l10n.notificationIftar,
-            value: settings.notifIftar,
-            onChanged: (v) async {
-              await notifier.setNotifIftar(v);
-              ref.read(notificationProvider.notifier).reschedule();
-            },
           ),
 
           const SizedBox(height: AppConstants.spaceLg),
@@ -268,95 +227,6 @@ class SettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: AppConstants.spaceXl),
         ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// PERMISSION BANNER
-// ─────────────────────────────────────────────
-
-class _NotificationPermissionBanner extends ConsumerWidget {
-  const _NotificationPermissionBanner();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = AppColors.of(context);
-    final status = ref.watch(notificationProvider);
-
-    if (status == NotificationPermissionStatus.granted) {
-      return const SizedBox.shrink();
-    }
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppConstants.spaceLg,
-        AppConstants.spaceSm,
-        AppConstants.spaceLg,
-        AppConstants.spaceMd,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-          onTap: () async {
-            final granted = await ref
-                .read(notificationProvider.notifier)
-                .requestPermission();
-            if (granted) {
-              await ref.read(notificationProvider.notifier).reschedule();
-            }
-          },
-          child: Container(
-            padding: const EdgeInsets.all(AppConstants.spaceLg),
-            decoration: BoxDecoration(
-              color: colors.gold.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-              border: Border.all(
-                color: colors.gold.withValues(alpha: 0.45),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.notifications_active_outlined,
-                  color: colors.gold,
-                  size: 22,
-                ),
-                const SizedBox(width: AppConstants.spaceMd),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Enable Notifications',
-                        style: TextStyle(
-                          color: colors.textPrimary,
-                          fontSize: AppConstants.fontBody,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Tap to allow prayer time alerts',
-                        style: TextStyle(
-                          color: colors.textMuted,
-                          fontSize: AppConstants.fontCaption,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.chevron_right,
-                  color: colors.gold,
-                  size: 20,
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -443,43 +313,6 @@ class _RadioTile<T> extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _SwitchTile extends StatelessWidget {
-  final String title;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const _SwitchTile({
-    required this.title,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.spaceLg,
-        vertical: AppConstants.spaceSm,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              title,
-              style: TextStyle(
-                color: colors.textPrimary,
-                fontSize: AppConstants.fontBody,
-              ),
-            ),
-          ),
-          Switch(value: value, onChanged: onChanged),
-        ],
       ),
     );
   }
