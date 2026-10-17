@@ -37,6 +37,9 @@ class NotificationNotifier
     return granted;
   }
 
+  /// Fire a test notification 10 seconds from now.
+  Future<void> sendTest() => _service.scheduleTest();
+
   /// Reschedule everything for today based on the current prayer times
   /// and the user's per-prayer toggles.
   Future<void> reschedule() async {
@@ -108,12 +111,4 @@ final notificationProvider = StateNotifierProvider<
 final notificationGrantedProvider = Provider<bool>((ref) {
   final status = ref.watch(notificationProvider);
   return status == NotificationPermissionStatus.granted;
-});
-
-/// Provider watching the current location so we can invalidate
-/// schedules whenever the location changes.
-final notificationRescheduleTriggerProvider = Provider<void>((ref) {
-  // Watch location and settings — when they change, schedule is stale.
-  ref.watch(currentLocationProvider);
-  ref.watch(settingsProvider);
 });
