@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app.dart';
 import 'core/constants.dart';
 import 'providers/notification_provider.dart';
+import 'providers/prayer_provider.dart';
 import 'providers/settings_provider.dart';
 import 'services/notification_service.dart';
 
@@ -32,10 +33,11 @@ Future<void> main() async {
 
   final prefs = await SharedPreferences.getInstance();
 
+  // Initialize notifications (non-fatal on failure).
   try {
     await NotificationService.instance.initialize();
   } catch (_) {
-    // Non-fatal.
+    // Ignore — app still works without notifications.
   }
 
   final container = ProviderContainer(
@@ -46,7 +48,7 @@ Future<void> main() async {
 
   // Schedule prayer notifications in the background on launch.
   WidgetsBinding.instance.addPostFrameCallback((_) {
-    _scheduleNotifications(container);
+    _bootstrapNotifications(container);
   });
 
   runApp(
@@ -57,8 +59,20 @@ Future<void> main() async {
   );
 }
 
-Future<void> _scheduleNotifications(ProviderContainer container) async {
+/// Ask for permissions once (silently — Android will prompt), then
+/// schedule today's prayer notifications.
+Future<void> _bootstrapNotifications(ProviderContainer container) async {
   try {
+    // Small delay to let the first frame settle.
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+
+    // Ask for permission (silent no-op if already granted).
+    await container.read(notificationProvider.notifier).requestPermission();
+
+    // Wait for prayer times to be available.
+    await container.read(currentDayPrayerProvider.future);
+
+    // Schedule notifications.
     await container.read(notificationProvider.notifier).reschedule();
   } catch (_) {
     // Never block the app on a notification failure.
