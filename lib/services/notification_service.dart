@@ -6,15 +6,11 @@ import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../core/constants.dart';
+import '../core/notification_messages.dart';
 import '../data/models/prayer_times.dart';
+import '../data/models/settings_model.dart';
 
-/// Singleton wrapper around flutter_local_notifications.
-///
-/// Provides scheduling for:
-///   - the 5 daily prayers
-///   - Sehri reminder (15 min before Imsak)
-///   - Iftar reminder (10 min before Maghrib)
-///   - Tahajjud reminder (last third of night)
+/// Prayer reminder notification service.
 class NotificationService {
   NotificationService._();
   static final NotificationService instance = NotificationService._();
@@ -32,14 +28,14 @@ class NotificationService {
   static const int _idSehri = 1101;
   static const int _idIftar = 1102;
   static const int _idTahajjud = 1103;
-  static const int _idTest = 9999;
 
   Future<void> initialize() async {
     if (_initialized) return;
 
     tz_data.initializeTimeZones();
 
-    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidInit =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosInit = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -61,28 +57,20 @@ class NotificationService {
     _initialized = true;
   }
 
-  /// Ask for exact-alarm permission (Android 12+).
   Future<void> _requestExactAlarmPermission() async {
     if (!Platform.isAndroid) return;
-
     final android = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
     await android?.requestExactAlarmsPermission();
   }
 
-  /// Ask the OS for notification permission (Android 13+ / iOS).
   Future<bool> requestPermissions() async {
     if (Platform.isAndroid) {
       final android = _plugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
-
-      // Notifications permission
       final notificationsGranted =
           await android?.requestNotificationsPermission();
-
-      // Exact alarms permission
       await android?.requestExactAlarmsPermission();
-
       return notificationsGranted ?? false;
     }
     if (Platform.isIOS) {
@@ -100,111 +88,140 @@ class NotificationService {
 
   Future<void> cancelAll() => _plugin.cancelAll();
 
-  /// Schedule the daily prayer + reminder notifications for [times].
+  /// Schedule prayer notifications using the user's per-prayer toggles
+  /// and custom offsets.
   Future<void> scheduleDaily({
     required PrayerTimes times,
-    required String Function(String key) labelBuilder,
-    bool fajr = true,
-    bool dhuhr = true,
-    bool asr = true,
-    bool maghrib = true,
-    bool isha = true,
-    bool sehri = true,
-    bool iftar = true,
-    bool tahajjud = false,
+    required SettingsModel settings,
   }) async {
     if (!_initialized) await initialize();
 
     await cancelAll();
 
-    if (fajr) {
+    // ─── Fajr ──────────────────────────────
+    if (settings.notifFajr) {
+      final msg = NotificationMessages.prayer(
+        prayerKey: 'fajr',
+        offsetMinutes: settings.offsetFajr,
+      );
+      final when =
+          times.fajr.add(Duration(minutes: -settings.offsetFajr));
       await _scheduleAt(
         id: _idFajr,
-        when: times.fajr,
-        title: labelBuilder('fajr'),
-        body: '${labelBuilder('fajr')} time has started.',
+        when: when,
+        title: msg.title,
+        body: msg.body,
       );
     }
-    if (dhuhr) {
+
+    // ─── Dhuhr ─────────────────────────────
+    if (settings.notifDhuhr) {
+      final msg = NotificationMessages.prayer(
+        prayerKey: 'dhuhr',
+        offsetMinutes: settings.offsetDhuhr,
+      );
+      final when =
+          times.dhuhr.add(Duration(minutes: -settings.offsetDhuhr));
       await _scheduleAt(
         id: _idDhuhr,
-        when: times.dhuhr,
-        title: labelBuilder('dhuhr'),
-        body: '${labelBuilder('dhuhr')} time has started.',
+        when: when,
+        title: msg.title,
+        body: msg.body,
       );
     }
-    if (asr) {
+
+    // ─── Asr ───────────────────────────────
+    if (settings.notifAsr) {
+      final msg = NotificationMessages.prayer(
+        prayerKey: 'asr',
+        offsetMinutes: settings.offsetAsr,
+      );
+      final when =
+          times.asr.add(Duration(minutes: -settings.offsetAsr));
       await _scheduleAt(
         id: _idAsr,
-        when: times.asr,
-        title: labelBuilder('asr'),
-        body: '${labelBuilder('asr')} time has started.',
+        when: when,
+        title: msg.title,
+        body: msg.body,
       );
     }
-    if (maghrib) {
+
+    // ─── Maghrib ───────────────────────────
+    if (settings.notifMaghrib) {
+      final msg = NotificationMessages.prayer(
+        prayerKey: 'maghrib',
+        offsetMinutes: settings.offsetMaghrib,
+      );
+      final when =
+          times.maghrib.add(Duration(minutes: -settings.offsetMaghrib));
       await _scheduleAt(
         id: _idMaghrib,
-        when: times.maghrib,
-        title: labelBuilder('maghrib'),
-        body: '${labelBuilder('maghrib')} time has started.',
+        when: when,
+        title: msg.title,
+        body: msg.body,
       );
     }
-    if (isha) {
+
+    // ─── Isha ──────────────────────────────
+    if (settings.notifIsha) {
+      final msg = NotificationMessages.prayer(
+        prayerKey: 'isha',
+        offsetMinutes: settings.offsetIsha,
+      );
+      final when =
+          times.isha.add(Duration(minutes: -settings.offsetIsha));
       await _scheduleAt(
         id: _idIsha,
-        when: times.isha,
-        title: labelBuilder('isha'),
-        body: '${labelBuilder('isha')} time has started.',
+        when: when,
+        title: msg.title,
+        body: msg.body,
       );
     }
-    if (sehri) {
-      final t = times.sehriSafety.subtract(const Duration(minutes: 15));
-      if (t.isAfter(DateTime.now())) {
+
+    // ─── Sehri end ─────────────────────────
+    if (settings.notifSehri) {
+      final msg = NotificationMessages.sehri(settings.offsetSehri);
+      final when = times.sehriSafety
+          .subtract(Duration(minutes: settings.offsetSehri));
+      if (when.isAfter(DateTime.now())) {
         await _scheduleAt(
           id: _idSehri,
-          when: t,
-          title: labelBuilder('sehri'),
-          body: 'সেহরি শেষ হবে ১৫ মিনিটে।',
+          when: when,
+          title: msg.title,
+          body: msg.body,
         );
       }
     }
-    if (iftar) {
-      final t = times.iftarSafety.subtract(const Duration(minutes: 10));
-      if (t.isAfter(DateTime.now())) {
+
+    // ─── Iftar ─────────────────────────────
+    if (settings.notifIftar) {
+      final msg = NotificationMessages.iftar(settings.offsetIftar);
+      final when = times.iftarSafety
+          .subtract(Duration(minutes: settings.offsetIftar));
+      if (when.isAfter(DateTime.now())) {
         await _scheduleAt(
           id: _idIftar,
-          when: t,
-          title: labelBuilder('iftar'),
-          body: 'ইফতার ১০ মিনিটে।',
+          when: when,
+          title: msg.title,
+          body: msg.body,
         );
       }
     }
-    if (tahajjud) {
-      final t = times.lastThirdStart;
-      if (t.isAfter(DateTime.now())) {
+
+    // ─── Tahajjud ──────────────────────────
+    if (settings.notifTahajjud) {
+      final msg = NotificationMessages.tahajjud(settings.offsetTahajjud);
+      final when = times.lastThirdStart
+          .subtract(Duration(minutes: settings.offsetTahajjud));
+      if (when.isAfter(DateTime.now())) {
         await _scheduleAt(
           id: _idTahajjud,
-          when: t,
-          title: labelBuilder('tahajjud'),
-          body: 'রাতের শেষ ১/৩ শুরু।',
+          when: when,
+          title: msg.title,
+          body: msg.body,
         );
       }
     }
-  }
-
-  /// Schedule a single test notification 10 seconds from now.
-  /// Useful for verifying the whole pipeline works.
-  Future<void> scheduleTest({int seconds = 10}) async {
-    if (!_initialized) await initialize();
-    await _plugin.cancel(_idTest);
-
-    final when = DateTime.now().add(Duration(seconds: seconds));
-    await _scheduleAt(
-      id: _idTest,
-      when: when,
-      title: 'আমলঘর',
-      body: 'টেস্ট নোটিফিকেশন — কাজ করছে! 🕌',
-    );
   }
 
   Future<void> _scheduleAt({
@@ -231,7 +248,7 @@ class NotificationService {
           priority: Priority.max,
           playSound: true,
           enableVibration: true,
-          category: AndroidNotificationCategory.alarm,
+          category: AndroidNotificationCategory.reminder,
         ),
         iOS: DarwinNotificationDetails(
           presentAlert: true,
