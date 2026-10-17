@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 /// A user-defined manual alarm (rings with sound & vibration).
 @immutable
@@ -224,9 +225,17 @@ class AlarmService {
     }
   }
 
-  DateTime _nextInstanceOf(int weekday, int hour, int minute) {
-    final now = DateTime.now();
-    var target = DateTime(now.year, now.month, now.day, hour, minute);
+  /// Returns the next TZDateTime instance of the given weekday + time.
+  tz.TZDateTime _nextInstanceOf(int weekday, int hour, int minute) {
+    final now = tz.TZDateTime.now(tz.local);
+    var target = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
     while (target.weekday != weekday) {
       target = target.add(const Duration(days: 1));
     }
