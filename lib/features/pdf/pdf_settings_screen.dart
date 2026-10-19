@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
 import '../../data/models/settings_model.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../providers/pdf_provider.dart';
 import 'pdf_cluster.dart';
 
@@ -13,18 +14,19 @@ class PdfSettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final opts = ref.watch(pdfOptionsProvider);
     final notifier = ref.read(pdfOptionsProvider.notifier);
     final currentYear = DateTime.now().year;
     final isHanafi = opts.madhhab == MadhhabType.hanafi;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('PDF ক্যালেন্ডার')),
+      appBar: AppBar(title: Text(l10n.pdfCalendar)),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: AppConstants.spaceLg),
         children: [
           // ─── Year ─────────────────────────────
-          const _SectionHeader('বছর'),
+          _SectionHeader(l10n.pdfYear),
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppConstants.spaceLg,
@@ -51,16 +53,15 @@ class PdfSettingsScreen extends ConsumerWidget {
           const SizedBox(height: AppConstants.spaceLg),
 
           // ─── Cluster granularity ──────────────
-          const _SectionHeader('ক্যালেন্ডার মোড'),
+          _SectionHeader(l10n.pdfMode),
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppConstants.spaceLg,
               vertical: AppConstants.spaceSm,
             ),
-            child: const Text(
-              'প্রতিদিন আলাদা — সবচেয়ে সঠিক\n'
-              'গ্যাপ মোড — একই সময়ের দিনগুলো একসাথে দেখাবে (ছোট PDF)',
-              style: TextStyle(
+            child: Text(
+              '${l10n.pdfModeFull}\n${l10n.pdfModeShort1Min}',
+              style: const TextStyle(
                 color: AppConstants.textMuted,
                 fontSize: AppConstants.fontCaption,
                 height: 1.5,
@@ -69,7 +70,7 @@ class PdfSettingsScreen extends ConsumerWidget {
           ),
           for (final g in ClusterGranularity.values)
             _RadioTile<ClusterGranularity>(
-              title: g.label,
+              title: _granularityLabel(g, l10n),
               value: g,
               group: opts.granularity,
               onChanged: notifier.setGranularity,
@@ -78,21 +79,21 @@ class PdfSettingsScreen extends ConsumerWidget {
           const SizedBox(height: AppConstants.spaceLg),
 
           // ─── Primary calendar ────────────────
-          const _SectionHeader('প্রধান ক্যালেন্ডার (বড় হবে)'),
+          _SectionHeader(l10n.pdfCalendarPrimary),
           _RadioTile<CalendarPrimary>(
-            title: 'ইংরেজি (English)',
+            title: l10n.pdfPrimaryEnglish,
             value: CalendarPrimary.english,
             group: opts.primaryCalendar,
             onChanged: notifier.setPrimaryCalendar,
           ),
           _RadioTile<CalendarPrimary>(
-            title: 'বাংলা (Bangla)',
+            title: l10n.pdfPrimaryBangla,
             value: CalendarPrimary.bangla,
             group: opts.primaryCalendar,
             onChanged: notifier.setPrimaryCalendar,
           ),
           _RadioTile<CalendarPrimary>(
-            title: 'হিজরি (Hijri)',
+            title: l10n.pdfPrimaryHijri,
             value: CalendarPrimary.hijri,
             group: opts.primaryCalendar,
             onChanged: notifier.setPrimaryCalendar,
@@ -101,15 +102,15 @@ class PdfSettingsScreen extends ConsumerWidget {
           const SizedBox(height: AppConstants.spaceLg),
 
           // ─── Madhhab ─────────────────────────
-          const _SectionHeader('মাযহাব'),
+          _SectionHeader(l10n.madhhab),
           _RadioTile<MadhhabType>(
-            title: 'হানাফী',
+            title: l10n.madhhabHanafi,
             value: MadhhabType.hanafi,
             group: opts.madhhab,
             onChanged: notifier.setMadhhab,
           ),
           _RadioTile<MadhhabType>(
-            title: 'শাফেঈ / মালিকি / হাম্বলি',
+            title: l10n.madhhabShafii,
             value: MadhhabType.shafii,
             group: opts.madhhab,
             onChanged: notifier.setMadhhab,
@@ -118,7 +119,7 @@ class PdfSettingsScreen extends ConsumerWidget {
           const SizedBox(height: AppConstants.spaceLg),
 
           // ─── Safety times ────────────────────
-          const _SectionHeader('সতর্কতা সময়'),
+          _SectionHeader(l10n.pdfTagline),
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppConstants.spaceLg,
@@ -126,10 +127,10 @@ class PdfSettingsScreen extends ConsumerWidget {
             ),
             child: Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'সেহরি ৭ মিনিট আগে, ইফতার ৩ মিনিট পরে',
-                    style: TextStyle(
+                    l10n.sehriEnds,
+                    style: const TextStyle(
                       color: AppConstants.textPrimary,
                       fontSize: AppConstants.fontBody,
                     ),
@@ -146,7 +147,7 @@ class PdfSettingsScreen extends ConsumerWidget {
           const SizedBox(height: AppConstants.spaceLg),
 
           // ─── Column selection ────────────────
-          const _SectionHeader('কলাম নির্বাচন'),
+          _SectionHeader(l10n.pdfCalendarPrimary),
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppConstants.spaceLg,
@@ -156,7 +157,7 @@ class PdfSettingsScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: Text(
-                    '${opts.columns.length}টি কলাম নির্বাচিত',
+                    '${opts.columns.length}',
                     style: const TextStyle(
                       color: AppConstants.textMuted,
                       fontSize: AppConstants.fontCaption,
@@ -166,11 +167,11 @@ class PdfSettingsScreen extends ConsumerWidget {
                 TextButton(
                   onPressed: () =>
                       notifier.selectAllColumns(isHanafi: isHanafi),
-                  child: const Text('সব'),
+                  child: Text(l10n.done),
                 ),
                 TextButton(
                   onPressed: notifier.clearColumns,
-                  child: const Text('বন্ধ'),
+                  child: Text(l10n.close),
                 ),
               ],
             ),
@@ -178,7 +179,7 @@ class PdfSettingsScreen extends ConsumerWidget {
           for (final c in PdfColumn.values)
             if (!c.requiresHanafi || isHanafi)
               _CheckTile(
-                title: c.label,
+                title: _columnLabel(c, l10n),
                 checked: opts.columns.contains(c),
                 onChanged: (_) => notifier.toggleColumn(c),
                 disabled: c == PdfColumn.date,
@@ -201,7 +202,7 @@ class PdfSettingsScreen extends ConsumerWidget {
                   context.push('/pdf/preview');
                 },
                 icon: const Icon(Icons.picture_as_pdf_outlined),
-                label: const Text('PDF তৈরি করুন'),
+                label: Text(l10n.generatePdfShort),
               ),
             ),
           ),
@@ -210,6 +211,55 @@ class PdfSettingsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  String _granularityLabel(
+    ClusterGranularity g,
+    AppLocalizations l10n,
+  ) {
+    switch (g) {
+      case ClusterGranularity.daily:
+        return l10n.pdfModeFull;
+      case ClusterGranularity.oneMinute:
+        return l10n.pdfModeShort1Min;
+      case ClusterGranularity.thirtySeconds:
+        return l10n.pdfModeShort30Sec;
+    }
+  }
+
+  String _columnLabel(PdfColumn c, AppLocalizations l10n) {
+    switch (c) {
+      case PdfColumn.date:
+        return l10n.dateGregorian;
+      case PdfColumn.fajr:
+        return l10n.fajr;
+      case PdfColumn.sunrise:
+        return l10n.sunrise;
+      case PdfColumn.dhuhr:
+        return l10n.dhuhr;
+      case PdfColumn.asr:
+        return l10n.asr;
+      case PdfColumn.maghrib:
+        return l10n.maghrib;
+      case PdfColumn.isha:
+        return l10n.isha;
+      case PdfColumn.sehri:
+        return l10n.sehriEnds;
+      case PdfColumn.iftar:
+        return l10n.iftar;
+      case PdfColumn.tahajjud:
+        return l10n.tahajjudLabel;
+      case PdfColumn.ishraq:
+        return l10n.ishraq;
+      case PdfColumn.midnight:
+        return l10n.midnightHalf;
+      case PdfColumn.solarNoon:
+        return l10n.solarNoon;
+      case PdfColumn.sunset:
+        return l10n.sunset;
+      case PdfColumn.mustahabbIsha:
+        return l10n.mustahabbIsha;
+    }
   }
 }
 
