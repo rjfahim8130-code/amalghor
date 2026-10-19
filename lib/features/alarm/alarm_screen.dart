@@ -84,6 +84,7 @@ class _AlarmTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final localeCode = Localizations.localeOf(context).languageCode;
 
     return Dismissible(
       key: ValueKey('alarm-${alarm.id}'),
@@ -176,7 +177,7 @@ class _AlarmTile extends ConsumerWidget {
                       ),
                     const SizedBox(height: 2),
                     Text(
-                      alarm.daysLabel,
+                      alarm.daysLabel(locale: localeCode),
                       style: TextStyle(
                         color: colors.textFaint,
                         fontSize: AppConstants.fontMicro,
