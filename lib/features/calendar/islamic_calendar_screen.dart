@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/constants.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../providers/islamic_calendar_provider.dart';
 import '../../services/bangla_date_service.dart';
 import '../../services/hijri_service.dart';
@@ -15,6 +16,7 @@ class IslamicCalendarScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final month = ref.watch(islamicCalendarProvider);
     final primary = ref.watch(primaryDisplayProvider);
     final days = ref.watch(calendarDaysProvider);
@@ -24,7 +26,7 @@ class IslamicCalendarScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: colors.pageBackground,
         title: Text(
-          'ইসলামিক ক্যালেন্ডার',
+          l10n.calendar,
           style: TextStyle(
             color: colors.textPrimary,
             fontWeight: FontWeight.w700,
@@ -32,7 +34,7 @@ class IslamicCalendarScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            tooltip: 'আজকে যান',
+            tooltip: l10n.today,
             icon: Icon(Icons.today, color: colors.textPrimary),
             onPressed: () =>
                 ref.read(islamicCalendarProvider.notifier).goToToday(),
@@ -157,6 +159,7 @@ class _PrimarySelector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final notifier = ref.read(primaryDisplayProvider.notifier);
     final colors = AppColors.of(context);
 
@@ -168,21 +171,21 @@ class _PrimarySelector extends ConsumerWidget {
       child: Row(
         children: [
           _PrimaryChip(
-            label: 'ইংরেজি',
+            label: l10n.labelEnglish,
             color: colors.emerald,
             selected: current == CalendarPrimaryDisplay.english,
             onTap: () => notifier.set(CalendarPrimaryDisplay.english),
           ),
           const SizedBox(width: AppConstants.spaceSm),
           _PrimaryChip(
-            label: 'বাংলা',
+            label: l10n.labelBangla,
             color: colors.gold,
             selected: current == CalendarPrimaryDisplay.bangla,
             onTap: () => notifier.set(CalendarPrimaryDisplay.bangla),
           ),
           const SizedBox(width: AppConstants.spaceSm),
           _PrimaryChip(
-            label: 'হিজরি',
+            label: l10n.labelHijri,
             color: colors.cyan,
             selected: current == CalendarPrimaryDisplay.hijri,
             onTap: () => notifier.set(CalendarPrimaryDisplay.hijri),
@@ -254,7 +257,10 @@ class _WeekdayHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    const days = ['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহ', 'শুক্র', 'শনি'];
+    final isBn = Localizations.localeOf(context).languageCode == 'bn';
+    final days = isBn
+        ? const ['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহ', 'শুক্র', 'শনি']
+        : const ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     return Container(
       padding: const EdgeInsets.symmetric(
