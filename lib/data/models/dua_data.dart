@@ -78,7 +78,8 @@ class DuaData {
       categoryId: 'morning',
       titleEn: 'When you wake up',
       titleBn: 'ঘুম থেকে উঠে',
-      arabic: 'الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ',
+      arabic:
+          'الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ',
       transliteration:
           'Alhamdulillahil-ladhi ahyana ba\'da ma amatana wa ilayhin-nushur',
       meaningEn:
@@ -92,7 +93,8 @@ class DuaData {
       categoryId: 'morning',
       titleEn: 'Morning remembrance',
       titleBn: 'সকালের যিকির',
-      arabic: 'أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ',
+      arabic:
+          'أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ',
       transliteration: 'Asbahna wa asbahal-mulku lillah, wal-hamdulillah',
       meaningEn:
           'We have entered the morning, and the dominion belongs to Allah, and all praise is for Allah.',
@@ -105,7 +107,8 @@ class DuaData {
       categoryId: 'morning',
       titleEn: 'Protection in the morning',
       titleBn: 'সকালের হেফাজত',
-      arabic: 'بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ',
+      arabic:
+          'بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ',
       transliteration:
           'Bismillahil-ladhi la yadurru ma\'asmihi shay\'un fil-ardi wa la fis-sama\'i wa huwas-sami\'ul-\'alim',
       meaningEn:
@@ -121,7 +124,8 @@ class DuaData {
       categoryId: 'evening',
       titleEn: 'Evening remembrance',
       titleBn: 'সন্ধ্যার যিকির',
-      arabic: 'أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ',
+      arabic:
+          'أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ',
       transliteration: 'Amsayna wa amsal-mulku lillah, wal-hamdulillah',
       meaningEn:
           'We have entered the evening, and the dominion belongs to Allah, and all praise is for Allah.',
@@ -134,8 +138,10 @@ class DuaData {
       categoryId: 'evening',
       titleEn: 'Seeking refuge in Allah',
       titleBn: 'আল্লাহর আশ্রয় প্রার্থনা',
-      arabic: 'أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ',
-      transliteration: 'A\'udhu bikalimatillahit-tammati min sharri ma khalaq',
+      arabic:
+          'أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ',
+      transliteration:
+          'A\'udhu bikalimatillahit-tammati min sharri ma khalaq',
       meaningEn:
           'I seek refuge in the perfect words of Allah from the evil of what He has created.',
       meaningBn:
@@ -143,7 +149,7 @@ class DuaData {
       reference: 'Muslim',
     ),
 
-        // ═══════════════ SLEEP ═══════════════
+    // ═══════════════ SLEEP ═══════════════
     Dua(
       id: 'sleep_1',
       categoryId: 'sleep',
@@ -160,7 +166,8 @@ class DuaData {
       categoryId: 'sleep',
       titleEn: 'Ayat al-Kursi before sleep',
       titleBn: 'ঘুমানোর আগে আয়াতুল কুরসি',
-      arabic: 'اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ',
+      arabic:
+          'اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ',
       transliteration:
           'Allahu la ilaha illa huwal-hayyul-qayyum, la ta\'khudhuhu sinatun wa la nawm',
       meaningEn:
@@ -176,7 +183,8 @@ class DuaData {
       categoryId: 'wake',
       titleEn: 'On waking up',
       titleBn: 'ঘুম থেকে উঠে',
-      arabic: 'الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ',
+      arabic:
+          'الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ',
       transliteration:
           'Alhamdulillahil-ladhi ahyana ba\'da ma amatana wa ilayhin-nushur',
       meaningEn:
@@ -203,7 +211,8 @@ class DuaData {
       categoryId: 'food',
       titleEn: 'After eating',
       titleBn: 'খাওয়ার পরে',
-      arabic: 'الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَنَا وَسَقَانَا وَجَعَلَنَا مُسْلِمِينَ',
+      arabic:
+          'الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَنَا وَسَقَانَا وَجَعَلَنَا مُسْلِمِينَ',
       transliteration:
           'Alhamdulillahil-ladhi at\'amana wa saqana wa ja\'alana muslimin',
       meaningEn:
@@ -219,7 +228,8 @@ class DuaData {
       categoryId: 'travel',
       titleEn: 'Before starting a journey',
       titleBn: 'সফরের শুরুতে',
-      arabic: 'سُبْحَانَ الَّذِي سَخَّرَ لَنَا هَذَا وَمَا كُنَّا لَهُ مُقْرِنِينَ وَإِنَّا إِلَى رَبِّنَا لَمُنْقَلِبُونَ',
+      arabic:
+          'سُبْحَانَ الَّذِي سَخَّرَ لَنَا هَذَا وَمَا كُنَّا لَهُ مُقْرِنِينَ وَإِنَّا إِلَى رَبِّنَا لَمُنْقَلِبُونَ',
       transliteration:
           'Subhanal-ladhi sakhkhara lana hadha wa ma kunna lahu muqrinin, wa inna ila Rabbina lamunqalibun',
       meaningEn:
@@ -233,7 +243,8 @@ class DuaData {
       categoryId: 'travel',
       titleEn: 'Entering a town',
       titleBn: 'শহরে প্রবেশের সময়',
-      arabic: 'اللَّهُمَّ إِنِّي أَسْأَلُكَ خَيْرَهَا وَخَيْرَ أَهْلِهَا وَخَيْرَ مَا فِيهَا، وَأَعُوذُ بِكَ مِنْ شَرِّهَا وَشَرِّ أَهْلِهَا وَشَرِّ مَا فِيهَا',
+      arabic:
+          'اللَّهُمَّ إِنِّي أَسْأَلُكَ خَيْرَهَا وَخَيْرَ أَهْلِهَا وَخَيْرَ مَا فِيهَا، وَأَعُوذُ بِكَ مِنْ شَرِّهَا وَشَرِّ أَهْلِهَا وَشَرِّ مَا فِيهَا',
       transliteration:
           'Allahumma inni as\'aluka khayraha wa khayra ahliha wa khayra ma fiha, wa a\'udhu bika min sharriha wa sharri ahliha wa sharri ma fiha',
       meaningEn:
@@ -249,7 +260,8 @@ class DuaData {
       categoryId: 'distress',
       titleEn: 'When in distress',
       titleBn: 'বিপদে পড়লে',
-      arabic: 'لَا إِلَٰهَ إِلَّا اللَّهُ الْعَظِيمُ الْحَلِيمُ، لَا إِلَٰهَ إِلَّا اللَّهُ رَبُّ الْعَرْشِ الْعَظِيمِ',
+      arabic:
+          'لَا إِلَٰهَ إِلَّا اللَّهُ الْعَظِيمُ الْحَلِيمُ، لَا إِلَٰهَ إِلَّا اللَّهُ رَبُّ الْعَرْشِ الْعَظِيمِ',
       transliteration:
           'La ilaha illallahul-\'Azimul-Halim, la ilaha illallahu Rabbul-\'Arshil-\'Azim',
       meaningEn:
@@ -263,7 +275,8 @@ class DuaData {
       categoryId: 'distress',
       titleEn: 'For anxiety and sorrow',
       titleBn: 'দুশ্চিন্তা ও দুঃখে',
-      arabic: 'اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ، وَالْعَجْزِ وَالْكَسَلِ',
+      arabic:
+          'اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ، وَالْعَجْزِ وَالْكَسَلِ',
       transliteration:
           'Allahumma inni a\'udhu bika minal-hammi wal-hazan, wal-\'ajzi wal-kasal',
       meaningEn:
@@ -279,8 +292,10 @@ class DuaData {
       titleBn: 'বেশি বেশি ক্ষমা প্রার্থনা',
       arabic: 'أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ',
       transliteration: 'Astaghfirullaha wa atubu ilayh',
-      meaningEn: 'I seek forgiveness from Allah and turn to Him in repentance.',
-      meaningBn: 'আমি আল্লাহর কাছে ক্ষমা চাই এবং তাঁর কাছে তাওবা করি।',
+      meaningEn:
+          'I seek forgiveness from Allah and turn to Him in repentance.',
+      meaningBn:
+          'আমি আল্লাহর কাছে ক্ষমা চাই এবং তাঁর কাছে তাওবা করি।',
       reference: 'Bukhari, Muslim',
     ),
   ];
