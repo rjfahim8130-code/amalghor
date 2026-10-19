@@ -29,9 +29,15 @@ class UserNotification {
   String get timeLabel =>
       '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
 
-  String get daysLabel {
-    if (daysOfWeek.isEmpty) return 'প্রতিদিন';
-    const names = ['সোম', 'মঙ্গল', 'বুধ', 'বৃহ', 'শুক্র', 'শনি', 'রবি'];
+  /// Day label — locale-aware.
+  ///
+  /// [locale] — 'en' or 'bn' (defaults to 'bn').
+  String daysLabel({String locale = 'bn'}) {
+    final isEn = locale == 'en';
+    if (daysOfWeek.isEmpty) return isEn ? 'Every day' : 'প্রতিদিন';
+    final names = isEn
+        ? const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        : const ['সোম', 'মঙ্গল', 'বুধ', 'বৃহ', 'শুক্র', 'শনি', 'রবি'];
     final sorted = daysOfWeek.toList()..sort();
     return sorted.map((d) => names[d - 1]).join(', ');
   }
@@ -68,7 +74,7 @@ class UserNotification {
   factory UserNotification.fromMap(Map<String, dynamic> m) {
     return UserNotification(
       id: m['id'] as String,
-      title: m['title'] as String? ?? '📖 নোটিফিকেশন',
+      title: m['title'] as String? ?? '📖 Notification',
       body: m['body'] as String? ?? '',
       hour: m['hour'] as int,
       minute: m['minute'] as int,
@@ -146,21 +152,21 @@ class CustomNotificationService {
     await _prefs?.setString(_key, raw);
   }
 
-  Future<void> add(UserNotification n) async {
+  Future<void> add(UserNotification n, {String locale = 'bn'}) async {
     final list = loadAll();
     list.add(n);
     await saveAll(list);
-    await _schedule(n);
+    await _schedule(n, locale: locale);
   }
 
-  Future<void> update(UserNotification n) async {
+  Future<void> update(UserNotification n, {String locale = 'bn'}) async {
     final list = loadAll();
     final idx = list.indexWhere((a) => a.id == n.id);
     if (idx == -1) return;
     list[idx] = n;
     await saveAll(list);
     await _cancel(n.id);
-    if (n.enabled) await _schedule(n);
+    if (n.enabled) await _schedule(n, locale: locale);
   }
 
   Future<void> delete(String id) async {
@@ -170,11 +176,18 @@ class CustomNotificationService {
     await _cancel(id);
   }
 
-  Future<void> toggle(UserNotification n, bool enabled) async {
-    await update(n.copyWith(enabled: enabled));
+  Future<void> toggle(
+    UserNotification n,
+    bool enabled, {
+    String locale = 'bn',
+  }) async {
+    await update(n.copyWith(enabled: enabled), locale: locale);
   }
 
-  Future<void> _schedule(UserNotification n) async {
+  Future<void> _schedule(
+    UserNotification n, {
+    String locale = 'bn',
+  }) async {
     if (!n.enabled) return;
 
     final baseId = _idFor(n.id);
@@ -237,7 +250,10 @@ class CustomNotificationService {
 
   int _idFor(String id) => id.hashCode.abs() % 1000000;
 
-  Future<void> preview(UserNotification n) async {
+  Future<void> preview(
+    UserNotification n, {
+    String locale = 'bn',
+  }) async {
     await _plugin.show(
       9997,
       n.title,
