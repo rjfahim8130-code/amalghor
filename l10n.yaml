@@ -8,4 +8,3 @@ nullable-getter: false
 preferred-supported-locales:
   - en
   - bn
-  - ar
