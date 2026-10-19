@@ -5,6 +5,7 @@ import '../../../core/app_colors.dart';
 import '../../../core/constants.dart';
 import '../../../core/date_utils.dart';
 import '../../../data/models/prayer_times.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/clock_provider.dart';
 
 /// Live digital clock card with a 3-chip tri-calendar row underneath.
@@ -20,7 +21,7 @@ class LiveClockCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
-    final localeCode = Localizations.localeOf(context).languageCode;
+    final l10n = AppLocalizations.of(context);
     final asyncNow = ref.watch(clockProvider);
     final now = asyncNow.value ?? DateTime.now();
 
@@ -66,7 +67,7 @@ class LiveClockCard extends ConsumerWidget {
                   horizontal: AppConstants.spaceSm,
                 ),
                 child: Text(
-                  _localeTag(localeCode),
+                  l10n.localTime.toUpperCase(),
                   style: TextStyle(
                     color: colors.textMuted,
                     fontSize: AppConstants.fontMicro,
@@ -95,17 +96,6 @@ class LiveClockCard extends ConsumerWidget {
       color: colors.textFaint.withValues(alpha: 0.5),
     );
   }
-
-  String _localeTag(String code) {
-    switch (code) {
-      case 'bn':
-        return 'স্থানীয় সময়';
-      case 'ar':
-        return 'التوقيت المحلي';
-      default:
-        return 'LOCAL TIME';
-    }
-  }
 }
 
 // ─────────────────────────────────────────────
@@ -120,6 +110,7 @@ class _TriCalendarChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final localeCode = Localizations.localeOf(context).languageCode;
     final tri = AppDateUtils.buildTriCalendar(prayer.date, localeCode);
 
@@ -127,7 +118,7 @@ class _TriCalendarChips extends StatelessWidget {
       children: [
         Expanded(
           child: _CalendarChip(
-            label: 'ইংরেজি',
+            label: l10n.labelEnglish,
             value: tri.gregorianFormatted,
             icon: Icons.calendar_month_outlined,
             accent: colors.emerald,
@@ -136,7 +127,7 @@ class _TriCalendarChips extends StatelessWidget {
         const SizedBox(width: AppConstants.spaceSm),
         Expanded(
           child: _CalendarChip(
-            label: 'বাংলা',
+            label: l10n.labelBangla,
             value: tri.banglaFormatted,
             icon: Icons.wb_sunny_outlined,
             accent: colors.gold,
@@ -145,7 +136,7 @@ class _TriCalendarChips extends StatelessWidget {
         const SizedBox(width: AppConstants.spaceSm),
         Expanded(
           child: _CalendarChip(
-            label: 'হিজরি',
+            label: l10n.labelHijri,
             value: tri.hijriFormatted,
             icon: Icons.nightlight_round,
             accent: colors.cyan,
