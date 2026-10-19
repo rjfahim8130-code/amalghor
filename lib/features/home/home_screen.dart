@@ -105,10 +105,12 @@ class _ToolsGrid extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
+
     final tools = <_ToolItem>[
       _ToolItem(
         icon: Icons.explore_outlined,
-        label: 'কিবলা',
+        label: l10n.qibla,
         route: Routes.qibla,
       ),
       _ToolItem(
@@ -118,32 +120,32 @@ class _ToolsGrid extends ConsumerWidget {
       ),
       _ToolItem(
         icon: Icons.radio_button_checked,
-        label: 'তাসবীহ',
+        label: l10n.tasbih,
         route: Routes.tasbih,
       ),
       _ToolItem(
         icon: Icons.auto_awesome_outlined,
-        label: '৯৯ নাম',
+        label: l10n.asmaUlHusna,
         route: Routes.asma,
       ),
       _ToolItem(
         icon: Icons.calendar_month_outlined,
-        label: 'ক্যালেন্ডার',
+        label: l10n.calendar,
         route: Routes.calendar,
       ),
       _ToolItem(
         icon: Icons.volunteer_activism_outlined,
-        label: 'দুআ',
+        label: l10n.dua,
         route: Routes.dua,
       ),
       _ToolItem(
         icon: Icons.notifications_active_outlined,
-        label: 'নোটিফিকেশন',
+        label: l10n.notifications,
         route: Routes.notifications,
       ),
       _ToolItem(
         icon: Icons.alarm_rounded,
-        label: 'অ্যালার্ম',
+        label: l10n.alarms,
         route: Routes.alarms,
       ),
     ];
@@ -165,7 +167,7 @@ class _ToolsGrid extends ConsumerWidget {
               _dot(colors, 0.5),
               const SizedBox(width: AppConstants.spaceMd),
               Text(
-                'টুলস',
+                l10n.tools,
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontSize: AppConstants.fontSubtitle,
