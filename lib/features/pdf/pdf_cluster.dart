@@ -3,16 +3,19 @@ import 'package:flutter/foundation.dart';
 import '../../data/models/prayer_times.dart';
 
 /// Granularity options for the PDF calendar clustering.
+///
+/// `label` is kept for backward compatibility but the UI should
+/// resolve locale-specific labels via [labelFor].
 enum ClusterGranularity {
-  dayWise(minutes: 0, label: 'প্রতিদিন আলাদা (৩৬৫ দিন)'),
-  tenSec(minutes: 0.1667, label: '১০ সেকেন্ডের গ্যাপ'),
-  fifteenSec(minutes: 0.25, label: '১৫ সেকেন্ডের গ্যাপ'),
-  twentySec(minutes: 0.3333, label: '২০ সেকেন্ডের গ্যাপ'),
-  thirtySec(minutes: 0.5, label: '৩০ সেকেন্ডের গ্যাপ'),
-  fortySec(minutes: 0.6667, label: '৪০ সেকেন্ডের গ্যাপ'),
-  oneMin(minutes: 1.0, label: '১ মিনিটের গ্যাপ'),
-  twoMin(minutes: 2.0, label: '২ মিনিটের গ্যাপ'),
-  fiveMin(minutes: 5.0, label: '৫ মিনিটের গ্যাপ');
+  dayWise(minutes: 0, label: 'Daily (365 days)'),
+  tenSec(minutes: 0.1667, label: '10-second gap'),
+  fifteenSec(minutes: 0.25, label: '15-second gap'),
+  twentySec(minutes: 0.3333, label: '20-second gap'),
+  thirtySec(minutes: 0.5, label: '30-second gap'),
+  fortySec(minutes: 0.6667, label: '40-second gap'),
+  oneMin(minutes: 1.0, label: '1-minute gap'),
+  twoMin(minutes: 2.0, label: '2-minute gap'),
+  fiveMin(minutes: 5.0, label: '5-minute gap');
 
   final double minutes;
   final String label;
@@ -23,6 +26,33 @@ enum ClusterGranularity {
   });
 
   bool get isDayWise => this == ClusterGranularity.dayWise;
+
+  /// Locale-aware label.
+  ///
+  /// [locale] — 'en' or 'bn' (defaults to 'en').
+  String labelFor({String locale = 'en'}) {
+    final isEn = locale == 'en';
+    switch (this) {
+      case ClusterGranularity.dayWise:
+        return isEn ? 'Daily (365 days)' : 'প্রতিদিন আলাদা (৩৬৫ দিন)';
+      case ClusterGranularity.tenSec:
+        return isEn ? '10-second gap' : '১০ সেকেন্ডের গ্যাপ';
+      case ClusterGranularity.fifteenSec:
+        return isEn ? '15-second gap' : '১৫ সেকেন্ডের গ্যাপ';
+      case ClusterGranularity.twentySec:
+        return isEn ? '20-second gap' : '২০ সেকেন্ডের গ্যাপ';
+      case ClusterGranularity.thirtySec:
+        return isEn ? '30-second gap' : '৩০ সেকেন্ডের গ্যাপ';
+      case ClusterGranularity.fortySec:
+        return isEn ? '40-second gap' : '৪০ সেকেন্ডের গ্যাপ';
+      case ClusterGranularity.oneMin:
+        return isEn ? '1-minute gap' : '১ মিনিটের গ্যাপ';
+      case ClusterGranularity.twoMin:
+        return isEn ? '2-minute gap' : '২ মিনিটের গ্যাপ';
+      case ClusterGranularity.fiveMin:
+        return isEn ? '5-minute gap' : '৫ মিনিটের গ্যাপ';
+    }
+  }
 }
 
 @immutable
@@ -223,36 +253,43 @@ enum PdfColumn {
 }
 
 extension PdfColumnExt on PdfColumn {
-  String get label {
+  /// Locale-aware label.
+  ///
+  /// [locale] — 'en' or 'bn' (defaults to 'en').
+  String labelFor({String locale = 'en'}) {
+    final isEn = locale == 'en';
     switch (this) {
       case PdfColumn.date:
-        return 'তারিখ';
+        return isEn ? 'Date' : 'তারিখ';
       case PdfColumn.tahajjud:
-        return 'তাহাজ্জুদ';
+        return isEn ? 'Tahajjud' : 'তাহাজ্জুদ';
       case PdfColumn.sehri:
-        return 'সেহরি';
+        return isEn ? 'Sehri' : 'সেহরি';
       case PdfColumn.fajr:
-        return 'ফজর';
+        return isEn ? 'Fajr' : 'ফজর';
       case PdfColumn.sunrise:
-        return 'সূর্যোদয়';
+        return isEn ? 'Sunrise' : 'সূর্যোদয়';
       case PdfColumn.ishraq:
-        return 'ইশরাক';
+        return isEn ? 'Ishraq' : 'ইশরাক';
       case PdfColumn.dhuhr:
-        return 'যোহর';
+        return isEn ? 'Dhuhr' : 'যোহর';
       case PdfColumn.asr:
-        return 'আসর';
+        return isEn ? 'Asr' : 'আসর';
       case PdfColumn.sunset:
-        return 'সূর্যাস্ত';
+        return isEn ? 'Sunset' : 'সূর্যাস্ত';
       case PdfColumn.iftar:
-        return 'ইফতার';
+        return isEn ? 'Iftar' : 'ইফতার';
       case PdfColumn.maghrib:
-        return 'মাগরিব';
+        return isEn ? 'Maghrib' : 'মাগরিব';
       case PdfColumn.isha:
-        return 'এশা';
+        return isEn ? 'Isha' : 'এশা';
       case PdfColumn.ishaMustahab:
-        return 'মুস্তাহাব এশা';
+        return isEn ? 'Mustahabb Isha' : 'মুস্তাহাব এশা';
     }
   }
+
+  /// Backward-compat getter — defaults to English.
+  String get label => labelFor();
 
   bool get requiresHanafi => this == PdfColumn.ishaMustahab;
 }
