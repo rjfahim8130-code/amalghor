@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/app_colors.dart';
 import '../../core/constants.dart';
 import '../../data/models/dua_models.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../providers/dua_provider.dart';
 
 /// Screen listing all duas, organized by category.
@@ -28,6 +29,7 @@ class _DuaListScreenState extends ConsumerState<DuaListScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: colors.pageBackground,
@@ -42,7 +44,7 @@ class _DuaListScreenState extends ConsumerState<DuaListScreen> {
                   fontSize: AppConstants.fontBody,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'দুআ খুঁজুন...',
+                  hintText: l10n.quranSearch,
                   border: InputBorder.none,
                   hintStyle: TextStyle(color: colors.textFaint),
                 ),
@@ -50,7 +52,7 @@ class _DuaListScreenState extends ConsumerState<DuaListScreen> {
                     ref.read(duaSearchProvider.notifier).update(v),
               )
             : Text(
-                'দুআ সংকলন',
+                l10n.dua,
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w700,
@@ -107,6 +109,7 @@ class _CategoryTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final count = ref.watch(duasByCategoryProvider(category.id)).length;
 
     return Material(
@@ -155,7 +158,7 @@ class _CategoryTile extends ConsumerWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '$count দুআ',
+                      '$count ${l10n.dua}',
                       style: TextStyle(
                         color: colors.textMuted,
                         fontSize: AppConstants.fontCaption,
@@ -182,13 +185,14 @@ class _SearchResults extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final results = ref.watch(duaFilteredProvider);
     final query = ref.watch(duaSearchProvider);
 
     if (query.trim().isEmpty) {
       return Center(
         child: Text(
-          'টাইপ করে দুআ খুঁজুন',
+          l10n.quranSearch,
           style: TextStyle(color: colors.textMuted),
         ),
       );
@@ -206,7 +210,7 @@ class _SearchResults extends ConsumerWidget {
             ),
             const SizedBox(height: AppConstants.spaceMd),
             Text(
-              '"$query" এর জন্য কোনো দুআ নেই',
+              '"$query" — ${l10n.quranSurahNotFound}',
               style: TextStyle(color: colors.textMuted),
             ),
           ],
