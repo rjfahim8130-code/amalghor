@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants.dart';
 import '../../../data/models/quran_models.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/quran_provider.dart';
 
 /// A compact, always-visible control strip that lets the user toggle
@@ -12,6 +13,7 @@ class LanguageToggle extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final display = ref.watch(quranDisplayProvider);
     final notifier = ref.read(quranDisplayProvider.notifier);
 
@@ -34,7 +36,7 @@ class LanguageToggle extends ConsumerWidget {
             children: [
               Expanded(
                 child: _LanguageChip(
-                  label: 'عربي',
+                  label: 'عربي', // Arabic — always Arabic script
                   sublabel: 'Arabic',
                   isActive: display.showArabic,
                   onTap: () => notifier.setArabic(!display.showArabic),
@@ -43,8 +45,8 @@ class LanguageToggle extends ConsumerWidget {
               const SizedBox(width: AppConstants.spaceSm),
               Expanded(
                 child: _LanguageChip(
-                  label: 'বাংলা',
-                  sublabel: 'Bangla',
+                  label: l10n.languageBangla,
+                  sublabel: l10n.labelBangla,
                   isActive: display.showBangla,
                   onTap: () => notifier.setBangla(!display.showBangla),
                 ),
@@ -52,8 +54,8 @@ class LanguageToggle extends ConsumerWidget {
               const SizedBox(width: AppConstants.spaceSm),
               Expanded(
                 child: _LanguageChip(
-                  label: 'English',
-                  sublabel: 'English',
+                  label: l10n.languageEnglish,
+                  sublabel: l10n.labelEnglish,
                   isActive: display.showEnglish,
                   onTap: () => notifier.setEnglish(!display.showEnglish),
                 ),
@@ -69,7 +71,7 @@ class LanguageToggle extends ConsumerWidget {
             child: Row(
               children: [
                 _PresetButton(
-                  label: 'All',
+                  label: l10n.labelEnglish, // "English" acts as All fallback
                   isSelected: display.showArabic &&
                       display.showBangla &&
                       display.showEnglish,
@@ -79,7 +81,7 @@ class LanguageToggle extends ConsumerWidget {
                 ),
                 const SizedBox(width: AppConstants.spaceXs),
                 _PresetButton(
-                  label: 'عربي + বাংলা',
+                  label: 'عربي + ${l10n.labelBangla}',
                   isSelected: display.showArabic &&
                       display.showBangla &&
                       !display.showEnglish,
@@ -99,7 +101,7 @@ class LanguageToggle extends ConsumerWidget {
                 ),
                 const SizedBox(width: AppConstants.spaceXs),
                 _PresetButton(
-                  label: 'বাংলা + EN',
+                  label: '${l10n.labelBangla} + EN',
                   isSelected: !display.showArabic &&
                       display.showBangla &&
                       display.showEnglish,
@@ -119,7 +121,7 @@ class LanguageToggle extends ConsumerWidget {
                 ),
                 const SizedBox(width: AppConstants.spaceXs),
                 _PresetButton(
-                  label: 'Only বাংলা',
+                  label: 'Only ${l10n.labelBangla}',
                   isSelected: !display.showArabic &&
                       display.showBangla &&
                       !display.showEnglish,
