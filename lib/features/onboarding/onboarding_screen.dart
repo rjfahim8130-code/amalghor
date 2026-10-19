@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../providers/onboarding_provider.dart';
 import '../../providers/settings_provider.dart';
 
@@ -30,6 +31,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -46,9 +49,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   if (_page < 2)
                     TextButton(
                       onPressed: _finish,
-                      child: const Text(
-                        'Skip',
-                        style: TextStyle(color: AppConstants.textMuted),
+                      child: Text(
+                        l10n.cancel,
+                        style: const TextStyle(
+                            color: AppConstants.textMuted),
                       ),
                     ),
                 ],
@@ -108,7 +112,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       _finish();
                     }
                   },
-                  child: Text(_page < 2 ? 'পরবর্তী' : 'শুরু করুন'),
+                  child: Text(_page < 2 ? l10n.next : l10n.ok),
                 ),
               ),
             ),
@@ -133,16 +137,13 @@ class _PageOne extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _PageLayout(
+    final l10n = AppLocalizations.of(context);
+    return _PageLayout(
       icon: Icons.access_time_rounded,
       iconColor: AppConstants.emeraldPrimary,
-      title: 'আমলঘর',
-      subtitle: 'আপনার প্রতিদিনের নামায ও ইবাদতের\nনির্ভরযোগ্য সঙ্গী',
-      bullets: [
-        'সঠিক সময়ে নামাযের সময়সূচি',
-        'সম্পূর্ণ অফলাইনে চলে',
-        'কোনো সার্ভার নেই, কোনো ট্র্যাকিং নেই',
-      ],
+      title: l10n.appName,
+      subtitle: l10n.appTagline,
+      bullets: const [],
     );
   }
 }
@@ -152,6 +153,7 @@ class _PageTwo extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
 
@@ -174,48 +176,31 @@ class _PageTwo extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: AppConstants.spaceXl),
-          const Text(
-            'ভাষা নির্বাচন করুন',
-            style: TextStyle(
+          Text(
+            l10n.settingsLanguage,
+            style: const TextStyle(
               color: AppConstants.textPrimary,
               fontSize: AppConstants.fontTitle,
               fontWeight: FontWeight.w700,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: AppConstants.spaceSm),
-          const Text(
-            'Choose your language',
-            style: TextStyle(
-              color: AppConstants.textMuted,
-              fontSize: AppConstants.fontBody,
-            ),
-            textAlign: TextAlign.center,
-          ),
           const SizedBox(height: AppConstants.spaceXl),
 
           _LangOption(
-            label: 'বাংলা',
-            sublabel: 'Bangla',
+            label: l10n.languageBangla,
+            sublabel: l10n.labelBangla,
             code: 'bn',
             selected: settings.locale.languageCode == 'bn',
             onTap: () => notifier.setLocale(const Locale('bn')),
           ),
           const SizedBox(height: AppConstants.spaceMd),
           _LangOption(
-            label: 'English',
-            sublabel: 'ইংরেজি',
+            label: l10n.languageEnglish,
+            sublabel: l10n.labelEnglish,
             code: 'en',
             selected: settings.locale.languageCode == 'en',
             onTap: () => notifier.setLocale(const Locale('en')),
-          ),
-          const SizedBox(height: AppConstants.spaceMd),
-          _LangOption(
-            label: 'العربية',
-            sublabel: 'আরবি',
-            code: 'ar',
-            selected: settings.locale.languageCode == 'ar',
-            onTap: () => notifier.setLocale(const Locale('ar')),
           ),
         ],
       ),
@@ -228,12 +213,13 @@ class _PageThree extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _PageLayout(
+    final l10n = AppLocalizations.of(context);
+    return _PageLayout(
       icon: Icons.check_circle_outline,
       iconColor: AppConstants.emeraldPrimary,
-      title: 'সব প্রস্তুত',
-      subtitle: 'আপনার ডিভাইস সম্পূর্ণ অফলাইনে কাজ করবে।\nএখন থেকে নামাযের সঠিক সময়,\nকুরআন, দুআ, তাসবীহ — সব হাতের মুঠোয়।',
-      bullets: [],
+      title: l10n.appName,
+      subtitle: l10n.appTagline,
+      bullets: const [],
     );
   }
 }
