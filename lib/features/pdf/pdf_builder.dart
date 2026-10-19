@@ -199,7 +199,7 @@ class PdfBuilder {
         pw.Text(
           '${_madhhabLabel(options.madhhab)} '
           '${_isEn ? 'Madhhab' : 'মাযহাব'}  •  '
-          '${result.granularity.label}',
+          '${result.granularity.labelFor(locale: options.locale)}',
           style: pw.TextStyle(
             fontSize: 7,
             color: PdfColors.grey600,
@@ -369,37 +369,37 @@ class PdfBuilder {
     );
   }
 
+  /// Locale-aware header label for the given column.
+  ///
+  /// Uses the ACTUAL enum values from `pdf_cluster.dart`
+  /// (no `midnight`, no `solarNoon` — those don't exist).
   String _columnLabel(PdfColumn c) {
     final isEn = _isEn;
     switch (c) {
       case PdfColumn.date:
         return isEn ? 'Date' : 'তারিখ';
+      case PdfColumn.tahajjud:
+        return isEn ? 'Tahajjud' : 'তাহাজ্জুদ';
+      case PdfColumn.sehri:
+        return isEn ? 'Sehri' : 'সেহরি';
       case PdfColumn.fajr:
         return isEn ? 'Fajr' : 'ফজর';
       case PdfColumn.sunrise:
         return isEn ? 'Sunrise' : 'সূর্যোদয়';
+      case PdfColumn.ishraq:
+        return isEn ? 'Ishraq' : 'ইশরাক';
       case PdfColumn.dhuhr:
         return isEn ? 'Dhuhr' : 'যোহর';
       case PdfColumn.asr:
         return isEn ? 'Asr' : 'আসর';
+      case PdfColumn.sunset:
+        return isEn ? 'Sunset' : 'সূর্যাস্ত';
+      case PdfColumn.iftar:
+        return isEn ? 'Iftar' : 'ইফতার';
       case PdfColumn.maghrib:
         return isEn ? 'Maghrib' : 'মাগরিব';
       case PdfColumn.isha:
         return isEn ? 'Isha' : 'এশা';
-      case PdfColumn.sehri:
-        return isEn ? 'Sehri' : 'সেহরি';
-      case PdfColumn.iftar:
-        return isEn ? 'Iftar' : 'ইফতার';
-      case PdfColumn.tahajjud:
-        return isEn ? 'Tahajjud' : 'তাহাজ্জুদ';
-      case PdfColumn.ishraq:
-        return isEn ? 'Ishraq' : 'ইশরাক';
-      case PdfColumn.midnight:
-        return isEn ? 'Midnight' : 'রাত অর্ধেক';
-      case PdfColumn.solarNoon:
-        return isEn ? 'Solar noon' : 'মধ্য আকাশ';
-      case PdfColumn.sunset:
-        return isEn ? 'Sunset' : 'সূর্যাস্ত';
       case PdfColumn.ishaMustahab:
         return isEn ? 'Mustahabb Isha' : 'মুস্তাহাব এশা';
     }
