@@ -4,9 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/models/mushaf_models.dart';
 import '../../../data/models/quran_models.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/quran_provider.dart';
 
-/// Structured search: পারা | পৃষ্ঠা + সূরা | আয়াত + আয়াত টেক্সট
+/// Structured search: Para | Page + Surah | Ayah + Ayah text
 class MushafSearchSheet extends ConsumerStatefulWidget {
   final MushafConfig config;
   final void Function(int page) onGoToPage;
@@ -33,6 +34,7 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
   List<MapEntry<String, int>> _suggestions = [];
   List<_TextHit> _textHits = [];
 
+  /// Search alias map (hardcoded — intentionally NOT localized).
   static const _surahNames = <String, int>{
     'আহকাফ': 46, 'ahqaf': 46, 'al-ahqaf': 46,
     'মুহাম্মদ': 47, 'muhammad': 47,
@@ -172,10 +174,11 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
   }
 
   Future<void> _searchByText() async {
+    final l10n = AppLocalizations.of(context);
     final q = _textCtrl.text.trim();
     if (q.length < 2) {
       setState(() {
-        _error = 'আয়াতের অন্তত ২ অক্ষর লিখুন';
+        _error = l10n.quranAyahInvalid;
         _textHits = [];
       });
       return;
@@ -196,7 +199,7 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
 
       for (final r in results) {
         final page = cfg.pageForAyah(r.surahNumber, r.ayahNumber);
-        if (page == null) continue; // শুধু পারা ২৬–৩০
+        if (page == null) continue; // only paras 26–30
         hits.add(_TextHit(
           surah: r.surahNumber,
           ayah: r.ayahNumber,
@@ -213,19 +216,20 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
         _searchingText = false;
         _textHits = hits;
         if (hits.isEmpty) {
-          _error = 'পারা ২৬–৩০-এ মিল পাওয়া যায়নি';
+          _error = l10n.quranAyahNotInParas;
         }
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _searchingText = false;
-        _error = 'সার্চ ব্যর্থ: $e';
+        _error = '${l10n.error}: $e';
       });
     }
   }
 
   void _search() {
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _error = null;
       _textHits = [];
@@ -244,32 +248,32 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
     final hasAyah = ayahText.isNotEmpty;
     final hasText = textQ.isNotEmpty;
 
-    // আয়াত টেক্সট সার্চ (অগ্রাধিকার যদি শুধু টেক্সট থাকে, বা অন্য ঘর খালি)
+    // Ayah text search (priority when only text is provided)
     if (hasText && !hasSurah && !hasPara && !hasPage) {
       _searchByText();
       return;
     }
 
     if (hasAyah && !hasSurah) {
-      setState(() => _error = 'সূরার নাম লিখুন, তারপর আয়াত নম্বর দিন');
+      setState(() => _error = l10n.quranSurahNameRequired);
       return;
     }
 
     if (hasSurah) {
       final surah = _resolveSurah(surahText);
       if (surah == null) {
-        setState(() => _error = 'সূরার নাম পাওয়া যায়নি');
+        setState(() => _error = l10n.quranSurahNotFound);
         return;
       }
       if (hasAyah) {
         final ayah = int.tryParse(ayahText);
         if (ayah == null || ayah < 1) {
-          setState(() => _error = 'সঠিক আয়াত নম্বর দিন');
+          setState(() => _error = l10n.quranAyahInvalid);
           return;
         }
         final page = cfg.pageForAyah(surah, ayah);
         if (page == null) {
-          setState(() => _error = 'এই আয়াত পারা ২৬–৩০-এ নেই');
+          setState(() => _error = l10n.quranAyahNotInParas);
           return;
         }
         widget.onGoToPage(page);
@@ -277,7 +281,7 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
       }
       final page = cfg.firstPageOfSurah(surah);
       if (page == null) {
-        setState(() => _error = 'এই সূরা পারা ২৬–৩০-এ নেই');
+        setState(() => _error = l10n.quranSurahNotInParas);
         return;
       }
       widget.onGoToPage(page);
@@ -288,12 +292,13 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
       final para = int.tryParse(paraText);
       final pageInPara = int.tryParse(pageText);
       if (para == null || pageInPara == null) {
-        setState(() => _error = 'পারা ও পৃষ্ঠা সংখ্যায় লিখুন');
+        setState(() => _error = l10n.quranPagePrintedHint);
         return;
       }
       final page = cfg.pageFromParaAndOffset(para, pageInPara);
       if (page == null) {
-        setState(() => _error = 'পারা $para-এর পৃষ্ঠা $pageInPara নেই');
+        setState(() => _error =
+            '${l10n.quranPara} $para · ${l10n.quranPage} $pageInPara — ${l10n.pageNotFound}');
         return;
       }
       widget.onGoToPage(page);
@@ -303,13 +308,12 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
     if (hasPage && !hasPara) {
       final printed = int.tryParse(pageText);
       if (printed == null) {
-        setState(() => _error = 'পৃষ্ঠা সংখ্যায় লিখুন');
+        setState(() => _error = l10n.quranPagePrintedHint);
         return;
       }
       final filePage = printed - 1;
       if (filePage < cfg.firstPage || filePage > cfg.lastPage) {
-        setState(() => _error =
-            'এই পৃষ্ঠা এখনো নেই (পারা ২৬–৩০: বইয়ের প্রায় ৫০৩–৬১১)');
+        setState(() => _error = l10n.quranParasOnly);
         return;
       }
       widget.onGoToPage(filePage);
@@ -319,12 +323,12 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
     if (hasPara && !hasPage) {
       final para = int.tryParse(paraText);
       if (para == null) {
-        setState(() => _error = 'পারা সংখ্যায় লিখুন');
+        setState(() => _error = l10n.quranParasOnly);
         return;
       }
       final page = cfg.firstPageOfPara(para);
       if (page == null) {
-        setState(() => _error = 'পারা $para এখনো আপলোড নেই (শুধু ২৬–৩০)');
+        setState(() => _error = l10n.quranParasOnly);
         return;
       }
       widget.onGoToPage(page);
@@ -336,7 +340,7 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
       return;
     }
 
-    setState(() => _error = 'অন্তত একটি ঘর পূরণ করুন');
+    setState(() => _error = l10n.quranSearchAction);
   }
 
   Widget _field({
@@ -387,6 +391,7 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final bottom = MediaQuery.of(context).viewInsets.bottom;
 
     return Padding(
@@ -407,39 +412,39 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
               ),
             ),
             const SizedBox(height: 12),
-            const Row(
+            Row(
               children: [
-                Icon(Icons.search, color: Color(0xFF34D399), size: 22),
-                SizedBox(width: 8),
+                const Icon(Icons.search, color: Color(0xFF34D399), size: 22),
+                const SizedBox(width: 8),
                 Text(
-                  'সার্চ',
-                  style: TextStyle(
+                  l10n.quranSearch,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                Spacer(),
+                const Spacer(),
                 Text(
-                  'পারা ২৬–৩০',
-                  style: TextStyle(color: Colors.white38, fontSize: 11),
+                  l10n.quranParasOnly,
+                  style: const TextStyle(color: Colors.white38, fontSize: 11),
                 ),
               ],
             ),
             const SizedBox(height: 20),
 
-            // পারা | পৃষ্ঠা
+            // Para | Page
             Row(
               children: [
                 _field(
-                  label: 'পারা',
+                  label: l10n.quranPara,
                   controller: _paraCtrl,
                   keyboard: TextInputType.number,
                   hint: '২৬',
                 ),
                 const SizedBox(width: 12),
                 _field(
-                  label: 'পৃষ্ঠা',
+                  label: l10n.quranPage,
                   controller: _pageCtrl,
                   keyboard: TextInputType.number,
                   hint: '৫০৩',
@@ -447,17 +452,17 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
               ],
             ),
             const SizedBox(height: 6),
-            const Text(
-              'পৃষ্ঠা = বইয়ে ছাপা নম্বর (অ্যাপ ১ কমিয়ে নেবে)',
-              style: TextStyle(color: Colors.white38, fontSize: 11),
+            Text(
+              l10n.quranPagePrintedHint,
+              style: const TextStyle(color: Colors.white38, fontSize: 11),
             ),
             const SizedBox(height: 16),
 
-            // সূরা | আয়াত
+            // Surah | Ayah
             Row(
               children: [
                 _field(
-                  label: 'সূরা',
+                  label: l10n.quranSurah,
                   controller: _surahCtrl,
                   keyboard: TextInputType.text,
                   hint: 'নাবা',
@@ -465,7 +470,7 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
                 ),
                 const SizedBox(width: 12),
                 _field(
-                  label: 'আয়াত নং',
+                  label: l10n.quranAyahNumber,
                   controller: _ayahCtrl,
                   keyboard: TextInputType.number,
                   hint: '১',
@@ -493,18 +498,13 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
 
             const SizedBox(height: 16),
 
-            // আয়াত টেক্সট (নতুন)
+            // Ayah text search
             _field(
-              label: 'আয়াতের অংশ / পূর্ণ আয়াত',
+              label: l10n.quranAyahText,
               controller: _textCtrl,
               keyboard: TextInputType.text,
-              hint: 'আরবি, বাংলা বা ইংরেজি লিখুন…',
+              hint: l10n.quranAyahTextHint,
               expand: false,
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'উদাহরণ: قل هو الله  বা  তিনি এক  বা  He is Allah',
-              style: TextStyle(color: Colors.white38, fontSize: 11),
             ),
 
             if (_error != null) ...[
@@ -529,7 +529,7 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
             if (_textHits.isNotEmpty) ...[
               const SizedBox(height: 12),
               Text(
-                '${_textHits.length} টি ফলাফল (পারা ২৬–৩০)',
+                '${_textHits.length} — ${l10n.quranParasOnly}',
                 style: const TextStyle(color: Colors.white54, fontSize: 12),
               ),
               const SizedBox(height: 6),
@@ -543,7 +543,7 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
                     return ListTile(
                       dense: true,
                       title: Text(
-                        '${h.surahName} \( {h.surah}: \){h.ayah}',
+                        '${h.surahName} \\( {h.surah}: \\){h.ayah}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
@@ -560,7 +560,7 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
                         ),
                       ),
                       trailing: Text(
-                        'পৃ. ${h.page}',
+                        '${l10n.quranPage}. ${h.page}',
                         style: const TextStyle(
                           color: Color(0xFF34D399),
                           fontSize: 12,
@@ -579,9 +579,12 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
               child: ElevatedButton.icon(
                 onPressed: _searchingText ? null : _search,
                 icon: const Icon(Icons.search, size: 20),
-                label: const Text(
-                  'সার্চ করুন',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                label: Text(
+                  l10n.quranSearchAction,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF10B981),
@@ -593,27 +596,4 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
               ),
             ),
             const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TextHit {
-  final int surah;
-  final int ayah;
-  final int page;
-  final String surahName;
-  final String snippet;
-  final QuranLanguage language;
-
-  _TextHit({
-    required this.surah,
-    required this.ayah,
-    required this.page,
-    required this.surahName,
-    required this.snippet,
-    required this.language,
-  });
-}
+          ]
