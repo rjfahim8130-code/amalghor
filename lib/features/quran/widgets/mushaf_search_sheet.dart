@@ -597,3 +597,26 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
             ),
             const SizedBox(height: 8),
           ]
+        ),
+      ),
+    );
+  }
+}
+
+class _TextHit {
+  final int surah;
+  final int ayah;
+  final int page;
+  final String surahName;
+  final String snippet;
+  final QuranLanguage language;
+
+  _TextHit({
+    required this.surah,
+    required this.ayah,
+    required this.page,
+    required this.surahName,
+    required this.snippet,
+    required this.language,
+  });
+}
