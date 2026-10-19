@@ -6,6 +6,7 @@ import '../../../core/app_colors.dart';
 import '../../../core/constants.dart';
 import '../../../core/router.dart';
 import '../../../data/models/location_model.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/location_provider.dart';
 
 /// Top header for the Home screen.
@@ -17,13 +18,14 @@ class HomeHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final loc = ref.watch(currentLocationProvider);
     final isRefreshing = ref.watch(isRefreshingLocationProvider);
     final notifier = ref.read(locationProvider.notifier);
 
     ref.listen<LocationState>(locationProvider, (prev, next) {
       if (next.lastError != null && prev?.lastError != next.lastError) {
-        _showError(context, next.lastError!);
+        _showError(context, l10n, next.lastError!);
         notifier.clearError();
       }
     });
@@ -54,7 +56,7 @@ class HomeHeader extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'আমলঘর',
+                l10n.appName,
                 style: TextStyle(
                   color: colors.emerald,
                   fontSize: 18,
@@ -64,7 +66,7 @@ class HomeHeader extends ConsumerWidget {
               ),
               const SizedBox(height: 1),
               Text(
-                'ইবাদতের পথে, সবসময়',
+                l10n.appTagline,
                 style: TextStyle(
                   color: colors.textMuted,
                   fontSize: 10.5,
@@ -102,7 +104,7 @@ class HomeHeader extends ConsumerWidget {
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 78),
                   child: Text(
-                    _chipLabel(loc, isRefreshing),
+                    _chipLabel(loc, isRefreshing, l10n),
                     style: TextStyle(
                       color: colors.textPrimary,
                       fontSize: 11,
@@ -126,7 +128,7 @@ class HomeHeader extends ConsumerWidget {
 
         // ─── Settings ─────────────────────────
         IconButton(
-          tooltip: 'Settings',
+          tooltip: l10n.settings,
           onPressed: () => context.push(Routes.settings),
           icon: Icon(
             Icons.settings_outlined,
@@ -162,46 +164,54 @@ class HomeHeader extends ConsumerWidget {
     );
   }
 
-  String _chipLabel(LocationModel loc, bool isRefreshing) {
-    if (isRefreshing) return 'খোঁজা হচ্ছে';
+  String _chipLabel(
+    LocationModel loc,
+    bool isRefreshing,
+    AppLocalizations l10n,
+  ) {
+    if (isRefreshing) return l10n.searchingLocation;
     if (loc.source == LocationSource.fallback) {
-      return 'লোকেশন';
+      return l10n.location;
     }
     final label = loc.city ?? loc.displayName.split(',').first.trim();
     return label;
   }
 
   Future<void> _handleRefresh(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
     final ok = await ref.read(locationProvider.notifier).refreshFromGps();
     if (!context.mounted) return;
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('লোকেশন আপডেট হয়েছে'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(l10n.locationUpdated),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
   }
 
-  void _showError(BuildContext context, String code) {
-    final message = _errorMessage(code);
+  void _showError(
+    BuildContext context,
+    AppLocalizations l10n,
+    String code,
+  ) {
+    final message = _errorMessage(code, l10n);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
   }
 
-  String _errorMessage(String code) {
+  String _errorMessage(String code, AppLocalizations l10n) {
     switch (code) {
       case 'services_disabled':
-        return 'লোকেশন সার্ভিস চালু করুন।';
+        return l10n.enableLocationServices;
       case 'permission_denied':
-        return 'লোকেশন অনুমতি দেওয়া হয়নি।';
+        return l10n.locationPermissionDeniedShort;
       case 'permission_denied_forever':
-        return 'লোকেশন অনুমতি স্থায়ীভাবে বন্ধ। '
-            'সেটিংস থেকে চালু করুন।';
+        return l10n.locationPermissionPermanentlyDenied;
       default:
-        return 'লোকেশন আপডেট করা যায়নি।';
+        return l10n.locationUpdateFailed;
     }
   }
 }
