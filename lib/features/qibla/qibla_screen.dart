@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/constants.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/qibla_provider.dart';
 
@@ -46,6 +47,7 @@ class _QiblaScreenState extends ConsumerState<QiblaScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final loc = ref.watch(currentLocationProvider);
     final qibla = ref.watch(qiblaDirectionProvider);
 
@@ -54,7 +56,7 @@ class _QiblaScreenState extends ConsumerState<QiblaScreen> {
       appBar: AppBar(
         backgroundColor: colors.pageBackground,
         title: Text(
-          'কিবলা',
+          l10n.qibla,
           style: TextStyle(
             color: colors.textPrimary,
             fontWeight: FontWeight.w700,
@@ -83,7 +85,7 @@ class _QiblaScreenState extends ConsumerState<QiblaScreen> {
               Padding(
                 padding: const EdgeInsets.only(bottom: AppConstants.spaceXl),
                 child: Text(
-                  'ফোনটি সমতল করে ধরুন, চারপাশের ধাতব বস্তু দূরে রাখুন।',
+                  l10n.qibla,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: colors.textMuted,
@@ -114,6 +116,7 @@ class _InfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(AppConstants.spaceLg),
       decoration: BoxDecoration(
@@ -137,7 +140,7 @@ class _InfoCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _Metric(
-                label: 'কিবলা কোণ',
+                label: l10n.qibla,
                 value: '${bearing.toStringAsFixed(1)}°',
               ),
               Container(
@@ -146,7 +149,7 @@ class _InfoCard extends StatelessWidget {
                 color: colors.divider,
               ),
               _Metric(
-                label: 'মক্কার দূরত্ব',
+                label: l10n.location,
                 value: '${distanceKm.toStringAsFixed(0)} km',
               ),
             ],
@@ -202,6 +205,7 @@ class _CompassView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
 
     if (heading == null) {
       return SizedBox(
@@ -218,7 +222,7 @@ class _CompassView extends StatelessWidget {
               ),
               const SizedBox(height: AppConstants.spaceMd),
               Text(
-                'কম্পাস সেন্সর নেই',
+                l10n.error,
                 style: TextStyle(
                   color: colors.textMuted,
                   fontSize: AppConstants.fontBody,
@@ -303,7 +307,7 @@ class _CompassView extends StatelessWidget {
                       BorderRadius.circular(AppConstants.radiusFull),
                 ),
                 child: Text(
-                  'কিবলামুখী',
+                  l10n.qibla,
                   style: TextStyle(
                     color: colors.textOnEmerald,
                     fontSize: AppConstants.fontCaption,
