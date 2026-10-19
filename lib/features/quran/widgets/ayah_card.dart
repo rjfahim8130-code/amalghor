@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/constants.dart';
 import '../../../data/models/quran_models.dart';
+import '../../../providers/mushaf_provider.dart';
 import '../../../providers/quran_provider.dart';
 
 /// A single Ayah card in the reader.
@@ -13,6 +15,7 @@ import '../../../providers/quran_provider.dart';
 ///   - Arabic text (right-aligned, RTL)
 ///   - Bangla text (below Arabic if enabled)
 ///   - English text (below Bangla if enabled)
+///   - Mushaf page navigate button
 ///   - Bookmark toggle
 ///   - Copy action
 ///
@@ -59,7 +62,7 @@ class _AyahCardState extends ConsumerState<AyahCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ─── Header: Ayah number + bookmark ────
+          // ─── Header: Ayah number + Mushaf btn + bookmark ────
           _Header(
             surahNumber: widget.ayah.surahNumber,
             ayahNumber: widget.ayah.ayahNumber,
@@ -122,7 +125,7 @@ class _AyahCardState extends ConsumerState<AyahCard> {
 }
 
 // ─────────────────────────────────────────────
-// HEADER — Ayah number + Bookmark
+// HEADER — Ayah number + Mushaf btn + Bookmark
 // ─────────────────────────────────────────────
 class _Header extends ConsumerWidget {
   final int surahNumber;
@@ -174,6 +177,40 @@ class _Header extends ConsumerWidget {
           ),
         ),
         const Spacer(),
+
+        // হাফিজী পৃষ্ঠায় যাও
+        IconButton(
+          tooltip: 'তেলাওয়াত পৃষ্ঠা',
+          onPressed: () async {
+            try {
+              final config = await ref.read(mushafConfigProvider.future);
+              final page = config.pageForAyah(surahNumber, ayahNumber);
+              if (!context.mounted) return;
+              if (page == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'এই আয়াত এখনো হাফিজী পারায় নেই (শুধু পারা ২৬–৩০)',
+                    ),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+                return;
+              }
+              context.push('/quran/mushaf?page=$page');
+            } catch (e) {
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('খোলা যায়নি: $e')),
+              );
+            }
+          },
+          icon: const Icon(
+            Icons.menu_book_rounded,
+            color: AppConstants.emeraldPrimary,
+            size: 22,
+          ),
+        ),
 
         // Bookmark toggle
         IconButton(
