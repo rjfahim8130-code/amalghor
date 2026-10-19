@@ -5,13 +5,14 @@ import '../../core/app_colors.dart';
 import '../../core/constants.dart';
 import '../../core/date_utils.dart';
 import '../../data/models/prayer_times.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../providers/clock_provider.dart';
 import '../../providers/prayer_provider.dart';
 
 /// Prayer timeline screen.
 ///
 /// Layout:
-///   - Section title: "আজকের সময়সূচি"
+///   - Section title: localized "Today's Schedule"
 ///   - Full daily timings list with live countdowns
 ///
 /// NO location chip, NO settings icon (both live on the Home tab).
@@ -35,7 +36,6 @@ class PrayerScreen extends ConsumerWidget {
           },
           child: prayerAsync.when(
             loading: () => ListView(
-              // Allow pull-to-refresh even while loading.
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
                 SizedBox(
@@ -74,10 +74,11 @@ class _PrayerBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final asyncNow = ref.watch(clockProvider);
     final now = asyncNow.value ?? DateTime.now();
 
-    final entries = _buildEntries(prayer);
+    final entries = _buildEntries(prayer, l10n);
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -124,7 +125,7 @@ class _PrayerBody extends ConsumerWidget {
               ),
               const SizedBox(width: AppConstants.spaceMd),
               Text(
-                'আজকের সময়সূচি',
+                l10n.todaysSchedule,
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontSize: AppConstants.fontSubtitle,
@@ -169,90 +170,93 @@ class _PrayerBody extends ConsumerWidget {
     );
   }
 
-  /// ১৪টি সারি — আপনার আগের list অনুযায়ী।
-  List<_TimingEntry> _buildEntries(PrayerTimes p) {
+  /// 14 timing rows — all labels come from `l10n`.
+  List<_TimingEntry> _buildEntries(
+    PrayerTimes p,
+    AppLocalizations l10n,
+  ) {
     return [
       _TimingEntry(
         key: 'tahajjud',
-        label: 'তাহাজ্জুদ',
+        label: l10n.tahajjudLabel,
         time: p.lastThirdStart,
         icon: Icons.nightlight_round,
       ),
       _TimingEntry(
         key: 'sehri',
-        label: 'সেহরি শেষ',
+        label: l10n.sehriEnds,
         time: p.sehriActual,
         icon: Icons.alarm_rounded,
       ),
       _TimingEntry(
         key: 'fajr',
-        label: 'ফজর',
+        label: l10n.fajr,
         time: p.fajr,
         icon: Icons.mosque_rounded,
       ),
       _TimingEntry(
         key: 'sunrise',
-        label: 'সূর্যোদয়',
+        label: l10n.sunrise,
         time: p.sunrise,
         icon: Icons.wb_twilight_rounded,
       ),
       _TimingEntry(
         key: 'ishraq',
-        label: 'ইশরাক',
+        label: l10n.ishraq,
         time: p.ishraq,
         icon: Icons.wb_sunny_outlined,
       ),
       _TimingEntry(
         key: 'solarNoon',
-        label: 'মধ্য আকাশ',
+        label: l10n.solarNoon,
         time: p.solarNoon,
         icon: Icons.brightness_high_rounded,
       ),
       _TimingEntry(
         key: 'dhuhr',
-        label: 'যোহর',
+        label: l10n.dhuhr,
         time: p.dhuhr,
         icon: Icons.mosque_rounded,
       ),
       _TimingEntry(
         key: 'asr',
-        label: 'আসর',
+        label: l10n.asr,
         time: p.asr,
         icon: Icons.mosque_rounded,
       ),
       _TimingEntry(
         key: 'sunset',
-        label: 'সূর্যাস্ত',
+        label: l10n.sunset,
         time: p.sunset,
         icon: Icons.wb_twilight_rounded,
       ),
       _TimingEntry(
         key: 'iftar',
-        label: 'ইফতার',
+        label: l10n.iftar,
         time: p.iftarActual,
         icon: Icons.restaurant_rounded,
       ),
       _TimingEntry(
         key: 'maghrib',
-        label: 'মাগরিব',
+        label: l10n.maghrib,
         time: p.maghrib,
         icon: Icons.mosque_rounded,
       ),
       _TimingEntry(
         key: 'isha',
-        label: 'এশা',
+        label: l10n.isha,
         time: p.isha,
         icon: Icons.mosque_rounded,
       ),
       _TimingEntry(
         key: 'ishaMustahab',
-        label: 'মুস্তাহাব এশা',
+        label: l10n.mustahabbIsha,
         time: p.ishaMustahab,
         icon: Icons.star_outline_rounded,
       ),
       _TimingEntry(
         key: 'midnight',
-        label: 'রাত অর্ধেক',
+        label: l10n.midnightHalf,
         time: p.islamicMidnight,
         icon: Icons.dark_mode_rounded,
       ),
@@ -299,8 +303,7 @@ class _TimingRow extends StatelessWidget {
     final countdownText =
         isPast ? '✓' : AppDateUtils.formatDuration(diff);
 
-    final accent =
-        isPast ? colors.textFaint : colors.emerald;
+    final accent = isPast ? colors.textFaint : colors.emerald;
 
     return Column(
       children: [
@@ -334,9 +337,7 @@ class _TimingRow extends StatelessWidget {
                 child: Text(
                   entry.label,
                   style: TextStyle(
-                    color: isPast
-                        ? colors.textFaint
-                        : colors.textPrimary,
+                    color: isPast ? colors.textFaint : colors.textPrimary,
                     fontSize: AppConstants.fontBody,
                     fontWeight:
                         isNext ? FontWeight.w600 : FontWeight.w400,
@@ -347,9 +348,7 @@ class _TimingRow extends StatelessWidget {
               Text(
                 AppDateUtils.formatTimeShort(entry.time),
                 style: TextStyle(
-                  color: isPast
-                      ? colors.textFaint
-                      : colors.textPrimary,
+                  color: isPast ? colors.textFaint : colors.textPrimary,
                   fontSize: AppConstants.fontBody,
                   fontWeight: FontWeight.w600,
                   fontFeatures: const [FontFeature.tabularFigures()],
@@ -413,6 +412,7 @@ class _PrayerError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(AppConstants.spaceXl),
       decoration: BoxDecoration(
@@ -429,7 +429,7 @@ class _PrayerError extends StatelessWidget {
           ),
           const SizedBox(height: AppConstants.spaceMd),
           Text(
-            'ত্রুটি',
+            l10n.error,
             style: TextStyle(
               color: colors.textPrimary,
               fontSize: AppConstants.fontSubtitle,
@@ -449,7 +449,7 @@ class _PrayerError extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: const Text('আবার চেষ্টা করুন'),
+            label: Text(l10n.retry),
           ),
         ],
       ),
