@@ -21,6 +21,9 @@ class PdfOptions {
   final String appName;
   final String appTagline;
 
+  /// Locale for the generated PDF (e.g. 'en' or 'bn').
+  final String locale;
+
   const PdfOptions({
     required this.primaryCalendar,
     required this.madhhab,
@@ -29,8 +32,9 @@ class PdfOptions {
     required this.latitude,
     required this.longitude,
     required this.columns,
-    this.appName = 'আমলঘর',
-    this.appTagline = 'নামাযের সময়সূচি',
+    this.appName = 'AmalGhor',
+    this.appTagline = 'Prayer timetable',
+    this.locale = 'bn',
   });
 }
 
@@ -44,6 +48,8 @@ class PdfBuilder {
     required this.fonts,
     required this.options,
   });
+
+  bool get _isEn => options.locale == 'en';
 
   Future<Uint8List> build(ClusterResult result) async {
     final doc = pw.Document(
@@ -110,7 +116,7 @@ class PdfBuilder {
                   ),
                   child: pw.Center(
                     child: pw.Text(
-                      'আ',
+                      _isEn ? 'A' : 'আ',
                       style: pw.TextStyle(
                         color: PdfColors.white,
                         fontSize: 12,
@@ -191,7 +197,8 @@ class PdfBuilder {
         ),
         pw.SizedBox(height: 3),
         pw.Text(
-          '${_madhhabLabel(options.madhhab)} মাযহাব  •  '
+          '${_madhhabLabel(options.madhhab)} '
+          '${_isEn ? 'Madhhab' : 'মাযহাব'}  •  '
           '${result.granularity.label}',
           style: pw.TextStyle(
             fontSize: 7,
@@ -222,8 +229,12 @@ class PdfBuilder {
     return '${hijri.monthName(h1, 'bn')} — ${hijri.monthName(h2, 'bn')}';
   }
 
-  String _madhhabLabel(MadhhabType m) =>
-      m == MadhhabType.hanafi ? 'হানাফী' : 'শাফেঈ';
+  String _madhhabLabel(MadhhabType m) {
+    if (m == MadhhabType.hanafi) {
+      return _isEn ? 'Hanafi' : 'হানাফী';
+    }
+    return _isEn ? "Shafi'i" : 'শাফেঈ';
+  }
 
   pw.Widget _footer(pw.Context ctx, ClusterResult result) {
     return pw.Container(
@@ -239,15 +250,21 @@ class PdfBuilder {
         children: [
           pw.Text(
             options.showSafetyTimes
-                ? 'সেহরি: ৭ মিনিট আগে  •  ইফতার: ৩ মিনিট পরে'
-                : 'সেহরি / ইফতার: মূল সময়',
+                ? (_isEn
+                    ? 'Sehri: 7 min before  •  Iftar: 3 min after'
+                    : 'সেহরি: ৭ মিনিট আগে  •  ইফতার: ৩ মিনিট পরে')
+                : (_isEn
+                    ? 'Sehri / Iftar: actual time'
+                    : 'সেহরি / ইফতার: মূল সময়'),
             style: pw.TextStyle(
               fontSize: 6.5,
               color: PdfColors.grey600,
             ),
           ),
           pw.Text(
-            '${options.appName}  •  পৃষ্ঠা ${ctx.pageNumber} / ${ctx.pagesCount}',
+            '${options.appName}  •  '
+            '${_isEn ? 'Page' : 'পৃষ্ঠা'} '
+            '${ctx.pageNumber} / ${ctx.pagesCount}',
             style: pw.TextStyle(
               fontSize: 6.5,
               color: PdfColors.grey600,
@@ -287,7 +304,7 @@ class PdfBuilder {
                 vertical: 3,
               ),
               child: pw.Text(
-                c.label,
+                _columnLabel(c),
                 style: pw.TextStyle(
                   fontSize: 7,
                   fontWeight: pw.FontWeight.bold,
@@ -350,6 +367,42 @@ class PdfBuilder {
       defaultVerticalAlignment: pw.TableCellVerticalAlignment.middle,
       children: [header, ...dataRows],
     );
+  }
+
+  String _columnLabel(PdfColumn c) {
+    final isEn = _isEn;
+    switch (c) {
+      case PdfColumn.date:
+        return isEn ? 'Date' : 'তারিখ';
+      case PdfColumn.fajr:
+        return isEn ? 'Fajr' : 'ফজর';
+      case PdfColumn.sunrise:
+        return isEn ? 'Sunrise' : 'সূর্যোদয়';
+      case PdfColumn.dhuhr:
+        return isEn ? 'Dhuhr' : 'যোহর';
+      case PdfColumn.asr:
+        return isEn ? 'Asr' : 'আসর';
+      case PdfColumn.maghrib:
+        return isEn ? 'Maghrib' : 'মাগরিব';
+      case PdfColumn.isha:
+        return isEn ? 'Isha' : 'এশা';
+      case PdfColumn.sehri:
+        return isEn ? 'Sehri' : 'সেহরি';
+      case PdfColumn.iftar:
+        return isEn ? 'Iftar' : 'ইফতার';
+      case PdfColumn.tahajjud:
+        return isEn ? 'Tahajjud' : 'তাহাজ্জুদ';
+      case PdfColumn.ishraq:
+        return isEn ? 'Ishraq' : 'ইশরাক';
+      case PdfColumn.midnight:
+        return isEn ? 'Midnight' : 'রাত অর্ধেক';
+      case PdfColumn.solarNoon:
+        return isEn ? 'Solar noon' : 'মধ্য আকাশ';
+      case PdfColumn.sunset:
+        return isEn ? 'Sunset' : 'সূর্যাস্ত';
+      case PdfColumn.ishaMustahab:
+        return isEn ? 'Mustahabb Isha' : 'মুস্তাহাব এশা';
+    }
   }
 
   String _cellFor(ClusterRow row, PdfColumn col) {
