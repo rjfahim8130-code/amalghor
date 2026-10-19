@@ -38,6 +38,7 @@
   "tahajjud": "Tahajjud Time",
   "iftar": "Iftar",
   "sehri": "Sehri",
+  "sunset": "Sunset",
 
   "prayerStarted": "{prayer} time is running",
   "@prayerStarted": {
@@ -76,6 +77,8 @@
   "pdfShare": "Share",
   "pdfPrint": "Print",
   "pdfSave": "Save to device",
+  "pdfCalendar": "Calendar",
+  "pdfYear": "Year",
 
   "location": "Location",
   "locationAuto": "Auto (GPS)",
