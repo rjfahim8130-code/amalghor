@@ -213,51 +213,61 @@ class PdfSettingsScreen extends ConsumerWidget {
     );
   }
 
+  /// Maps the ACTUAL enum values from `pdf_cluster.dart` to labels.
   String _granularityLabel(
     ClusterGranularity g,
     AppLocalizations l10n,
   ) {
     switch (g) {
-      case ClusterGranularity.daily:
+      case ClusterGranularity.dayWise:
         return l10n.pdfModeFull;
-      case ClusterGranularity.oneMinute:
-        return l10n.pdfModeShort1Min;
-      case ClusterGranularity.thirtySeconds:
+      case ClusterGranularity.tenSec:
+        return '10 sec';
+      case ClusterGranularity.fifteenSec:
+        return '15 sec';
+      case ClusterGranularity.twentySec:
+        return '20 sec';
+      case ClusterGranularity.thirtySec:
         return l10n.pdfModeShort30Sec;
+      case ClusterGranularity.fortySec:
+        return '40 sec';
+      case ClusterGranularity.oneMin:
+        return l10n.pdfModeShort1Min;
+      case ClusterGranularity.twoMin:
+        return '2 min';
+      case ClusterGranularity.fiveMin:
+        return '5 min';
     }
   }
 
+  /// Maps the ACTUAL enum values from `pdf_cluster.dart` to labels.
   String _columnLabel(PdfColumn c, AppLocalizations l10n) {
     switch (c) {
       case PdfColumn.date:
         return l10n.dateGregorian;
+      case PdfColumn.tahajjud:
+        return l10n.tahajjudLabel;
+      case PdfColumn.sehri:
+        return l10n.sehri;
       case PdfColumn.fajr:
         return l10n.fajr;
       case PdfColumn.sunrise:
         return l10n.sunrise;
+      case PdfColumn.ishraq:
+        return l10n.ishraq;
       case PdfColumn.dhuhr:
         return l10n.dhuhr;
       case PdfColumn.asr:
         return l10n.asr;
+      case PdfColumn.sunset:
+        return l10n.sunset;
+      case PdfColumn.iftar:
+        return l10n.iftar;
       case PdfColumn.maghrib:
         return l10n.maghrib;
       case PdfColumn.isha:
         return l10n.isha;
-      case PdfColumn.sehri:
-        return l10n.sehriEnds;
-      case PdfColumn.iftar:
-        return l10n.iftar;
-      case PdfColumn.tahajjud:
-        return l10n.tahajjudLabel;
-      case PdfColumn.ishraq:
-        return l10n.ishraq;
-      case PdfColumn.midnight:
-        return l10n.midnightHalf;
-      case PdfColumn.solarNoon:
-        return l10n.solarNoon;
-      case PdfColumn.sunset:
-        return l10n.sunset;
-      case PdfColumn.mustahabbIsha:
+      case PdfColumn.ishaMustahab:
         return l10n.mustahabbIsha;
     }
   }
