@@ -25,6 +25,7 @@ import '../features/ramadan/ramadan_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/shell/app_shell.dart';
 import '../features/tasbih/tasbih_screen.dart';
+import '../l10n/generated/app_localizations.dart';
 
 class Routes {
   Routes._();
@@ -70,7 +71,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: PrayerScreen()),
           ),
-          // কুরআন ট্যাব → মোড সিলেক্ট (হাফিজী / সাধারণ)
+          // Quran tab → mode select (Hafezi / Regular)
           GoRoute(
             path: Routes.quran,
             pageBuilder: (context, state) =>
@@ -92,7 +93,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                   return MushafReaderScreen(initialPage: page);
                 },
               ),
-              // :surahNumber অবশ্যই regular/mushaf/bookmarks এর পরে
+              // :surahNumber must come after regular/mushaf/bookmarks
               GoRoute(
                 path: ':surahNumber',
                 builder: (context, state) {
@@ -181,41 +182,44 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const NotificationScreen(),
       ),
     ],
-    errorBuilder: (context, state) => Scaffold(
-      backgroundColor: const Color(0xFF0B0F12),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.error_outline,
-                color: Color(0xFFEF4444),
-                size: 48,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Page not found',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+    errorBuilder: (context, state) {
+      final l10n = AppLocalizations.of(context);
+      return Scaffold(
+        backgroundColor: const Color(0xFF0B0F12),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  color: Color(0xFFEF4444),
+                  size: 48,
                 ),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => context.go('/'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
-                  foregroundColor: Colors.black,
+                const SizedBox(height: 16),
+                Text(
+                  l10n.pageNotFound,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                child: const Text('Go Home'),
-              ),
-            ],
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => context.go('/'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981),
+                    foregroundColor: Colors.black,
+                  ),
+                  child: Text(l10n.goHome),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    ),
+      );
+    },
   );
 });
