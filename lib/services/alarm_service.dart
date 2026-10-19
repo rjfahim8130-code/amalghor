@@ -29,9 +29,15 @@ class UserAlarm {
   String get timeLabel =>
       '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
 
-  String get daysLabel {
-    if (daysOfWeek.isEmpty) return 'প্রতিদিন';
-    const names = ['সোম', 'মঙ্গল', 'বুধ', 'বৃহ', 'শুক্র', 'শনি', 'রবি'];
+  /// Day label — locale-aware.
+  ///
+  /// [locale] — 'en' or 'bn' (defaults to 'bn').
+  String daysLabel({String locale = 'bn'}) {
+    final isEn = locale == 'en';
+    if (daysOfWeek.isEmpty) return isEn ? 'Every day' : 'প্রতিদিন';
+    final names = isEn
+        ? const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        : const ['সোম', 'মঙ্গল', 'বুধ', 'বৃহ', 'শুক্র', 'শনি', 'রবি'];
     final sorted = daysOfWeek.toList()..sort();
     return sorted.map((d) => names[d - 1]).join(', ');
   }
@@ -68,8 +74,8 @@ class UserAlarm {
   factory UserAlarm.fromMap(Map<String, dynamic> m) {
     return UserAlarm(
       id: m['id'] as String,
-      title: m['title'] as String? ?? '🌌 অ্যালার্ম',
-      body: m['body'] as String? ?? 'আমলঘর — অ্যালার্ম',
+      title: m['title'] as String? ?? '🌌 Alarm',
+      body: m['body'] as String? ?? 'AmalGhor — Alarm',
       hour: m['hour'] as int,
       minute: m['minute'] as int,
       daysOfWeek:
@@ -141,21 +147,21 @@ class AlarmService {
     await _prefs?.setString(_key, raw);
   }
 
-  Future<void> add(UserAlarm alarm) async {
+  Future<void> add(UserAlarm alarm, {String locale = 'bn'}) async {
     final list = loadAll();
     list.add(alarm);
     await saveAll(list);
-    await _schedule(alarm);
+    await _schedule(alarm, locale: locale);
   }
 
-  Future<void> update(UserAlarm alarm) async {
+  Future<void> update(UserAlarm alarm, {String locale = 'bn'}) async {
     final list = loadAll();
     final idx = list.indexWhere((a) => a.id == alarm.id);
     if (idx == -1) return;
     list[idx] = alarm;
     await saveAll(list);
     await _cancel(alarm.id);
-    if (alarm.enabled) await _schedule(alarm);
+    if (alarm.enabled) await _schedule(alarm, locale: locale);
   }
 
   Future<void> delete(String id) async {
@@ -165,12 +171,23 @@ class AlarmService {
     await _cancel(id);
   }
 
-  Future<void> toggle(UserAlarm alarm, bool enabled) async {
-    await update(alarm.copyWith(enabled: enabled));
+  Future<void> toggle(
+    UserAlarm alarm,
+    bool enabled, {
+    String locale = 'bn',
+  }) async {
+    await update(alarm.copyWith(enabled: enabled), locale: locale);
   }
 
-  Future<void> _schedule(UserAlarm alarm) async {
+  Future<void> _schedule(
+    UserAlarm alarm, {
+    String locale = 'bn',
+  }) async {
     if (!alarm.enabled) return;
+
+    final isEn = locale == 'en';
+    final snoozeLabel = isEn ? 'Snooze 5 min' : '৫ মিনিট পরে';
+    final dismissLabel = isEn ? 'Dismiss' : 'বন্ধ করুন';
 
     final baseId = _idFor(alarm.id);
     final days =
@@ -195,15 +212,15 @@ class AlarmService {
             fullScreenIntent: true,
             ongoing: true,
             autoCancel: false,
-            actions: const [
+            actions: [
               AndroidNotificationAction(
                 'snooze',
-                '৫ মিনিট পরে',
+                snoozeLabel,
                 showsUserInterface: false,
               ),
               AndroidNotificationAction(
                 'dismiss',
-                'বন্ধ করুন',
+                dismissLabel,
                 showsUserInterface: false,
                 cancelNotification: true,
               ),
@@ -247,7 +264,7 @@ class AlarmService {
 
   int _idFor(String id) => id.hashCode.abs() % 1000000;
 
-  Future<void> preview(UserAlarm alarm) async {
+  Future<void> preview(UserAlarm alarm, {String locale = 'bn'}) async {
     await _plugin.show(
       998,
       alarm.title,
