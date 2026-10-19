@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/constants.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../providers/custom_notification_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../providers/settings_provider.dart';
@@ -36,13 +37,14 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: colors.pageBackground,
       appBar: AppBar(
         backgroundColor: colors.pageBackground,
         title: Text(
-          '🔔 নোটিফিকেশন',
+          l10n.notifications,
           style: TextStyle(
             color: colors.textPrimary,
             fontWeight: FontWeight.w700,
@@ -61,9 +63,9 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
             fontSize: 13,
             fontWeight: FontWeight.w500,
           ),
-          tabs: const [
-            Tab(text: 'নামাযের রিমাইন্ডার'),
-            Tab(text: 'কাস্টম'),
+          tabs: [
+            Tab(text: l10n.prayerRemindersTab),
+            Tab(text: l10n.customTab),
           ],
         ),
       ),
@@ -88,6 +90,7 @@ class _PrayerRemindersTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
 
@@ -102,7 +105,7 @@ class _PrayerRemindersTab extends ConsumerWidget {
         const _NotificationPermissionBanner(),
         const SizedBox(height: AppConstants.spaceMd),
         Text(
-          'প্রতিটি নামাযের জন্য নোটিফিকেশন চালু/বন্ধ করুন এবং কত মিনিট আগে রিমাইন্ডার চান সেটা সেট করুন।',
+          l10n.notifPrayerHelp,
           style: TextStyle(
             color: colors.textMuted,
             fontSize: AppConstants.fontCaption,
@@ -111,56 +114,56 @@ class _PrayerRemindersTab extends ConsumerWidget {
         ),
         const SizedBox(height: AppConstants.spaceLg),
         _PrayerNotifTile(
-          title: '🌅 ফজর',
+          title: l10n.fajr,
           enabled: settings.notifFajr,
           offset: settings.offsetFajr,
           onToggle: (v) => update(() => notifier.setNotifFajr(v)),
           onOffset: (v) => update(() => notifier.setOffset('fajr', v)),
         ),
         _PrayerNotifTile(
-          title: '☀️ যোহর',
+          title: l10n.dhuhr,
           enabled: settings.notifDhuhr,
           offset: settings.offsetDhuhr,
           onToggle: (v) => update(() => notifier.setNotifDhuhr(v)),
           onOffset: (v) => update(() => notifier.setOffset('dhuhr', v)),
         ),
         _PrayerNotifTile(
-          title: '🌤️ আসর',
+          title: l10n.asr,
           enabled: settings.notifAsr,
           offset: settings.offsetAsr,
           onToggle: (v) => update(() => notifier.setNotifAsr(v)),
           onOffset: (v) => update(() => notifier.setOffset('asr', v)),
         ),
         _PrayerNotifTile(
-          title: '🌇 মাগরিব',
+          title: l10n.maghrib,
           enabled: settings.notifMaghrib,
           offset: settings.offsetMaghrib,
           onToggle: (v) => update(() => notifier.setNotifMaghrib(v)),
           onOffset: (v) => update(() => notifier.setOffset('maghrib', v)),
         ),
         _PrayerNotifTile(
-          title: '🌙 এশা',
+          title: l10n.isha,
           enabled: settings.notifIsha,
           offset: settings.offsetIsha,
           onToggle: (v) => update(() => notifier.setNotifIsha(v)),
           onOffset: (v) => update(() => notifier.setOffset('isha', v)),
         ),
         _PrayerNotifTile(
-          title: '🥣 সেহরি শেষ',
+          title: l10n.sehriEnds,
           enabled: settings.notifSehri,
           offset: settings.offsetSehri,
           onToggle: (v) => update(() => notifier.setNotifSehri(v)),
           onOffset: (v) => update(() => notifier.setOffset('sehri', v)),
         ),
         _PrayerNotifTile(
-          title: '🌙 ইফতার',
+          title: l10n.iftar,
           enabled: settings.notifIftar,
           offset: settings.offsetIftar,
           onToggle: (v) => update(() => notifier.setNotifIftar(v)),
           onOffset: (v) => update(() => notifier.setOffset('iftar', v)),
         ),
         _PrayerNotifTile(
-          title: '🌌 তাহাজ্জুদ',
+          title: l10n.tahajjudLabel,
           enabled: settings.notifTahajjud,
           offset: settings.offsetTahajjud,
           onToggle: (v) => update(() => notifier.setNotifTahajjud(v)),
@@ -182,6 +185,7 @@ class _CustomNotificationsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final items = ref.watch(customNotificationProvider);
 
     return Stack(
@@ -211,7 +215,7 @@ class _CustomNotificationsTab extends ConsumerWidget {
             backgroundColor: colors.emerald,
             foregroundColor: colors.textOnEmerald,
             icon: const Icon(Icons.add),
-            label: const Text('নতুন'),
+            label: Text(l10n.newAlarm),
             onPressed: () => _showEditor(context, ref, null),
           ),
         ),
@@ -260,6 +264,7 @@ class _PrayerNotifTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -295,7 +300,7 @@ class _PrayerNotifTile extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    '${offset}মি',
+                    '$offset ${l10n.remaining}',
                     style: TextStyle(
                       color: colors.emerald,
                       fontSize: AppConstants.fontCaption,
@@ -315,7 +320,7 @@ class _PrayerNotifTile extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'আগে',
+                    l10n.remaining,
                     style: TextStyle(
                       color: colors.textMuted,
                       fontSize: AppConstants.fontMicro,
@@ -450,7 +455,6 @@ class _NotificationTile extends ConsumerWidget {
     );
   }
 }
-
 // ─────────────────────────────────────────────
 // EDITOR DIALOG
 // ─────────────────────────────────────────────
@@ -477,10 +481,10 @@ class _NotificationEditorDialogState
     super.initState();
     final e = widget.existing;
     _titleController = TextEditingController(
-      text: e?.title ?? '📖 কুরআন পড়ার সময়',
+      text: e?.title ?? '',
     );
     _bodyController = TextEditingController(
-      text: e?.body ?? 'আজকের তিলাওয়াতের লক্ষ্য পূরণ করুন। ✨',
+      text: e?.body ?? '',
     );
     _time = e != null
         ? TimeOfDay(hour: e.hour, minute: e.minute)
@@ -526,11 +530,16 @@ class _NotificationEditorDialogState
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
+    final isBn = Localizations.localeOf(context).languageCode == 'bn';
+    const bnDays = ['সো', 'ম', 'বু', 'বৃ', 'শু', 'শ', 'র'];
+    const enDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final dayNames = isBn ? bnDays : enDays;
 
     return AlertDialog(
       backgroundColor: colors.cardBackground,
       title: Text(
-        widget.existing == null ? 'নতুন নোটিফিকেশন' : 'সম্পাদনা',
+        widget.existing == null ? l10n.newAlarm : l10n.editAlarm,
         style: TextStyle(color: colors.textPrimary),
       ),
       content: SingleChildScrollView(
@@ -567,8 +576,8 @@ class _NotificationEditorDialogState
             TextField(
               controller: _titleController,
               style: TextStyle(color: colors.textPrimary),
-              decoration: const InputDecoration(
-                hintText: 'শিরোনাম (যেমন: 📖 কুরআন পড়ার সময়)',
+              decoration: InputDecoration(
+                hintText: l10n.alarmTitleHint,
               ),
             ),
             const SizedBox(height: AppConstants.spaceSm),
@@ -576,13 +585,13 @@ class _NotificationEditorDialogState
               controller: _bodyController,
               style: TextStyle(color: colors.textPrimary),
               maxLines: 3,
-              decoration: const InputDecoration(
-                hintText: 'বার্তা (ঐচ্ছিক)',
+              decoration: InputDecoration(
+                hintText: l10n.alarmBodyHint,
               ),
             ),
             const SizedBox(height: AppConstants.spaceMd),
             Text(
-              'কোন দিনগুলোতে?',
+              l10n.whichDays,
               style: TextStyle(
                 color: colors.textMuted,
                 fontSize: AppConstants.fontCaption,
@@ -594,7 +603,6 @@ class _NotificationEditorDialogState
               runSpacing: 6,
               children: List.generate(7, (i) {
                 final day = i + 1;
-                const names = ['সো', 'ম', 'বু', 'বৃ', 'শু', 'শ', 'র'];
                 final selected = _days.contains(day);
                 return GestureDetector(
                   onTap: () {
@@ -620,12 +628,12 @@ class _NotificationEditorDialogState
                     ),
                     child: Center(
                       child: Text(
-                        names[i],
+                        dayNames[i],
                         style: TextStyle(
                           color: selected
                               ? colors.textOnEmerald
                               : colors.textMuted,
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -634,17 +642,31 @@ class _NotificationEditorDialogState
                 );
               }),
             ),
+            if (_days.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  l10n.noDayMeansEveryday,
+                  style: TextStyle(
+                    color: colors.textFaint,
+                    fontSize: AppConstants.fontMicro,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text('বাতিল', style: TextStyle(color: colors.textMuted)),
+          child: Text(l10n.cancel,
+              style: TextStyle(color: colors.textMuted)),
         ),
         TextButton(
           onPressed: _save,
-          child: Text('সংরক্ষণ', style: TextStyle(color: colors.emerald)),
+          child: Text(l10n.save,
+              style: TextStyle(color: colors.emerald)),
         ),
       ],
     );
@@ -661,6 +683,7 @@ class _EmptyCustomState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppConstants.spaceXl),
@@ -674,7 +697,7 @@ class _EmptyCustomState extends StatelessWidget {
             ),
             const SizedBox(height: AppConstants.spaceMd),
             Text(
-              'এখনো কোনো কাস্টম নোটিফিকেশন নেই',
+              l10n.noAlarms,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.textMuted,
@@ -698,6 +721,7 @@ class _NotificationPermissionBanner extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final status = ref.watch(notificationProvider);
 
     if (status == NotificationPermissionStatus.granted) {
@@ -738,7 +762,7 @@ class _NotificationPermissionBanner extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'নোটিফিকেশন চালু করুন',
+                      l10n.notifications,
                       style: TextStyle(
                         color: colors.textPrimary,
                         fontSize: AppConstants.fontBody,
@@ -746,7 +770,7 @@ class _NotificationPermissionBanner extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      'ট্যাপ করে অনুমতি দিন',
+                      l10n.retry,
                       style: TextStyle(
                         color: colors.textMuted,
                         fontSize: AppConstants.fontCaption,
