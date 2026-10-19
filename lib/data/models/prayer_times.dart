@@ -39,14 +39,14 @@ class PrayerTimes {
   final DateTime iftarActual;
 
   // ─── Extended Islamic windows ────────────────
-  final DateTime tahajjudStart;     // = lastThirdStart
+  final DateTime tahajjudStart; // = lastThirdStart
   final DateTime lastThirdStart;
   final DateTime islamicMidnight;
   final DateTime firstThirdEnd;
 
   // ─── Contextual ──────────────────────────────
-  final DateTime ishraq;            // Sunrise + 20 min
-  final DateTime ishaMustahab;      // Isha + 1/3 × (nextFajr − Isha)
+  final DateTime ishraq; // Sunrise + 20 min
+  final DateTime ishaMustahab; // Isha + 1/3 × (nextFajr − Isha)
 
   // ─── Next-day Fajr (for night-window maths) ──
   final DateTime nextFajr;
@@ -75,6 +75,59 @@ class PrayerTimes {
     required this.ishaMustahab,
     required this.nextFajr,
   });
+
+  // ─────────────────────────────────────────────
+  // DISPLAY NAMES — locale-aware
+  // ─────────────────────────────────────────────
+
+  /// Display name for a prayer key, localized.
+  ///
+  /// [key] — one of: fajr, dhuhr, asr, maghrib, isha, sunrise,
+  ///                 sunset, ishraq, tahajjud, sehri, iftar,
+  ///                 ishaMustahab, midnight, solarNoon
+  /// [locale] — 'en' or 'bn' (defaults to 'en').
+  static String displayName(
+    String key, {
+    String locale = 'en',
+  }) {
+    final isEn = locale == 'en';
+    switch (key) {
+      case 'fajr':
+        return isEn ? 'Fajr' : 'ফজর';
+      case 'dhuhr':
+        return isEn ? 'Dhuhr' : 'যোহর';
+      case 'asr':
+        return isEn ? 'Asr' : 'আসর';
+      case 'maghrib':
+        return isEn ? 'Maghrib' : 'মাগরিব';
+      case 'isha':
+        return isEn ? 'Isha' : 'এশা';
+      case 'sunrise':
+        return isEn ? 'Sunrise' : 'সূর্যোদয়';
+      case 'sunset':
+        return isEn ? 'Sunset' : 'সূর্যাস্ত';
+      case 'ishraq':
+        return isEn ? 'Ishraq' : 'ইশরাক';
+      case 'tahajjud':
+        return isEn ? 'Tahajjud' : 'তাহাজ্জুদ';
+      case 'sehri':
+        return isEn ? 'Sehri' : 'সেহরি';
+      case 'iftar':
+        return isEn ? 'Iftar' : 'ইফতার';
+      case 'ishaMustahab':
+        return isEn ? 'Mustahabb Isha' : 'মুস্তাহাব এশা';
+      case 'midnight':
+        return isEn ? 'Midnight' : 'রাত অর্ধেক';
+      case 'solarNoon':
+        return isEn ? 'Solar noon' : 'মধ্য আকাশ';
+      default:
+        return key;
+    }
+  }
+
+  /// Locale-aware display name for this key.
+  String displayNameFor(String key, {String locale = 'en'}) =>
+      PrayerTimes.displayName(key, locale: locale);
 
   // ─────────────────────────────────────────────
   // COMPUTED HELPERS
@@ -133,21 +186,78 @@ class PrayerTimes {
 
   /// All timings in chronological order — used by the multi-countdown
   /// widget on the home screen.
-  List<({String key, DateTime time, String label})> allTimings(DateTime now) {
+  ///
+  /// [locale] — 'en' or 'bn' (defaults to 'en').
+  List<({String key, DateTime time, String label})> allTimings(
+    DateTime now, {
+    String locale = 'en',
+  }) {
     return [
-      (key: 'tahajjud', time: lastThirdStart, label: 'তাহাজ্জুদ'),
-      (key: 'sehri', time: sehriSafety, label: 'সেহরি'),
-      (key: 'fajr', time: fajr, label: 'ফজর'),
-      (key: 'sunrise', time: sunrise, label: 'সূর্যোদয়'),
-      (key: 'ishraq', time: ishraq, label: 'ইশরাক'),
-      (key: 'dhuhr', time: dhuhr, label: 'যোহর'),
-      (key: 'asr', time: asr, label: 'আসর'),
-      (key: 'sunset', time: sunset, label: 'সূর্যাস্ত'),
-      (key: 'iftar', time: iftarSafety, label: 'ইফতার'),
-      (key: 'maghrib', time: maghrib, label: 'মাগরিব'),
-      (key: 'isha', time: isha, label: 'এশা'),
-      (key: 'ishaMustahab', time: ishaMustahab, label: 'মুস্তাহাব এশা'),
-      (key: 'midnight', time: islamicMidnight, label: 'রাত অর্ধেক'),
+      (
+        key: 'tahajjud',
+        time: lastThirdStart,
+        label: displayName('tahajjud', locale: locale),
+      ),
+      (
+        key: 'sehri',
+        time: sehriSafety,
+        label: displayName('sehri', locale: locale),
+      ),
+      (
+        key: 'fajr',
+        time: fajr,
+        label: displayName('fajr', locale: locale),
+      ),
+      (
+        key: 'sunrise',
+        time: sunrise,
+        label: displayName('sunrise', locale: locale),
+      ),
+      (
+        key: 'ishraq',
+        time: ishraq,
+        label: displayName('ishraq', locale: locale),
+      ),
+      (
+        key: 'dhuhr',
+        time: dhuhr,
+        label: displayName('dhuhr', locale: locale),
+      ),
+      (
+        key: 'asr',
+        time: asr,
+        label: displayName('asr', locale: locale),
+      ),
+      (
+        key: 'sunset',
+        time: sunset,
+        label: displayName('sunset', locale: locale),
+      ),
+      (
+        key: 'iftar',
+        time: iftarSafety,
+        label: displayName('iftar', locale: locale),
+      ),
+      (
+        key: 'maghrib',
+        time: maghrib,
+        label: displayName('maghrib', locale: locale),
+      ),
+      (
+        key: 'isha',
+        time: isha,
+        label: displayName('isha', locale: locale),
+      ),
+      (
+        key: 'ishaMustahab',
+        time: ishaMustahab,
+        label: displayName('ishaMustahab', locale: locale),
+      ),
+      (
+        key: 'midnight',
+        time: islamicMidnight,
+        label: displayName('midnight', locale: locale),
+      ),
     ];
   }
 
