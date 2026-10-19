@@ -5,6 +5,10 @@
 ///   - One emoji in the title.
 ///   - One or two emojis in the body (max).
 ///   - No faces, eyes, hands, or human gestures.
+///
+/// Localization:
+///   Pass `locale` = 'en' or 'bn' to get the matching language.
+///   Arabic UI is not supported — only English + Bangla.
 class NotificationMessages {
   NotificationMessages._();
 
@@ -17,22 +21,30 @@ class NotificationMessages {
   /// [prayerKey] — one of: fajr, dhuhr, asr, maghrib, isha
   /// [offsetMinutes] — 0 = at the time, 10 = 10 min before, 5 = 5 min before,
   ///                  negative = after the time
+  /// [locale] — 'en' or 'bn' (defaults to 'bn')
   static ({String title, String body}) prayer({
     required String prayerKey,
     required int offsetMinutes,
+    String locale = 'bn',
   }) {
     switch (prayerKey) {
       case 'fajr':
-        return _fajr(offsetMinutes);
+        return _fajr(offsetMinutes, locale);
       case 'dhuhr':
-        return _dhuhr(offsetMinutes);
+        return _dhuhr(offsetMinutes, locale);
       case 'asr':
-        return _asr(offsetMinutes);
+        return _asr(offsetMinutes, locale);
       case 'maghrib':
-        return _maghrib(offsetMinutes);
+        return _maghrib(offsetMinutes, locale);
       case 'isha':
-        return _isha(offsetMinutes);
+        return _isha(offsetMinutes, locale);
       default:
+        if (locale == 'en') {
+          return (
+            title: '🕌 Prayer',
+            body: 'It is time for prayer. Please pray. 🕌',
+          );
+        }
         return (
           title: '🕌 নামায',
           body: 'নামাযের সময় হয়েছে। নামায আদায় করুন। 🕌',
@@ -40,128 +52,183 @@ class NotificationMessages {
     }
   }
 
-  static ({String title, String body}) _fajr(int offset) {
+  static ({String title, String body}) _fajr(int offset, String locale) {
+    final isEn = locale == 'en';
+    final name = isEn ? 'Fajr' : 'ফজর';
+    const emoji = '🌅';
     if (offset == 0) {
       return (
-        title: '🌅 ফজর',
-        body: 'ফজরের ওয়াক্ত শুরু হয়েছে। নামাযের প্রস্তুতি নিন। 🕌',
+        title: '$emoji $name',
+        body: isEn
+            ? 'Fajr time has begun. Prepare for prayer. 🕌'
+            : 'ফজরের ওয়াক্ত শুরু হয়েছে। নামাযের প্রস্তুতি নিন। 🕌',
       );
     }
     if (offset >= 10) {
       return (
-        title: '🌅 ফজর',
-        body: 'আর মাত্র $offset মিনিট পর ফজরের ওয়াক্ত শুরু হবে। ✨',
+        title: '$emoji $name',
+        body: isEn
+            ? 'Fajr begins in $offset minutes. ✨'
+            : 'আর মাত্র $offset মিনিট পর ফজরের ওয়াক্ত শুরু হবে। ✨',
       );
     }
     if (offset > 0) {
       return (
-        title: '🌅 ফজর',
-        body: 'ফজরের ওয়াক্ত শুরু হতে আর মাত্র $offset মিনিট বাকি। 🌸',
+        title: '$emoji $name',
+        body: isEn
+            ? 'Only $offset minutes left until Fajr. 🌸'
+            : 'ফজরের ওয়াক্ত শুরু হতে আর মাত্র $offset মিনিট বাকি। 🌸',
       );
     }
     return (
-      title: '🌅 ফজর',
-      body: 'ফজরের ওয়াক্ত শুরু হয়েছে ${-offset} মিনিট আগে। নামায আদায় করুন। 🕌',
+      title: '$emoji $name',
+      body: isEn
+          ? 'Fajr began ${-offset} minutes ago. Please pray. 🕌'
+          : 'ফজরের ওয়াক্ত শুরু হয়েছে ${-offset} মিনিট আগে। নামায আদায় করুন। 🕌',
     );
   }
 
-  static ({String title, String body}) _dhuhr(int offset) {
+  static ({String title, String body}) _dhuhr(int offset, String locale) {
+    final isEn = locale == 'en';
+    final name = isEn ? 'Dhuhr' : 'যোহর';
+    const emoji = '☀️';
     if (offset == 0) {
       return (
-        title: '☀️ যোহর',
-        body: 'যোহরের ওয়াক্ত শুরু হয়েছে। নামায আদায়ের প্রস্তুতি নিন। 🕌',
+        title: '$emoji $name',
+        body: isEn
+            ? 'Dhuhr time has begun. Prepare for prayer. 🕌'
+            : 'যোহরের ওয়াক্ত শুরু হয়েছে। নামায আদায়ের প্রস্তুতি নিন। 🕌',
       );
     }
     if (offset >= 10) {
       return (
-        title: '☀️ যোহর',
-        body: 'আর মাত্র $offset মিনিট পর যোহরের ওয়াক্ত শুরু হবে। ✨',
+        title: '$emoji $name',
+        body: isEn
+            ? 'Dhuhr begins in $offset minutes. ✨'
+            : 'আর মাত্র $offset মিনিট পর যোহরের ওয়াক্ত শুরু হবে। ✨',
       );
     }
     if (offset > 0) {
       return (
-        title: '☀️ যোহর',
-        body: 'যোহরের ওয়াক্ত শুরু হতে আর মাত্র $offset মিনিট বাকি। 🌸',
+        title: '$emoji $name',
+        body: isEn
+            ? 'Only $offset minutes left until Dhuhr. 🌸'
+            : 'যোহরের ওয়াক্ত শুরু হতে আর মাত্র $offset মিনিট বাকি। 🌸',
       );
     }
     return (
-      title: '☀️ যোহর',
-      body: 'যোহরের ওয়াক্ত শুরু হয়েছে ${-offset} মিনিট আগে। নামায আদায় করুন। 🕌',
+      title: '$emoji $name',
+      body: isEn
+          ? 'Dhuhr began ${-offset} minutes ago. Please pray. 🕌'
+          : 'যোহরের ওয়াক্ত শুরু হয়েছে ${-offset} মিনিট আগে। নামায আদায় করুন। 🕌',
     );
   }
 
-  static ({String title, String body}) _asr(int offset) {
+  static ({String title, String body}) _asr(int offset, String locale) {
+    final isEn = locale == 'en';
+    final name = isEn ? 'Asr' : 'আসর';
+    const emoji = '🌤️';
     if (offset == 0) {
       return (
-        title: '🌤️ আসর',
-        body: 'আসরের ওয়াক্ত শুরু হয়েছে। নামাযের প্রস্তুতি নিন। 🕌',
+        title: '$emoji $name',
+        body: isEn
+            ? 'Asr time has begun. Prepare for prayer. 🕌'
+            : 'আসরের ওয়াক্ত শুরু হয়েছে। নামাযের প্রস্তুতি নিন। 🕌',
       );
     }
     if (offset >= 10) {
       return (
-        title: '🌤️ আসর',
-        body: 'আর মাত্র $offset মিনিট পর আসরের ওয়াক্ত শুরু হবে। ✨',
+        title: '$emoji $name',
+        body: isEn
+            ? 'Asr begins in $offset minutes. ✨'
+            : 'আর মাত্র $offset মিনিট পর আসরের ওয়াক্ত শুরু হবে। ✨',
       );
     }
     if (offset > 0) {
       return (
-        title: '🌤️ আসর',
-        body: 'আসরের ওয়াক্ত শুরু হতে আর মাত্র $offset মিনিট বাকি। 🌸',
+        title: '$emoji $name',
+        body: isEn
+            ? 'Only $offset minutes left until Asr. 🌸'
+            : 'আসরের ওয়াক্ত শুরু হতে আর মাত্র $offset মিনিট বাকি। 🌸',
       );
     }
     return (
-      title: '🌤️ আসর',
-      body: 'আসরের ওয়াক্ত শুরু হয়েছে ${-offset} মিনিট আগে। নামায আদায় করুন। 🕌',
+      title: '$emoji $name',
+      body: isEn
+          ? 'Asr began ${-offset} minutes ago. Please pray. 🕌'
+          : 'আসরের ওয়াক্ত শুরু হয়েছে ${-offset} মিনিট আগে। নামায আদায় করুন। 🕌',
     );
   }
 
-  static ({String title, String body}) _maghrib(int offset) {
+  static ({String title, String body}) _maghrib(int offset, String locale) {
+    final isEn = locale == 'en';
+    final name = isEn ? 'Maghrib' : 'মাগরিব';
+    const emoji = '🌇';
     if (offset == 0) {
       return (
-        title: '🌇 মাগরিব',
-        body: 'মাগরিবের ওয়াক্ত শুরু হয়েছে। নামায আদায় করুন। 🕌',
+        title: '$emoji $name',
+        body: isEn
+            ? 'Maghrib time has begun. Please pray. 🕌'
+            : 'মাগরিবের ওয়াক্ত শুরু হয়েছে। নামায আদায় করুন। 🕌',
       );
     }
     if (offset >= 10) {
       return (
-        title: '🌇 মাগরিব',
-        body: 'আর মাত্র $offset মিনিট পর মাগরিবের ওয়াক্ত শুরু হবে। ✨',
+        title: '$emoji $name',
+        body: isEn
+            ? 'Maghrib begins in $offset minutes. ✨'
+            : 'আর মাত্র $offset মিনিট পর মাগরিবের ওয়াক্ত শুরু হবে। ✨',
       );
     }
     if (offset > 0) {
       return (
-        title: '🌇 মাগরিব',
-        body: 'মাগরিবের ওয়াক্ত শুরু হতে আর মাত্র $offset মিনিট বাকি। 🌸',
+        title: '$emoji $name',
+        body: isEn
+            ? 'Only $offset minutes left until Maghrib. 🌸'
+            : 'মাগরিবের ওয়াক্ত শুরু হতে আর মাত্র $offset মিনিট বাকি। 🌸',
       );
     }
     return (
-      title: '🌇 মাগরিব',
-      body: 'মাগরিবের ওয়াক্ত শুরু হয়েছে ${-offset} মিনিট আগে। নামায আদায় করুন। 🕌',
+      title: '$emoji $name',
+      body: isEn
+          ? 'Maghrib began ${-offset} minutes ago. Please pray. 🕌'
+          : 'মাগরিবের ওয়াক্ত শুরু হয়েছে ${-offset} মিনিট আগে। নামায আদায় করুন। 🕌',
     );
   }
 
-  static ({String title, String body}) _isha(int offset) {
+  static ({String title, String body}) _isha(int offset, String locale) {
+    final isEn = locale == 'en';
+    final name = isEn ? 'Isha' : 'এশা';
+    const emoji = '🌙';
     if (offset == 0) {
       return (
-        title: '🌙 এশা',
-        body: 'এশার ওয়াক্ত শুরু হয়েছে। নামায আদায়ের প্রস্তুতি নিন। 🕌',
+        title: '$emoji $name',
+        body: isEn
+            ? 'Isha time has begun. Prepare for prayer. 🕌'
+            : 'এশার ওয়াক্ত শুরু হয়েছে। নামায আদায়ের প্রস্তুতি নিন। 🕌',
       );
     }
     if (offset >= 10) {
       return (
-        title: '🌙 এশা',
-        body: 'আর মাত্র $offset মিনিট পর এশার ওয়াক্ত শুরু হবে। ✨',
+        title: '$emoji $name',
+        body: isEn
+            ? 'Isha begins in $offset minutes. ✨'
+            : 'আর মাত্র $offset মিনিট পর এশার ওয়াক্ত শুরু হবে। ✨',
       );
     }
     if (offset > 0) {
       return (
-        title: '🌙 এশা',
-        body: 'এশার ওয়াক্ত শুরু হতে আর মাত্র $offset মিনিট বাকি। 🌸',
+        title: '$emoji $name',
+        body: isEn
+            ? 'Only $offset minutes left until Isha. 🌸'
+            : 'এশার ওয়াক্ত শুরু হতে আর মাত্র $offset মিনিট বাকি। 🌸',
       );
     }
     return (
-      title: '🌙 এশা',
-      body: 'এশার ওয়াক্ত শুরু হয়েছে ${-offset} মিনিট আগে। নামায আদায় করুন। 🕌',
+      title: '$emoji $name',
+      body: isEn
+          ? 'Isha began ${-offset} minutes ago. Please pray. 🕌'
+          : 'এশার ওয়াক্ত শুরু হয়েছে ${-offset} মিনিট আগে। নামায আদায় করুন। 🕌',
     );
   }
 
@@ -169,30 +236,40 @@ class NotificationMessages {
   // SEHRI END
   // ─────────────────────────────────────────────
 
-  static ({String title, String body}) sehri(int offset) {
+  static ({String title, String body}) sehri(
+    int offset, {
+    String locale = 'bn',
+  }) {
+    final isEn = locale == 'en';
     if (offset <= 0) {
       return (
-        title: '🌅 সেহরির সময় শেষ',
-        body: 'সেহরির নির্ধারিত সময় শেষ হয়েছে। 🌙',
+        title: isEn ? '🌅 Sehri ended' : '🌅 সেহরির সময় শেষ',
+        body: isEn
+            ? 'The Sehri time has ended. 🌙'
+            : 'সেহরির নির্ধারিত সময় শেষ হয়েছে। 🌙',
       );
     }
     if (offset >= 20) {
       return (
-        title: '🥣 সেহরি শেষ',
-        body:
-            'সেহরির জন্য হাতে আছে আর মাত্র $offset মিনিট। সময়ের প্রতি খেয়াল রাখুন। 🌙',
+        title: isEn ? '🥣 Sehri ends' : '🥣 সেহরি শেষ',
+        body: isEn
+            ? 'Only $offset minutes left for Sehri. Watch the time. 🌙'
+            : 'সেহরির জন্য হাতে আছে আর মাত্র $offset মিনিট। সময়ের প্রতি খেয়াল রাখুন। 🌙',
       );
     }
     if (offset >= 15) {
       return (
-        title: '🥣 সেহরি শেষ',
-        body:
-            'সেহরির সময় শেষ হতে আর মাত্র $offset মিনিট বাকি। দ্রুত সেহরি সম্পন্ন করুন। 🌙',
+        title: isEn ? '🥣 Sehri ends' : '🥣 সেহরি শেষ',
+        body: isEn
+            ? 'Only $offset minutes left until Sehri ends. Please finish quickly. 🌙'
+            : 'সেহরির সময় শেষ হতে আর মাত্র $offset মিনিট বাকি। দ্রুত সেহরি সম্পন্ন করুন। 🌙',
       );
     }
     return (
-      title: '🥣 সেহরি শেষ',
-      body: 'সেহরির সময় শেষ হতে আর মাত্র $offset মিনিট বাকি। ✨',
+      title: isEn ? '🥣 Sehri ends' : '🥣 সেহরি শেষ',
+      body: isEn
+          ? 'Only $offset minutes left until Sehri ends. ✨'
+          : 'সেহরির সময় শেষ হতে আর মাত্র $offset মিনিট বাকি। ✨',
     );
   }
 
@@ -200,29 +277,40 @@ class NotificationMessages {
   // IFTAR
   // ─────────────────────────────────────────────
 
-  static ({String title, String body}) iftar(int offset) {
+  static ({String title, String body}) iftar(
+    int offset, {
+    String locale = 'bn',
+  }) {
+    final isEn = locale == 'en';
     if (offset <= 0) {
       return (
-        title: '🌙 ইফতারের সময়',
-        body: 'ইফতারের সময় হয়েছে। আল্লাহ আপনার রোজা কবুল করুন। 🤍',
+        title: isEn ? '🌙 Iftar time' : '🌙 ইফতারের সময়',
+        body: isEn
+            ? 'Iftar time has arrived. May Allah accept your fast. 🤍'
+            : 'ইফতারের সময় হয়েছে। আল্লাহ আপনার রোজা কবুল করুন। 🤍',
       );
     }
     if (offset >= 15) {
       return (
-        title: '🌙 ইফতার',
-        body: 'ইফতারের আর মাত্র $offset মিনিট বাকি। 🌸',
+        title: isEn ? '🌙 Iftar' : '🌙 ইফতার',
+        body: isEn
+            ? 'Only $offset minutes left until Iftar. 🌸'
+            : 'ইফতারের আর মাত্র $offset মিনিট বাকি। 🌸',
       );
     }
     if (offset >= 10) {
       return (
-        title: '🌙 ইফতার',
-        body:
-            'ইফতারের সময় হতে আর মাত্র $offset মিনিট বাকি। প্রস্তুতি নিয়ে নিন। ✨',
+        title: isEn ? '🌙 Iftar' : '🌙 ইফতার',
+        body: isEn
+            ? 'Only $offset minutes left until Iftar. Get ready. ✨'
+            : 'ইফতারের সময় হতে আর মাত্র $offset মিনিট বাকি। প্রস্তুতি নিয়ে নিন। ✨',
       );
     }
     return (
-      title: '🌙 ইফতার',
-      body: 'আর মাত্র $offset মিনিট! ইফতারের প্রস্তুতি সম্পন্ন করুন। 🥣',
+      title: isEn ? '🌙 Iftar' : '🌙 ইফতার',
+      body: isEn
+          ? 'Only $offset minutes left! Prepare for Iftar. 🥣'
+          : 'আর মাত্র $offset মিনিট! ইফতারের প্রস্তুতি সম্পন্ন করুন। 🥣',
     );
   }
 
@@ -230,24 +318,32 @@ class NotificationMessages {
   // TAHAJJUD
   // ─────────────────────────────────────────────
 
-  static ({String title, String body}) tahajjud(int offset) {
+  static ({String title, String body}) tahajjud(
+    int offset, {
+    String locale = 'bn',
+  }) {
+    final isEn = locale == 'en';
     if (offset <= 0) {
       return (
-        title: '🌌 তাহাজ্জুদ',
-        body:
-            'রাতের শেষ তৃতীয়াংশ শুরু হয়েছে। তাহাজ্জুদ ও দুআর জন্য সময় বের করুন। ✨',
+        title: isEn ? '🌌 Tahajjud' : '🌌 তাহাজ্জুদ',
+        body: isEn
+            ? 'The last third of the night has begun. Make time for Tahajjud and Dua. ✨'
+            : 'রাতের শেষ তৃতীয়াংশ শুরু হয়েছে। তাহাজ্জুদ ও দুআর জন্য সময় বের করুন। ✨',
       );
     }
     if (offset >= 10) {
       return (
-        title: '🌌 তাহাজ্জুদ',
-        body: 'তাহাজ্জুদের সময় শুরু হতে আর মাত্র $offset মিনিট বাকি। 🌙',
+        title: isEn ? '🌌 Tahajjud' : '🌌 তাহাজ্জুদ',
+        body: isEn
+            ? 'Tahajjud begins in $offset minutes. 🌙'
+            : 'তাহাজ্জুদের সময় শুরু হতে আর মাত্র $offset মিনিট বাকি। 🌙',
       );
     }
     return (
-      title: '🌌 তাহাজ্জুদ',
-      body:
-          'আর মাত্র $offset মিনিট পর তাহাজ্জুদের নির্ধারিত সময় শুরু হবে। 🕌',
+      title: isEn ? '🌌 Tahajjud' : '🌌 তাহাজ্জুদ',
+      body: isEn
+          ? 'In $offset minutes the Tahajjud window begins. 🕌'
+          : 'আর মাত্র $offset মিনিট পর তাহাজ্জুদের নির্ধারিত সময় শুরু হবে। 🕌',
     );
   }
 
@@ -255,24 +351,25 @@ class NotificationMessages {
   // LABELS (for settings UI)
   // ─────────────────────────────────────────────
 
-  static String labelFor(String key) {
+  static String labelFor(String key, {String locale = 'bn'}) {
+    final isEn = locale == 'en';
     switch (key) {
       case 'fajr':
-        return 'ফজর';
+        return isEn ? 'Fajr' : 'ফজর';
       case 'dhuhr':
-        return 'যোহর';
+        return isEn ? 'Dhuhr' : 'যোহর';
       case 'asr':
-        return 'আসর';
+        return isEn ? 'Asr' : 'আসর';
       case 'maghrib':
-        return 'মাগরিব';
+        return isEn ? 'Maghrib' : 'মাগরিব';
       case 'isha':
-        return 'এশা';
+        return isEn ? 'Isha' : 'এশা';
       case 'sehri':
-        return 'সেহরি শেষ';
+        return isEn ? 'Sehri ends' : 'সেহরি শেষ';
       case 'iftar':
-        return 'ইফতার';
+        return isEn ? 'Iftar' : 'ইফতার';
       case 'tahajjud':
-        return 'তাহাজ্জুদ';
+        return isEn ? 'Tahajjud' : 'তাহাজ্জুদ';
       default:
         return key;
     }
