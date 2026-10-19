@@ -53,7 +53,7 @@ class SettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: AppConstants.spaceLg),
 
-          // ─── Language ─────────────────────────
+          // ─── Language (English + Bangla only) ─
           _SectionHeader(title: l10n.settingsLanguage),
           _RadioTile<Locale>(
             title: l10n.languageEnglish,
@@ -64,12 +64,6 @@ class SettingsScreen extends ConsumerWidget {
           _RadioTile<Locale>(
             title: l10n.languageBangla,
             value: const Locale('bn'),
-            group: settings.locale,
-            onChanged: notifier.setLocale,
-          ),
-          _RadioTile<Locale>(
-            title: l10n.languageArabic,
-            value: const Locale('ar'),
             group: settings.locale,
             onChanged: notifier.setLocale,
           ),
