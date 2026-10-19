@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/constants.dart';
 import '../data/models/prayer_times.dart';
 import '../data/models/settings_model.dart';
 import '../features/pdf/pdf_builder.dart';
@@ -179,19 +180,26 @@ class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
 
   PdfGeneratorNotifier(this._ref) : super(const PdfProgress());
 
+  /// Stage messages are localized at build time inside the UI using the
+  /// `stage` key (e.g. `pdfPreparing`, `pdfCalculating`) so the provider
+  /// does not need BuildContext.
+  ///
+  /// We store stable stage *keys* here; the UI maps them via l10n keys.
   Future<void> generate() async {
     state = const PdfProgress(
       isGenerating: true,
-      stage: 'প্রস্তুতি নিচ্ছি...',
+      stage: 'pdfPreparing',
       progress: 0.0,
     );
 
     try {
       final options = _ref.read(pdfOptionsProvider);
       final loc = _ref.read(currentLocationProvider);
+      final settings = _ref.read(settingsProvider);
+      final isEn = settings.locale.languageCode == 'en';
 
       state = state.copyWith(
-        stage: 'নামাযের সময় হিসাব করছি...',
+        stage: 'pdfCalculating',
         progress: 0.1,
       );
 
@@ -200,11 +208,11 @@ class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
         longitude: loc.longitude,
         year: options.year,
         madhhab: options.madhhab,
-        method: _ref.read(settingsProvider).calcMethod,
+        method: settings.calcMethod,
       );
 
       state = state.copyWith(
-        stage: 'গ্রুপ তৈরি করছি...',
+        stage: 'pdfGrouping',
         progress: 0.4,
       );
 
@@ -217,15 +225,19 @@ class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
       );
 
       state = state.copyWith(
-        stage: 'ফন্ট লোড করছি...',
+        stage: 'pdfLoadingFonts',
         progress: 0.55,
       );
       final fonts = await PdfFonts.load();
 
       state = state.copyWith(
-        stage: 'PDF তৈরি করছি...',
+        stage: 'pdfBuilding',
         progress: 0.7,
       );
+
+      // App name / tagline localized
+      final appName = isEn ? 'AmalGhor' : AppConstants.appNameBn;
+      final tagline = isEn ? 'Prayer timetable' : 'নামাযের সময়সূচি';
 
       final builder = PdfBuilder(
         fonts: fonts,
@@ -237,8 +249,8 @@ class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
           latitude: loc.latitude,
           longitude: loc.longitude,
           columns: options.columns,
-          appName: 'আমলঘর',
-          appTagline: 'নামাযের সময়সূচি',
+          appName: appName,
+          appTagline: tagline,
         ),
       );
 
@@ -246,7 +258,7 @@ class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
 
       state = state.copyWith(
         isGenerating: false,
-        stage: 'সম্পূর্ণ',
+        stage: 'pdfComplete',
         progress: 1.0,
         bytes: bytes,
         clearError: true,
@@ -254,7 +266,7 @@ class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
     } catch (e) {
       state = state.copyWith(
         isGenerating: false,
-        stage: 'ব্যর্থ',
+        stage: 'pdfFailedStage',
         progress: 0.0,
         error: e.toString(),
       );
