@@ -23,12 +23,15 @@ class Tasbih {
     this.isDefault = true,
   });
 
+  /// Title localized for the given locale code.
+  ///
+  /// Arabic UI is not supported. Use [titleAr] directly if you need to
+  /// display the Arabic script (which is often shown alongside the
+  /// localized title).
   String titleFor(String localeCode) {
     switch (localeCode) {
       case 'bn':
         return titleBn;
-      case 'ar':
-        return titleAr;
       default:
         return titleEn;
     }
