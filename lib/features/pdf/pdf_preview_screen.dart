@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 
 import '../../core/constants.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../providers/pdf_provider.dart';
 
 /// Runs PDF generation and shows the result with a print/share UI.
@@ -25,26 +26,27 @@ class _PdfPreviewScreenState extends ConsumerState<PdfPreviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final progress = ref.watch(pdfGeneratorProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PDF প্রিভিউ'),
+        title: Text(l10n.pdfGenerating),
         actions: [
           if (progress.bytes != null)
             IconButton(
-              tooltip: 'আবার তৈরি',
+              tooltip: l10n.retry,
               icon: const Icon(Icons.refresh),
               onPressed: () =>
                   ref.read(pdfGeneratorProvider.notifier).generate(),
             ),
         ],
       ),
-      body: _body(progress),
+      body: _body(progress, l10n),
     );
   }
 
-  Widget _body(PdfProgress progress) {
+  Widget _body(PdfProgress progress, AppLocalizations l10n) {
     if (progress.isGenerating) {
       return _ProgressView(
         stage: progress.stage,
@@ -61,10 +63,10 @@ class _PdfPreviewScreenState extends ConsumerState<PdfPreviewScreen> {
     }
 
     if (progress.bytes == null) {
-      return const Center(
+      return Center(
         child: Text(
-          'প্রিভিউ দেখানোর কিছু নেই',
-          style: TextStyle(color: AppConstants.textMuted),
+          l10n.error,
+          style: const TextStyle(color: AppConstants.textMuted),
         ),
       );
     }
@@ -98,6 +100,7 @@ class _ProgressView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppConstants.space2xl),
@@ -118,9 +121,9 @@ class _ProgressView extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppConstants.spaceXl),
-            const Text(
-              'PDF তৈরি হচ্ছে',
-              style: TextStyle(
+            Text(
+              l10n.pdfGenerating,
+              style: const TextStyle(
                 color: AppConstants.textPrimary,
                 fontSize: AppConstants.fontHeading,
                 fontWeight: FontWeight.w700,
@@ -179,6 +182,7 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppConstants.space2xl),
@@ -191,9 +195,9 @@ class _ErrorView extends StatelessWidget {
               size: 48,
             ),
             const SizedBox(height: AppConstants.spaceMd),
-            const Text(
-              'PDF তৈরি ব্যর্থ',
-              style: TextStyle(
+            Text(
+              l10n.pdfFailedStage,
+              style: const TextStyle(
                 color: AppConstants.textPrimary,
                 fontSize: AppConstants.fontSubtitle,
                 fontWeight: FontWeight.w700,
@@ -212,7 +216,7 @@ class _ErrorView extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh),
-              label: const Text('আবার চেষ্টা করুন'),
+              label: Text(l10n.retry),
             ),
           ],
         ),
