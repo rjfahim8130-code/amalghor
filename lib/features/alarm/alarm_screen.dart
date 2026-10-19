@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/constants.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../providers/alarm_provider.dart';
 import '../../services/alarm_service.dart';
 
@@ -13,6 +14,7 @@ class AlarmScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final alarms = ref.watch(alarmProvider);
 
     return Scaffold(
@@ -20,7 +22,7 @@ class AlarmScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: colors.pageBackground,
         title: Text(
-          '⏰ অ্যালার্ম',
+          l10n.alarms,
           style: TextStyle(
             color: colors.textPrimary,
             fontWeight: FontWeight.w700,
@@ -45,7 +47,7 @@ class AlarmScreen extends ConsumerWidget {
         backgroundColor: colors.emerald,
         foregroundColor: colors.textOnEmerald,
         icon: const Icon(Icons.add),
-        label: const Text('নতুন অ্যালার্ম'),
+        label: Text(l10n.newAlarm),
         onPressed: () => _showEditor(context, ref, null),
       ),
     );
@@ -100,7 +102,6 @@ class _AlarmTile extends ConsumerWidget {
       },
       child: InkWell(
         onTap: () async {
-          // Manual edit
           final result = await showDialog<UserAlarm>(
             context: context,
             builder: (ctx) => _AlarmEditorDialog(existing: alarm),
@@ -221,10 +222,10 @@ class _AlarmEditorDialogState extends State<_AlarmEditorDialog> {
     super.initState();
     final e = widget.existing;
     _titleController = TextEditingController(
-      text: e?.title ?? '🌌 তাহাজ্জুদ',
+      text: e?.title ?? '',
     );
     _bodyController = TextEditingController(
-      text: e?.body ?? 'তাহাজ্জুদ আদায় ও দুআর জন্য প্রস্তুত হোন। 🌙',
+      text: e?.body ?? '',
     );
     _time = e != null
         ? TimeOfDay(hour: e.hour, minute: e.minute)
@@ -270,11 +271,16 @@ class _AlarmEditorDialogState extends State<_AlarmEditorDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
+    final isBn = Localizations.localeOf(context).languageCode == 'bn';
+    const bnDays = ['সো', 'ম', 'বু', 'বৃ', 'শু', 'শ', 'র'];
+    const enDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final dayNames = isBn ? bnDays : enDays;
 
     return AlertDialog(
       backgroundColor: colors.cardBackground,
       title: Text(
-        widget.existing == null ? 'নতুন অ্যালার্ম' : 'অ্যালার্ম সম্পাদনা',
+        widget.existing == null ? l10n.newAlarm : l10n.editAlarm,
         style: TextStyle(color: colors.textPrimary),
       ),
       content: SingleChildScrollView(
@@ -311,8 +317,8 @@ class _AlarmEditorDialogState extends State<_AlarmEditorDialog> {
             TextField(
               controller: _titleController,
               style: TextStyle(color: colors.textPrimary),
-              decoration: const InputDecoration(
-                hintText: 'শিরোনাম (যেমন: 🌌 তাহাজ্জুদ)',
+              decoration: InputDecoration(
+                hintText: l10n.alarmTitleHint,
               ),
             ),
             const SizedBox(height: AppConstants.spaceSm),
@@ -320,13 +326,13 @@ class _AlarmEditorDialogState extends State<_AlarmEditorDialog> {
               controller: _bodyController,
               style: TextStyle(color: colors.textPrimary),
               maxLines: 3,
-              decoration: const InputDecoration(
-                hintText: 'বার্তা (ঐচ্ছিক)',
+              decoration: InputDecoration(
+                hintText: l10n.alarmBodyHint,
               ),
             ),
             const SizedBox(height: AppConstants.spaceMd),
             Text(
-              'কোন দিনগুলোতে?',
+              l10n.whichDays,
               style: TextStyle(
                 color: colors.textMuted,
                 fontSize: AppConstants.fontCaption,
@@ -338,7 +344,6 @@ class _AlarmEditorDialogState extends State<_AlarmEditorDialog> {
               runSpacing: 6,
               children: List.generate(7, (i) {
                 final day = i + 1;
-                const names = ['সো', 'ম', 'বু', 'বৃ', 'শু', 'শ', 'র'];
                 final selected = _days.contains(day);
                 return GestureDetector(
                   onTap: () {
@@ -364,12 +369,12 @@ class _AlarmEditorDialogState extends State<_AlarmEditorDialog> {
                     ),
                     child: Center(
                       child: Text(
-                        names[i],
+                        dayNames[i],
                         style: TextStyle(
                           color: selected
                               ? colors.textOnEmerald
                               : colors.textMuted,
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -382,7 +387,7 @@ class _AlarmEditorDialogState extends State<_AlarmEditorDialog> {
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
-                  'কোনো দিন সিলেক্ট না করলে প্রতিদিন বাজবে',
+                  l10n.noDayMeansEveryday,
                   style: TextStyle(
                     color: colors.textFaint,
                     fontSize: AppConstants.fontMicro,
@@ -396,11 +401,13 @@ class _AlarmEditorDialogState extends State<_AlarmEditorDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text('বাতিল', style: TextStyle(color: colors.textMuted)),
+          child: Text(l10n.cancel,
+              style: TextStyle(color: colors.textMuted)),
         ),
         TextButton(
           onPressed: _save,
-          child: Text('সংরক্ষণ', style: TextStyle(color: colors.emerald)),
+          child: Text(l10n.save,
+              style: TextStyle(color: colors.emerald)),
         ),
       ],
     );
@@ -417,6 +424,7 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppConstants.spaceXl),
@@ -438,7 +446,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: AppConstants.spaceLg),
             Text(
-              'কোনো অ্যালার্ম নেই',
+              l10n.noAlarms,
               style: TextStyle(
                 color: colors.textPrimary,
                 fontSize: AppConstants.fontSubtitle,
@@ -447,7 +455,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: AppConstants.spaceSm),
             Text(
-              'নিচের বাটনে ট্যাপ করে প্রথম অ্যালার্ম যোগ করুন',
+              l10n.addFirstAlarm,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.textMuted,
