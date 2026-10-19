@@ -5,22 +5,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants.dart';
 import '../../../data/models/quran_models.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../providers/mushaf_provider.dart';
 import '../../../providers/quran_provider.dart';
 
 /// A single Ayah card in the reader.
-///
-/// Shows:
-///   - Ayah number badge
-///   - Arabic text (right-aligned, RTL)
-///   - Bangla text (below Arabic if enabled)
-///   - English text (below Bangla if enabled)
-///   - Mushaf page navigate button
-///   - Bookmark toggle
-///   - Copy action
-///
-/// The card adapts to the current [QuranDisplayMode] — only the
-/// enabled language layers are rendered.
 class AyahCard extends ConsumerStatefulWidget {
   final Ayah ayah;
   final SurahMeta surah;
@@ -62,14 +51,13 @@ class _AyahCardState extends ConsumerState<AyahCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ─── Header: Ayah number + Mushaf btn + bookmark ────
           _Header(
             surahNumber: widget.ayah.surahNumber,
             ayahNumber: widget.ayah.ayahNumber,
           ),
           const SizedBox(height: AppConstants.spaceMd),
 
-          // ─── Arabic text (RTL) ────────────────
+          // Arabic text (RTL) — hardcoded Arabic
           if (display.showArabic && widget.ayah.textArabic.isNotEmpty)
             _ArabicText(
               text: widget.ayah.textArabic,
@@ -77,7 +65,7 @@ class _AyahCardState extends ConsumerState<AyahCard> {
               lineHeight: display.lineHeight,
             ),
 
-          // ─── Bangla text ──────────────────────
+          // Bangla text
           if (display.showBangla &&
               (widget.ayah.textBangla?.isNotEmpty ?? false))
             Padding(
@@ -94,7 +82,7 @@ class _AyahCardState extends ConsumerState<AyahCard> {
               ),
             ),
 
-          // ─── English text ─────────────────────
+          // English text
           if (display.showEnglish &&
               (widget.ayah.textEnglish?.isNotEmpty ?? false))
             Padding(
@@ -116,7 +104,6 @@ class _AyahCardState extends ConsumerState<AyahCard> {
 
           const SizedBox(height: AppConstants.spaceSm),
 
-          // ─── Footer: Copy ─────────────────────
           _Footer(ayah: widget.ayah, surah: widget.surah),
         ],
       ),
@@ -138,6 +125,7 @@ class _Header extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final bookmarkedAsync = ref.watch(
       isBookmarkedProvider((surah: surahNumber, ayah: ayahNumber)),
     );
@@ -145,7 +133,6 @@ class _Header extends ConsumerWidget {
 
     return Row(
       children: [
-        // Ayah number badge
         Container(
           width: 32,
           height: 32,
@@ -178,9 +165,9 @@ class _Header extends ConsumerWidget {
         ),
         const Spacer(),
 
-        // হাফিজী পৃষ্ঠায় যাও
+        // Go to Hafezi page
         IconButton(
-          tooltip: 'তেলাওয়াত পৃষ্ঠা',
+          tooltip: l10n.quranTilawatPage,
           onPressed: () async {
             try {
               final config = await ref.read(mushafConfigProvider.future);
@@ -188,11 +175,9 @@ class _Header extends ConsumerWidget {
               if (!context.mounted) return;
               if (page == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'এই আয়াত এখনো হাফিজী পারায় নেই (শুধু পারা ২৬–৩০)',
-                    ),
-                    duration: Duration(seconds: 2),
+                  SnackBar(
+                    content: Text(l10n.quranAyahNotInMushaf),
+                    duration: const Duration(seconds: 2),
                   ),
                 );
                 return;
@@ -201,7 +186,7 @@ class _Header extends ConsumerWidget {
             } catch (e) {
               if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('খোলা যায়নি: $e')),
+                SnackBar(content: Text('${l10n.error}: $e')),
               );
             }
           },
@@ -222,7 +207,7 @@ class _Header extends ConsumerWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  added ? 'Bookmarked' : 'Bookmark removed',
+                  added ? l10n.bookmarked : l10n.bookmarkRemoved,
                 ),
                 duration: const Duration(seconds: 1),
               ),
@@ -235,7 +220,7 @@ class _Header extends ConsumerWidget {
                 : AppConstants.textMuted,
             size: 22,
           ),
-          tooltip: isBookmarked ? 'Remove bookmark' : 'Add bookmark',
+          tooltip: isBookmarked ? l10n.bookmarkRemoved : l10n.quranBookmark,
         ),
       ],
     );
@@ -327,15 +312,16 @@ class _Footer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         TextButton.icon(
-          onPressed: () => _copyToClipboard(context),
+          onPressed: () => _copyToClipboard(context, l10n),
           icon: const Icon(Icons.copy, size: 14),
-          label: const Text(
-            'Copy',
-            style: TextStyle(fontSize: AppConstants.fontMicro),
+          label: Text(
+            l10n.copy,
+            style: const TextStyle(fontSize: AppConstants.fontMicro),
           ),
           style: TextButton.styleFrom(
             foregroundColor: AppConstants.textFaint,
@@ -351,10 +337,13 @@ class _Footer extends ConsumerWidget {
     );
   }
 
-  Future<void> _copyToClipboard(BuildContext context) async {
+  Future<void> _copyToClipboard(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
     final buffer = StringBuffer();
     buffer.writeln('${surah.nameEnglish} — ${surah.nameArabic}');
-    buffer.writeln('Ayah ${ayah.ayahNumber}');
+    buffer.writeln('${l10n.quranAyahNumber} ${ayah.ayahNumber}');
     buffer.writeln();
     buffer.writeln(ayah.textArabic);
     if (ayah.textBangla != null && ayah.textBangla!.isNotEmpty) {
@@ -369,9 +358,9 @@ class _Footer extends ConsumerWidget {
     await Clipboard.setData(ClipboardData(text: buffer.toString()));
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Ayah copied'),
-        duration: Duration(seconds: 1),
+      SnackBar(
+        content: Text(l10n.ayahCopied),
+        duration: const Duration(seconds: 1),
       ),
     );
   }
