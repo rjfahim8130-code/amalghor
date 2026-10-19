@@ -10,7 +10,7 @@ class AppConstants {
   // ─────────────────────────────────────────────
   // IDENTITY
   // ─────────────────────────────────────────────
-  static const String appName = 'Amalghor';
+  static const String appName = 'AmalGhor';
   static const String appNameBn = 'আমলঘর';
   static const String appNameAr = 'أملغور';
   static const String appTaglineBn = 'ইবাদতের পথে, সবসময়';
@@ -122,22 +122,19 @@ class AppConstants {
   ];
 
   // ─────────────────────────────────────────────
-  // LOCALES
+  // LOCALES  (Arabic UI removed — only en + bn)
   // ─────────────────────────────────────────────
   static const Locale localeEn = Locale('en');
   static const Locale localeBn = Locale('bn');
-  static const Locale localeAr = Locale('ar');
 
   static const List<Locale> supportedLocales = [
     localeEn,
     localeBn,
-    localeAr,
   ];
 
   static const Map<String, String> languageNames = {
     'en': 'English',
     'bn': 'বাংলা',
-    'ar': 'العربية',
   };
 
   // ─────────────────────────────────────────────
