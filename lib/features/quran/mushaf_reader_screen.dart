@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/app_colors.dart';
 import '../../data/models/mushaf_models.dart';
 import '../../data/repositories/mushaf_repository.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../providers/mushaf_provider.dart';
 import 'widgets/mushaf_search_sheet.dart';
 
@@ -102,6 +103,7 @@ class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final configAsync = ref.watch(mushafConfigProvider);
 
     return configAsync.when(
@@ -109,8 +111,10 @@ class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
         body: Center(child: CircularProgressIndicator()),
       ),
       error: (e, _) => Scaffold(
-        appBar: AppBar(title: const Text('হাফিজী কুরআন')),
-        body: Center(child: Text('লোড ব্যর্থ: $e')),
+        appBar: AppBar(title: Text(l10n.quranHafeziTitle)),
+        body: Center(
+          child: Text('${l10n.error}: $e'),
+        ),
       ),
       data: (cfg) {
         if (!_ready || _pageController == null) {
@@ -121,8 +125,8 @@ class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
 
         final para = cfg.paraForPage(_currentPage);
         final subtitle = para == null
-            ? 'পৃষ্ঠা $_currentPage'
-            : 'পারা ${para.para} · পৃষ্ঠা $_currentPage';
+            ? '${l10n.quranPage} $_currentPage'
+            : '${l10n.quranPara} ${para.para} · ${l10n.quranPage} $_currentPage';
 
         return Scaffold(
           backgroundColor: Colors.black,
@@ -137,7 +141,7 @@ class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'হাফিজী কুরআন',
+                  l10n.quranHafeziTitle,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -152,7 +156,7 @@ class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
             ),
             actions: [
               IconButton(
-                tooltip: 'সার্চ',
+                tooltip: l10n.quranSearch,
                 icon: Icon(Icons.search, size: 22, color: colors.textPrimary),
                 onPressed: () => _openSearch(cfg),
               ),
@@ -167,11 +171,11 @@ class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
               return PageView.builder(
                 key: ValueKey('pv_$orientation'),
                 controller: _pageController,
-                // Portrait: horizontal, RTL (বাম←ডান = পরের পৃষ্ঠা)
-                // Landscape: vertical (উপর↔নিচ = আগের/পরের পৃষ্ঠা)
+                // Portrait: horizontal, RTL (left←right = next page)
+                // Landscape: vertical (up↔down = prev/next page)
                 scrollDirection:
                     isPortrait ? Axis.horizontal : Axis.vertical,
-                reverse: isPortrait, // শুধু পোর্ট্রেটে RTL
+                reverse: isPortrait, // RTL only in portrait
                 physics: const BouncingScrollPhysics(
                   parent: PageScrollPhysics(),
                 ),
@@ -181,10 +185,10 @@ class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
                   final page = cfg.firstPage + index;
                   final pageInfo = cfg.pageInfo(page);
                   if (pageInfo == null) {
-                    return const Center(
+                    return Center(
                       child: Text(
-                        'পৃষ্ঠা পাওয়া যায়নি',
-                        style: TextStyle(color: Colors.white70),
+                        l10n.pageNotFound,
+                        style: const TextStyle(color: Colors.white70),
                       ),
                     );
                   }
@@ -208,7 +212,7 @@ class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
     if (isZoomed) {
       _resetZoom();
     } else {
-      // \~2x zoom from center
+      // ~2x zoom from center
       final size = MediaQuery.of(context).size;
       final zoomed = Matrix4.identity()
         ..translate(size.width / 2, size.height / 2)
@@ -233,13 +237,13 @@ class _MushafPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return GestureDetector(
       onDoubleTap: onDoubleTapZoom,
       child: InteractiveViewer(
         transformationController: transformCtrl,
         minScale: 1.0,
         maxScale: 4.0,
-        // প্যান শুধু জুম অবস্থায়
         panEnabled: true,
         scaleEnabled: true,
         clipBehavior: Clip.hardEdge,
@@ -248,17 +252,16 @@ class _MushafPage extends StatelessWidget {
           child: Center(
             child: Image.asset(
               assetPath,
-              // সব পৃষ্ঠা একইভাবে স্ক্রিনে ফিট — ছোট/বড় সোর্স একই দেখাবে
               fit: BoxFit.contain,
               width: double.infinity,
               height: double.infinity,
               filterQuality: FilterQuality.high,
-              errorBuilder: (_, __, ___) => const Padding(
-                padding: EdgeInsets.all(24),
+              errorBuilder: (_, __, ___) => Padding(
+                padding: const EdgeInsets.all(24),
                 child: Text(
-                  'ছবি লোড হয়নি\nফাইল আছে কিনা চেক করুন',
+                  l10n.error,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white70),
+                  style: const TextStyle(color: Colors.white70),
                 ),
               ),
             ),
