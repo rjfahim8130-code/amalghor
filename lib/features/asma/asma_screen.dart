@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/app_colors.dart';
 import '../../core/constants.dart';
 import '../../data/models/asma_models.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../providers/asma_provider.dart';
 
 /// Screen listing all 99 Names of Allah with search.
@@ -27,6 +28,7 @@ class _AsmaScreenState extends ConsumerState<AsmaScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final names = ref.watch(asmaFilteredProvider);
 
     return Scaffold(
@@ -34,7 +36,7 @@ class _AsmaScreenState extends ConsumerState<AsmaScreen> {
       appBar: AppBar(
         backgroundColor: colors.pageBackground,
         title: Text(
-          'আল্লাহর ৯৯ নাম',
+          l10n.asmaUlHusna,
           style: TextStyle(
             color: colors.textPrimary,
             fontWeight: FontWeight.w700,
@@ -56,7 +58,7 @@ class _AsmaScreenState extends ConsumerState<AsmaScreen> {
                   ref.read(asmaSearchProvider.notifier).update(v),
               style: TextStyle(color: colors.textPrimary),
               decoration: InputDecoration(
-                hintText: 'খুঁজুন (নাম / অর্থ / নম্বর)',
+                hintText: l10n.quranSearch,
                 prefixIcon: Icon(
                   Icons.search,
                   color: colors.textMuted,
@@ -101,12 +103,13 @@ class _AsmaTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final localeCode = Localizations.localeOf(context).languageCode;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onLongPress: () => _copy(context, localeCode),
+        onLongPress: () => _copy(context, localeCode, l10n),
         borderRadius: BorderRadius.circular(AppConstants.radiusXl),
         child: Container(
           padding: const EdgeInsets.all(AppConstants.spaceLg),
@@ -179,7 +182,7 @@ class _AsmaTile extends StatelessWidget {
                   size: 16,
                   color: colors.textFaint,
                 ),
-                onPressed: () => _copy(context, localeCode),
+                onPressed: () => _copy(context, localeCode, l10n),
               ),
             ],
           ),
@@ -188,16 +191,20 @@ class _AsmaTile extends StatelessWidget {
     );
   }
 
-  Future<void> _copy(BuildContext context, String localeCode) async {
+  Future<void> _copy(
+    BuildContext context,
+    String localeCode,
+    AppLocalizations l10n,
+  ) async {
     final text =
         '${name.number}. ${name.arabic} — ${name.transliteration}'
         ' (${name.meaningFor(localeCode)})';
     await Clipboard.setData(ClipboardData(text: text));
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Copied'),
-        duration: Duration(seconds: 1),
+      SnackBar(
+        content: Text(l10n.ayahCopied),
+        duration: const Duration(seconds: 1),
       ),
     );
   }
@@ -209,6 +216,7 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -220,7 +228,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: AppConstants.spaceMd),
           Text(
-            'কোনো নাম পাওয়া যায়নি',
+            l10n.quranSurahNotFound,
             style: TextStyle(
               color: colors.textMuted,
               fontSize: AppConstants.fontBody,
