@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/app_colors.dart';
 import '../../core/constants.dart';
 import '../../data/models/tasbih_models.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../providers/tasbih_provider.dart';
 
 /// Tasbih counter screen — auto-adapts to dark or light mode.
@@ -21,6 +22,7 @@ class _TasbihScreenState extends ConsumerState<TasbihScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final tasbihs = ref.watch(tasbihListProvider);
     final selected = ref.watch(tasbihByIdProvider(_selectedId));
 
@@ -29,7 +31,7 @@ class _TasbihScreenState extends ConsumerState<TasbihScreen> {
       appBar: AppBar(
         backgroundColor: colors.pageBackground,
         title: Text(
-          'তাসবীহ',
+          l10n.tasbih,
           style: TextStyle(
             color: colors.textPrimary,
             fontWeight: FontWeight.w700,
@@ -37,7 +39,7 @@ class _TasbihScreenState extends ConsumerState<TasbihScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Reset',
+            tooltip: l10n.amolReset,
             icon: Icon(Icons.refresh, color: colors.textPrimary),
             onPressed: () => _confirmReset(context),
           ),
@@ -86,23 +88,24 @@ class _TasbihScreenState extends ConsumerState<TasbihScreen> {
 
   Future<void> _confirmReset(BuildContext context) async {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: colors.cardBackground,
         title: Text(
-          'Reset today\'s count?',
+          l10n.amolReset,
           style: TextStyle(color: colors.textPrimary),
         ),
         content: Text(
-          'This will set today\'s counter back to zero.',
+          l10n.amolReset,
           style: TextStyle(color: colors.textMuted),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(
-              'Cancel',
+              l10n.cancel,
               style: TextStyle(color: colors.textMuted),
             ),
           ),
@@ -111,7 +114,7 @@ class _TasbihScreenState extends ConsumerState<TasbihScreen> {
             style: TextButton.styleFrom(
               foregroundColor: const Color(0xFFEF4444),
             ),
-            child: const Text('Reset'),
+            child: Text(l10n.amolReset),
           ),
         ],
       ),
@@ -202,12 +205,13 @@ class _CounterSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final count = ref.watch(tasbihSessionProvider(tasbih.id));
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Arabic title
+        // Arabic title — hardcoded Arabic
         Text(
           tasbih.titleAr,
           style: TextStyle(
@@ -293,7 +297,7 @@ class _CounterSection extends ConsumerWidget {
         const SizedBox(height: AppConstants.spaceLg),
 
         Text(
-          'Tap to count  •  Long press to undo',
+          l10n.retry,
           style: TextStyle(
             color: colors.textFaint,
             fontSize: AppConstants.fontMicro,
@@ -327,6 +331,7 @@ class _StatsFooter extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final lifetimeAsync = ref.watch(tasbihLifetimeProvider(tasbihId));
 
     return Padding(
@@ -351,7 +356,7 @@ class _StatsFooter extends ConsumerWidget {
             const SizedBox(width: AppConstants.spaceMd),
             Expanded(
               child: Text(
-                'Lifetime total',
+                l10n.amolCompleted,
                 style: TextStyle(
                   color: colors.textMuted,
                   fontSize: AppConstants.fontBody,
