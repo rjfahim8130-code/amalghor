@@ -38,6 +38,7 @@
   "tahajjud": "তাহাজ্জুদের সময়",
   "iftar": "ইফতার",
   "sehri": "সেহরি",
+  "sunset": "সূর্যাস্ত",
 
   "prayerStarted": "{prayer}-এর সময় চলছে",
   "timeRemaining": "শেষ হতে বাকি",
@@ -64,6 +65,8 @@
   "pdfShare": "শেয়ার",
   "pdfPrint": "প্রিন্ট",
   "pdfSave": "ডিভাইসে সেভ করুন",
+  "pdfCalendar": "ক্যালেন্ডার",
+  "pdfYear": "বছর",
 
   "location": "লোকেশন",
   "locationAuto": "স্বয়ংক্রিয় (GPS)",
