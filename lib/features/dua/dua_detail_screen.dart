@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants.dart';
 import '../../data/models/dua_models.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../providers/dua_provider.dart';
 
 /// Full-screen dua detail view.
@@ -14,11 +15,12 @@ class DuaDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final dua = ref.watch(duaByIdProvider(duaId));
     if (dua == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text('দুআ পাওয়া যায়নি')),
+        body: Center(child: Text(l10n.quranSurahNotFound)),
       );
     }
 
@@ -29,9 +31,9 @@ class DuaDetailScreen extends ConsumerWidget {
         title: Text(dua.titleFor(localeCode)),
         actions: [
           IconButton(
-            tooltip: 'কপি করুন',
+            tooltip: l10n.copy,
             icon: const Icon(Icons.copy),
-            onPressed: () => _copy(context, dua, localeCode),
+            onPressed: () => _copy(context, dua, localeCode, l10n),
           ),
         ],
       ),
@@ -67,21 +69,21 @@ class DuaDetailScreen extends ConsumerWidget {
 
           // ─── Transliteration ─────────────────
           _Section(
-            title: 'উচ্চারণ',
+            title: l10n.quranAyahText,
             body: dua.transliteration,
             italic: true,
           ),
 
           // ─── Meaning ─────────────────────────
           _Section(
-            title: 'অর্থ',
+            title: l10n.quranAyahText,
             body: dua.meaningFor(localeCode),
           ),
 
           // ─── Reference ───────────────────────
           if (dua.reference != null)
             _Section(
-              title: 'রেফারেন্স',
+              title: l10n.quranSurah,
               body: dua.reference!,
               muted: true,
             ),
@@ -96,6 +98,7 @@ class DuaDetailScreen extends ConsumerWidget {
     BuildContext context,
     Dua dua,
     String localeCode,
+    AppLocalizations l10n,
   ) async {
     final text =
         '${dua.titleFor(localeCode)}\n\n${dua.arabic}\n\n'
@@ -103,9 +106,9 @@ class DuaDetailScreen extends ConsumerWidget {
     await Clipboard.setData(ClipboardData(text: text));
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('দুআ কপি হয়েছে'),
-        duration: Duration(seconds: 1),
+      SnackBar(
+        content: Text(l10n.ayahCopied),
+        duration: const Duration(seconds: 1),
       ),
     );
   }
