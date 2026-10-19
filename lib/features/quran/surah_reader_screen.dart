@@ -4,20 +4,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
 import '../../data/models/quran_models.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../providers/mushaf_provider.dart';
 import '../../providers/quran_provider.dart';
 import 'widgets/ayah_card.dart';
 import 'widgets/language_toggle.dart';
 
 /// The Ayah reader screen for a single Surah.
-///
-/// Features:
-///   - Sticky header with Surah name + actions
-///   - Language toggle bar
-///   - Ayah list (lazy, with auto-scroll to a target ayah)
-///   - Progress saving (last read)
-///   - Bookmarks shortcut
-///   - Settings for font size / line height
 class SurahReaderScreen extends ConsumerStatefulWidget {
   final int surahNumber;
   final int? initialAyah;
@@ -50,20 +43,15 @@ class _SurahReaderScreenState extends ConsumerState<SurahReaderScreen> {
     super.dispose();
   }
 
-  /// Save the last-read position roughly every scroll stop.
   void _saveProgressOnScroll() {
     if (!_scrollController.hasClients) return;
-    // Throttle by using a simple heuristic: only save every N pixels.
-    // Actual progress saving happens in `_onScrollStop`.
   }
 
-  /// Called by the list's `NotificationListener` when scrolling stops.
   void _onScrollStop() {
     if (!_scrollController.hasClients) return;
     final offset = _scrollController.offset;
     final viewport = _scrollController.position.viewportDimension;
 
-    // Find the closest ayah key to the current scroll offset.
     int? closestAyah;
     double closestDistance = double.infinity;
 
@@ -85,12 +73,10 @@ class _SurahReaderScreenState extends ConsumerState<SurahReaderScreen> {
           .read(lastReadProvider.notifier)
           .update(widget.surahNumber, closestAyah!);
     }
-    // Silence unused-variable lint.
     offset.hashCode;
     viewport.hashCode;
   }
 
-  /// Scroll to the initial ayah once the list is built.
   void _scrollToInitialAyahOnce() {
     if (_initialScrollDone) return;
     final target = widget.initialAyah;
@@ -113,18 +99,19 @@ class _SurahReaderScreenState extends ConsumerState<SurahReaderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final surahAsync = ref.watch(surahMetaProvider(widget.surahNumber));
 
     return Scaffold(
       appBar: AppBar(
         title: surahAsync.when(
-          loading: () => const Text('Loading...'),
-          error: (_, __) => Text('Surah ${widget.surahNumber}'),
+          loading: () => Text(l10n.loading),
+          error: (_, __) => Text('${l10n.quranSurah} ${widget.surahNumber}'),
           data: (surah) => Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                surah?.nameEnglish ?? 'Surah ${widget.surahNumber}',
+                surah?.nameEnglish ?? '${l10n.quranSurah} ${widget.surahNumber}',
                 style: const TextStyle(
                   fontSize: AppConstants.fontSubtitle,
                   fontWeight: FontWeight.w600,
@@ -132,7 +119,7 @@ class _SurahReaderScreenState extends ConsumerState<SurahReaderScreen> {
               ),
               if (surah != null)
                 Text(
-                  '${surah.nameArabic} •${surah.totalAyahs} ayahs',
+                  '${surah.nameArabic} • ${surah.totalAyahs}',
                   style: const TextStyle(
                     fontSize: AppConstants.fontMicro,
                     color: AppConstants.textMuted,
@@ -142,9 +129,8 @@ class _SurahReaderScreenState extends ConsumerState<SurahReaderScreen> {
           ),
         ),
         actions: [
-          // তেলাওয়াত পৃষ্ঠা (মুসহাফ) রিডাইরেক্ট বাটন
           IconButton(
-            tooltip: 'তেলাওয়াত পৃষ্ঠা',
+            tooltip: l10n.quranTilawatPage,
             icon: const Icon(Icons.menu_book_rounded, size: 22),
             onPressed: () async {
               final config = await ref.read(mushafConfigProvider.future);
@@ -152,10 +138,8 @@ class _SurahReaderScreenState extends ConsumerState<SurahReaderScreen> {
               if (!context.mounted) return;
               if (page == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'এই সূরা এখনো হাফিজী পারায় নেই (শুধু পারা ২৬–৩০)',
-                    ),
+                  SnackBar(
+                    content: Text(l10n.quranSurahNotInParas),
                   ),
                 );
                 return;
@@ -164,12 +148,12 @@ class _SurahReaderScreenState extends ConsumerState<SurahReaderScreen> {
             },
           ),
           IconButton(
-            tooltip: 'Font size',
+            tooltip: l10n.settings,
             icon: const Icon(Icons.format_size),
             onPressed: () => _showFontSettings(context),
           ),
           IconButton(
-            tooltip: 'Bookmarks',
+            tooltip: l10n.quranBookmark,
             icon: const Icon(Icons.bookmark_border),
             onPressed: () => context.push('/quran/bookmarks'),
           ),
@@ -177,10 +161,7 @@ class _SurahReaderScreenState extends ConsumerState<SurahReaderScreen> {
       ),
       body: Column(
         children: [
-          // Sticky language toggle bar.
           const LanguageToggle(),
-
-          // Ayah list.
           Expanded(
             child: surahAsync.when(
               loading: () => const Center(
@@ -190,16 +171,16 @@ class _SurahReaderScreenState extends ConsumerState<SurahReaderScreen> {
               ),
               error: (e, _) => Center(
                 child: Text(
-                  'Failed to load: $e',
+                  '${l10n.error}: $e',
                   style: const TextStyle(color: AppConstants.textMuted),
                 ),
               ),
               data: (surah) {
                 if (surah == null) {
-                  return const Center(
+                  return Center(
                     child: Text(
-                      'Surah not found',
-                      style: TextStyle(color: AppConstants.textMuted),
+                      l10n.quranSurahNotFound,
+                      style: const TextStyle(color: AppConstants.textMuted),
                     ),
                   );
                 }
@@ -218,10 +199,6 @@ class _SurahReaderScreenState extends ConsumerState<SurahReaderScreen> {
       ),
     );
   }
-
-  // ─────────────────────────────────────────────
-  // FONT SETTINGS SHEET
-  // ─────────────────────────────────────────────
 
   void _showFontSettings(BuildContext context) {
     showModalBottomSheet<void>(
@@ -266,6 +243,7 @@ class _AyahListState extends ConsumerState<_AyahList> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final ayahsAsync = ref.watch(ayahsProvider(widget.surah.number));
 
     return ayahsAsync.when(
@@ -278,7 +256,7 @@ class _AyahListState extends ConsumerState<_AyahList> {
         child: Padding(
           padding: const EdgeInsets.all(AppConstants.spaceXl),
           child: Text(
-            'Failed to load ayahs: $e',
+            '${l10n.error}: $e',
             textAlign: TextAlign.center,
             style: const TextStyle(color: AppConstants.textMuted),
           ),
@@ -286,20 +264,18 @@ class _AyahListState extends ConsumerState<_AyahList> {
       ),
       data: (ayahs) {
         if (ayahs.isEmpty) {
-          return const Center(
+          return Center(
             child: Text(
-              'No ayahs found for this Surah',
-              style: TextStyle(color: AppConstants.textMuted),
+              l10n.quranSurahNotFound,
+              style: const TextStyle(color: AppConstants.textMuted),
             ),
           );
         }
 
-        // Register a GlobalKey for every ayah once.
         for (final a in ayahs) {
           widget.ayahKeys.putIfAbsent(a.ayahNumber, () => GlobalKey());
         }
 
-        // Trigger the initial scroll after the first build.
         if (!_hasHandledInitialScroll &&
             widget.initialAyah != null &&
             widget.initialAyah! > 0 &&
@@ -322,9 +298,8 @@ class _AyahListState extends ConsumerState<_AyahList> {
             padding: const EdgeInsets.symmetric(
               vertical: AppConstants.spaceMd,
             ),
-            itemCount: ayahs.length + 1, // +1 for Bismillah header
+            itemCount: ayahs.length + 1,
             itemBuilder: (context, i) {
-              // First row: Bismillah header (except Surah 1 & 9).
               if (i == 0) {
                 return _BismillahHeader(
                   surahNumber: widget.surah.number,
@@ -376,8 +351,7 @@ class _BismillahHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Bismillah is not part of Surah 1 (it IS the first ayah) and is
-    // not recited at the start of Surah 9.
+    final l10n = AppLocalizations.of(context);
     final showBismillah = surahNumber != 1 && surahNumber != 9;
 
     return Container(
@@ -404,7 +378,7 @@ class _BismillahHeader extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Surah name (Arabic)
+          // Arabic surah name (hardcoded Arabic — intentional)
           Text(
             surahNameArabic,
             style: const TextStyle(
@@ -417,7 +391,6 @@ class _BismillahHeader extends StatelessWidget {
           ),
           const SizedBox(height: AppConstants.spaceSm),
 
-          // Surah name (English) + meta
           Text(
             surahNameEnglish,
             style: const TextStyle(
@@ -429,8 +402,7 @@ class _BismillahHeader extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${revelationPlace == 'makkah' ? 'Makki' : 'Madani'} • '
-            '$totalAyahs ayahs',
+            '${revelationPlace == 'makkah' ? l10n.quranMakki : l10n.quranMadani} • $totalAyahs',
             style: const TextStyle(
               color: AppConstants.textMuted,
               fontSize: AppConstants.fontCaption,
@@ -438,7 +410,6 @@ class _BismillahHeader extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
 
-          // Bismillah
           if (showBismillah) ...[
             const SizedBox(height: AppConstants.spaceXl),
             Container(
@@ -482,6 +453,7 @@ class _FontSettingsSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final display = ref.watch(quranDisplayProvider);
     final notifier = ref.read(quranDisplayProvider.notifier);
 
@@ -492,7 +464,6 @@ class _FontSettingsSheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Drag handle
             Center(
               child: Container(
                 width: 40,
@@ -505,10 +476,9 @@ class _FontSettingsSheet extends ConsumerWidget {
             ),
             const SizedBox(height: AppConstants.spaceLg),
 
-            // Title
-            const Text(
-              'Reading Settings',
-              style: TextStyle(
+            Text(
+              l10n.settings,
+              style: const TextStyle(
                 color: AppConstants.textPrimary,
                 fontSize: AppConstants.fontHeading,
                 fontWeight: FontWeight.w700,
@@ -516,9 +486,8 @@ class _FontSettingsSheet extends ConsumerWidget {
             ),
             const SizedBox(height: AppConstants.spaceLg),
 
-            // Font size
             _SettingRow(
-              label: 'Font Size',
+              label: l10n.settingsAppearance,
               value: '${(display.fontScale * 100).toInt()}%',
               child: Slider(
                 value: display.fontScale,
@@ -531,9 +500,8 @@ class _FontSettingsSheet extends ConsumerWidget {
               ),
             ),
 
-            // Line height
             _SettingRow(
-              label: 'Line Spacing',
+              label: l10n.settingsAppearance,
               value: display.lineHeight.toStringAsFixed(1),
               child: Slider(
                 value: display.lineHeight,
@@ -548,14 +516,13 @@ class _FontSettingsSheet extends ConsumerWidget {
 
             const SizedBox(height: AppConstants.spaceLg),
 
-            // Reset
             TextButton.icon(
               onPressed: () {
                 notifier.setFontScale(1.0);
                 notifier.setLineHeight(1.6);
               },
               icon: const Icon(Icons.refresh),
-              label: const Text('Reset to default'),
+              label: Text(l10n.amolReset),
             ),
           ],
         ),
