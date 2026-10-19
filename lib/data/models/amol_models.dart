@@ -39,25 +39,46 @@ class Amol {
     this.isDefault = true,
   });
 
+  /// Title localized for the given locale code.
+  ///
+  /// Arabic UI is not supported (only English + Bangla). The `titleAr`
+  /// field is kept only for potential display of the Arabic deed name
+  /// inside the UI, but never selected by `localeCode`.
   String titleFor(String localeCode) {
     switch (localeCode) {
       case 'bn':
         return titleBn;
-      case 'ar':
-        return titleAr;
       default:
         return titleEn;
     }
   }
 
+  /// Description localized for the given locale code.
   String? descriptionFor(String localeCode) {
     switch (localeCode) {
       case 'bn':
         return descriptionBn;
-      case 'ar':
-        return descriptionAr;
       default:
         return descriptionEn;
+    }
+  }
+
+  /// Category label, localized.
+  String categoryLabel({String locale = 'en'}) {
+    final isEn = locale == 'en';
+    switch (category) {
+      case AmolCategory.tasbih:
+        return isEn ? 'Tasbih' : 'তাসবীহ';
+      case AmolCategory.dua:
+        return isEn ? 'Dua' : 'দুআ';
+      case AmolCategory.dhikr:
+        return isEn ? 'Dhikr' : 'যিকির';
+      case AmolCategory.quranReading:
+        return isEn ? 'Quran Reading' : 'কুরআন তিলাওয়াত';
+      case AmolCategory.salat:
+        return isEn ? 'Salat' : 'নামায';
+      case AmolCategory.custom:
+        return isEn ? 'Custom' : 'কাস্টম';
     }
   }
 
