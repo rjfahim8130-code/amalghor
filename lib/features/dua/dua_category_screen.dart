@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../providers/dua_provider.dart';
 
 /// Shows all duas in a single category.
@@ -13,12 +14,13 @@ class DuaCategoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final category = ref.watch(duaCategoryByIdProvider(categoryId));
     final duas = ref.watch(duasByCategoryProvider(categoryId));
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(category?.titleBn ?? 'দুআ'),
+        title: Text(category?.titleBn ?? l10n.dua),
       ),
       body: ListView.separated(
         padding: const EdgeInsets.symmetric(
