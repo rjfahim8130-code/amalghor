@@ -355,7 +355,7 @@ class AsmaData {
       englishMeaning: 'The Witness',
       banglaMeaning: 'সাক্ষী',
     ),
-        AsmaName(
+    AsmaName(
       number: 51,
       arabic: 'الْحَقُّ',
       transliteration: 'Al-Haqq',
