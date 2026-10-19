@@ -17,6 +17,8 @@ import '../features/pdf/pdf_settings_screen.dart';
 import '../features/prayer/prayer_screen.dart';
 import '../features/qibla/qibla_screen.dart';
 import '../features/quran/bookmark_feature.dart';
+import '../features/quran/mushaf_reader_screen.dart';
+import '../features/quran/quran_mode_select_screen.dart';
 import '../features/quran/quran_screen.dart';
 import '../features/quran/surah_reader_screen.dart';
 import '../features/ramadan/ramadan_screen.dart';
@@ -29,6 +31,8 @@ class Routes {
   static const String home = '/';
   static const String prayer = '/prayer';
   static const String quran = '/quran';
+  static const String quranRegular = '/quran/regular';
+  static const String quranMushaf = '/quran/mushaf';
   static const String ramadan = '/ramadan';
   static const String amol = '/amol';
   static const String settings = '/settings';
@@ -66,15 +70,29 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: PrayerScreen()),
           ),
+          // কুরআন ট্যাব → মোড সিলেক্ট (হাফিজী / সাধারণ)
           GoRoute(
             path: Routes.quran,
             pageBuilder: (context, state) =>
-                const NoTransitionPage(child: QuranScreen()),
+                const NoTransitionPage(child: QuranModeSelectScreen()),
             routes: [
+              GoRoute(
+                path: 'regular',
+                builder: (context, state) => const QuranScreen(),
+              ),
               GoRoute(
                 path: 'bookmarks',
                 builder: (context, state) => const BookmarkScreen(),
               ),
+              GoRoute(
+                path: 'mushaf',
+                builder: (context, state) {
+                  final pageParam = state.uri.queryParameters['page'];
+                  final page = int.tryParse(pageParam ?? '');
+                  return MushafReaderScreen(initialPage: page);
+                },
+              ),
+              // :surahNumber অবশ্যই regular/mushaf/bookmarks এর পরে
               GoRoute(
                 path: ':surahNumber',
                 builder: (context, state) {
