@@ -154,7 +154,7 @@ class _MainCard extends StatelessWidget {
                     const SizedBox(width: AppConstants.spaceSm),
                     Expanded(
                       child: Text(
-                        'পরবর্তী: $nextLabel',
+                        l10n.nextColon(nextLabel),
                         style: TextStyle(
                           color: colors.textPrimary,
                           fontSize: AppConstants.fontBody,
@@ -188,7 +188,7 @@ class _MainCard extends StatelessWidget {
                     ),
                     const SizedBox(width: AppConstants.spaceSm),
                     Text(
-                      'বাকি',
+                      l10n.remaining,
                       style: TextStyle(
                         color: colors.textMuted,
                         fontSize: AppConstants.fontBody,
