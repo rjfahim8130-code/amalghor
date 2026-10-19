@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/models/mushaf_models.dart';
+import '../../../data/models/quran_models.dart';
+import '../../../providers/quran_provider.dart';
 
-/// Structured search: পারা | পৃষ্ঠা  +  সূরা | আয়াত
-class MushafSearchSheet extends StatefulWidget {
+/// Structured search: পারা | পৃষ্ঠা + সূরা | আয়াত + আয়াত টেক্সট
+class MushafSearchSheet extends ConsumerStatefulWidget {
   final MushafConfig config;
   final void Function(int page) onGoToPage;
 
@@ -15,19 +18,21 @@ class MushafSearchSheet extends StatefulWidget {
   });
 
   @override
-  State<MushafSearchSheet> createState() => _MushafSearchSheetState();
+  ConsumerState<MushafSearchSheet> createState() => _MushafSearchSheetState();
 }
 
-class _MushafSearchSheetState extends State<MushafSearchSheet> {
+class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
   final _paraCtrl = TextEditingController();
   final _pageCtrl = TextEditingController();
   final _surahCtrl = TextEditingController();
   final _ayahCtrl = TextEditingController();
+  final _textCtrl = TextEditingController();
 
   String? _error;
+  bool _searchingText = false;
   List<MapEntry<String, int>> _suggestions = [];
+  List<_TextHit> _textHits = [];
 
-  // Surahs in paras 26–30
   static const _surahNames = <String, int>{
     'আহকাফ': 46, 'ahqaf': 46, 'al-ahqaf': 46,
     'মুহাম্মদ': 47, 'muhammad': 47,
@@ -100,7 +105,6 @@ class _MushafSearchSheetState extends State<MushafSearchSheet> {
     'নাস': 114, 'nas': 114, 'an-nas': 114,
   };
 
-  /// Display names for suggestions (Bengali preferred)
   static const _displayNames = <int, String>{
     46: 'আহকাফ', 47: 'মুহাম্মদ', 48: 'ফাতহ', 49: 'হুজুরাত',
     50: 'কাফ', 51: 'ধারিয়াত', 52: 'তূর', 53: 'নাজম',
@@ -128,6 +132,7 @@ class _MushafSearchSheetState extends State<MushafSearchSheet> {
     _pageCtrl.dispose();
     _surahCtrl.dispose();
     _ayahCtrl.dispose();
+    _textCtrl.dispose();
     super.dispose();
   }
 
@@ -142,11 +147,9 @@ class _MushafSearchSheetState extends State<MushafSearchSheet> {
     for (final e in _surahNames.entries) {
       if (e.key.toLowerCase().startsWith(q) && !seen.contains(e.value)) {
         seen.add(e.value);
-        final display = _displayNames[e.value] ?? e.key;
-        list.add(MapEntry(display, e.value));
+        list.add(MapEntry(_displayNames[e.value] ?? e.key, e.value));
       }
     }
-    // Also match display names
     for (final e in _displayNames.entries) {
       if (e.value.toLowerCase().startsWith(q) && !seen.contains(e.key)) {
         seen.add(e.key);
@@ -168,27 +171,90 @@ class _MushafSearchSheetState extends State<MushafSearchSheet> {
     return null;
   }
 
+  Future<void> _searchByText() async {
+    final q = _textCtrl.text.trim();
+    if (q.length < 2) {
+      setState(() {
+        _error = 'আয়াতের অন্তত ২ অক্ষর লিখুন';
+        _textHits = [];
+      });
+      return;
+    }
+
+    setState(() {
+      _searchingText = true;
+      _error = null;
+      _textHits = [];
+    });
+
+    try {
+      final repo = ref.read(quranRepositoryProvider);
+      await ref.read(quranLoadProvider.notifier).load();
+      final results = await repo.search(q, limit: 80);
+      final cfg = widget.config;
+      final hits = <_TextHit>[];
+
+      for (final r in results) {
+        final page = cfg.pageForAyah(r.surahNumber, r.ayahNumber);
+        if (page == null) continue; // শুধু পারা ২৬–৩০
+        hits.add(_TextHit(
+          surah: r.surahNumber,
+          ayah: r.ayahNumber,
+          page: page,
+          surahName: r.surahName,
+          snippet: r.snippet,
+          language: r.matchedLanguage,
+        ));
+        if (hits.length >= 25) break;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _searchingText = false;
+        _textHits = hits;
+        if (hits.isEmpty) {
+          _error = 'পারা ২৬–৩০-এ মিল পাওয়া যায়নি';
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _searchingText = false;
+        _error = 'সার্চ ব্যর্থ: $e';
+      });
+    }
+  }
+
   void _search() {
-    setState(() => _error = null);
+    setState(() {
+      _error = null;
+      _textHits = [];
+    });
     final cfg = widget.config;
 
     final paraText = _paraCtrl.text.trim();
     final pageText = _pageCtrl.text.trim();
     final surahText = _surahCtrl.text.trim();
     final ayahText = _ayahCtrl.text.trim();
+    final textQ = _textCtrl.text.trim();
 
     final hasPara = paraText.isNotEmpty;
     final hasPage = pageText.isNotEmpty;
     final hasSurah = surahText.isNotEmpty;
     final hasAyah = ayahText.isNotEmpty;
+    final hasText = textQ.isNotEmpty;
 
-    // Check if user provided only Ayah without Surah
+    // আয়াত টেক্সট সার্চ (অগ্রাধিকার যদি শুধু টেক্সট থাকে, বা অন্য ঘর খালি)
+    if (hasText && !hasSurah && !hasPara && !hasPage) {
+      _searchByText();
+      return;
+    }
+
     if (hasAyah && !hasSurah) {
       setState(() => _error = 'সূরার নাম লিখুন, তারপর আয়াত নম্বর দিন');
       return;
     }
 
-    // Priority: surah(+ayah) > para(+page) > page only > para only
     if (hasSurah) {
       final surah = _resolveSurah(surahText);
       if (surah == null) {
@@ -209,7 +275,6 @@ class _MushafSearchSheetState extends State<MushafSearchSheet> {
         widget.onGoToPage(page);
         return;
       }
-      // Surah only
       final page = cfg.firstPageOfSurah(surah);
       if (page == null) {
         setState(() => _error = 'এই সূরা পারা ২৬–৩০-এ নেই');
@@ -236,7 +301,6 @@ class _MushafSearchSheetState extends State<MushafSearchSheet> {
     }
 
     if (hasPage && !hasPara) {
-      // User types PRINTED page number → file = printed - 1
       final printed = int.tryParse(pageText);
       if (printed == null) {
         setState(() => _error = 'পৃষ্ঠা সংখ্যায় লিখুন');
@@ -267,6 +331,11 @@ class _MushafSearchSheetState extends State<MushafSearchSheet> {
       return;
     }
 
+    if (hasText) {
+      _searchByText();
+      return;
+    }
+
     setState(() => _error = 'অন্তত একটি ঘর পূরণ করুন');
   }
 
@@ -276,44 +345,44 @@ class _MushafSearchSheetState extends State<MushafSearchSheet> {
     required TextInputType keyboard,
     String? hint,
     void Function(String)? onChanged,
+    bool expand = true,
   }) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+    final field = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          keyboardType: keyboard,
+          style: const TextStyle(color: Colors.white, fontSize: 16),
+          onChanged: onChanged,
+          inputFormatters: keyboard == TextInputType.number
+              ? [FilteringTextInputFormatter.digitsOnly]
+              : null,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(color: Colors.white30, fontSize: 14),
+            filled: true,
+            fillColor: Colors.white10,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide.none,
             ),
           ),
-          const SizedBox(height: 6),
-          TextField(
-            controller: controller,
-            keyboardType: keyboard,
-            style: const TextStyle(color: Colors.white, fontSize: 16),
-            onChanged: onChanged,
-            inputFormatters: keyboard == TextInputType.number
-                ? [FilteringTextInputFormatter.digitsOnly]
-                : null,
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: const TextStyle(color: Colors.white30, fontSize: 14),
-              filled: true,
-              fillColor: Colors.white10,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
+    return expand ? Expanded(child: field) : field;
   }
 
   @override
@@ -322,149 +391,229 @@ class _MushafSearchSheetState extends State<MushafSearchSheet> {
 
     return Padding(
       padding: EdgeInsets.fromLTRB(20, 12, 20, 16 + bottom),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Handle
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Title + search icon
-          Row(
-            children: [
-              const Icon(Icons.search, color: Color(0xFF34D399), size: 22),
-              const SizedBox(width: 8),
-              const Text(
-                'সার্চ',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const Spacer(),
-              const Text(
-                'পারা ২৬–৩০',
-                style: TextStyle(color: Colors.white38, fontSize: 11),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-
-          // Row 1: পারা | পৃষ্ঠা
-          Row(
-            children: [
-              _field(
-                label: 'পারা',
-                controller: _paraCtrl,
-                keyboard: TextInputType.number,
-                hint: '২৬',
-              ),
-              const SizedBox(width: 12),
-              _field(
-                label: 'পৃষ্ঠা',
-                controller: _pageCtrl,
-                keyboard: TextInputType.number,
-                hint: '৫০৩',
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'পৃষ্ঠা = বইয়ে ছাপা নম্বর লিখুন (অ্যাপ নিজে ১ কমিয়ে নেবে)',
-            style: TextStyle(color: Colors.white38, fontSize: 11),
-          ),
-          const SizedBox(height: 16),
-
-          // Row 2: সূরা | আয়াত
-          Row(
-            children: [
-              _field(
-                label: 'সূরা',
-                controller: _surahCtrl,
-                keyboard: TextInputType.text,
-                hint: 'নাবা',
-                onChanged: _onSurahChanged,
-              ),
-              const SizedBox(width: 12),
-              _field(
-                label: 'আয়াত',
-                controller: _ayahCtrl,
-                keyboard: TextInputType.number,
-                hint: '১',
-              ),
-            ],
-          ),
-
-          // Surah suggestions
-          if (_suggestions.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 140),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: _suggestions.length,
-                itemBuilder: (_, i) {
-                  final s = _suggestions[i];
-                  return ListTile(
-                    dense: true,
-                    title: Text(
-                      '${s.value}. ${s.key}',
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
-                    ),
-                    onTap: () {
-                      _surahCtrl.text = s.key;
-                      setState(() => _suggestions = []);
-                      FocusScope.of(context).unfocus();
-                    },
-                  );
-                },
-              ),
             ),
-          ],
-
-          if (_error != null) ...[
             const SizedBox(height: 12),
-            Text(
-              _error!,
-              style: const TextStyle(color: Color(0xFFF87171), fontSize: 13),
+            const Row(
+              children: [
+                Icon(Icons.search, color: Color(0xFF34D399), size: 22),
+                SizedBox(width: 8),
+                Text(
+                  'সার্চ',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Spacer(),
+                Text(
+                  'পারা ২৬–৩০',
+                  style: TextStyle(color: Colors.white38, fontSize: 11),
+                ),
+              ],
             ),
-          ],
+            const SizedBox(height: 20),
 
-          const SizedBox(height: 20),
+            // পারা | পৃষ্ঠা
+            Row(
+              children: [
+                _field(
+                  label: 'পারা',
+                  controller: _paraCtrl,
+                  keyboard: TextInputType.number,
+                  hint: '২৬',
+                ),
+                const SizedBox(width: 12),
+                _field(
+                  label: 'পৃষ্ঠা',
+                  controller: _pageCtrl,
+                  keyboard: TextInputType.number,
+                  hint: '৫০৩',
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'পৃষ্ঠা = বইয়ে ছাপা নম্বর (অ্যাপ ১ কমিয়ে নেবে)',
+              style: TextStyle(color: Colors.white38, fontSize: 11),
+            ),
+            const SizedBox(height: 16),
 
-          // Search button
-          SizedBox(
-            height: 48,
-            child: ElevatedButton.icon(
-              onPressed: _search,
-              icon: const Icon(Icons.search, size: 20),
-              label: const Text(
-                'সার্চ করুন',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+            // সূরা | আয়াত
+            Row(
+              children: [
+                _field(
+                  label: 'সূরা',
+                  controller: _surahCtrl,
+                  keyboard: TextInputType.text,
+                  hint: 'নাবা',
+                  onChanged: _onSurahChanged,
+                ),
+                const SizedBox(width: 12),
+                _field(
+                  label: 'আয়াত নং',
+                  controller: _ayahCtrl,
+                  keyboard: TextInputType.number,
+                  hint: '১',
+                ),
+              ],
+            ),
+
+            if (_suggestions.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              ..._suggestions.map(
+                (s) => ListTile(
+                  dense: true,
+                  title: Text(
+                    '${s.value}. ${s.key}',
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                  ),
+                  onTap: () {
+                    _surahCtrl.text = s.key;
+                    setState(() => _suggestions = []);
+                    FocusScope.of(context).unfocus();
+                  },
+                ),
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
-                foregroundColor: Colors.black,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            ],
+
+            const SizedBox(height: 16),
+
+            // আয়াত টেক্সট (নতুন)
+            _field(
+              label: 'আয়াতের অংশ / পূর্ণ আয়াত',
+              controller: _textCtrl,
+              keyboard: TextInputType.text,
+              hint: 'আরবি, বাংলা বা ইংরেজি লিখুন…',
+              expand: false,
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'উদাহরণ: قل هو الله  বা  তিনি এক  বা  He is Allah',
+              style: TextStyle(color: Colors.white38, fontSize: 11),
+            ),
+
+            if (_error != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                _error!,
+                style: const TextStyle(color: Color(0xFFF87171), fontSize: 13),
+              ),
+            ],
+
+            if (_searchingText) ...[
+              const SizedBox(height: 12),
+              const Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ],
+
+            if (_textHits.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                '${_textHits.length} টি ফলাফল (পারা ২৬–৩০)',
+                style: const TextStyle(color: Colors.white54, fontSize: 12),
+              ),
+              const SizedBox(height: 6),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 220),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _textHits.length,
+                  itemBuilder: (_, i) {
+                    final h = _textHits[i];
+                    return ListTile(
+                      dense: true,
+                      title: Text(
+                        '${h.surahName} \( {h.surah}: \){h.ayah}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      subtitle: Text(
+                        h.snippet,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white60,
+                          fontSize: 12,
+                        ),
+                      ),
+                      trailing: Text(
+                        'পৃ. ${h.page}',
+                        style: const TextStyle(
+                          color: Color(0xFF34D399),
+                          fontSize: 12,
+                        ),
+                      ),
+                      onTap: () => widget.onGoToPage(h.page),
+                    );
+                  },
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 20),
+            SizedBox(
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: _searchingText ? null : _search,
+                icon: const Icon(Icons.search, size: 20),
+                label: const Text(
+                  'সার্চ করুন',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981),
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-        ],
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }
+}
+
+class _TextHit {
+  final int surah;
+  final int ayah;
+  final int page;
+  final String surahName;
+  final String snippet;
+  final QuranLanguage language;
+
+  _TextHit({
+    required this.surah,
+    required this.ayah,
+    required this.page,
+    required this.surahName,
+    required this.snippet,
+    required this.language,
+  });
 }
