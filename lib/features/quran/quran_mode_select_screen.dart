@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/constants.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 /// Quran tab entry: choose Hafezi (tilawat) or Regular (translation).
 class QuranModeSelectScreen extends ConsumerWidget {
@@ -12,13 +13,14 @@ class QuranModeSelectScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: colors.pageBackground,
       appBar: AppBar(
         backgroundColor: colors.pageBackground,
         title: Text(
-          'আল-কুরআন',
+          l10n.quranTitle,
           style: TextStyle(
             color: colors.textPrimary,
             fontWeight: FontWeight.w700,
@@ -32,7 +34,7 @@ class QuranModeSelectScreen extends ConsumerWidget {
           children: [
             const SizedBox(height: 12),
             Text(
-              'কোন কুরআন পড়তে চান?',
+              l10n.quranChooseMode,
               style: TextStyle(
                 color: colors.textMuted,
                 fontSize: AppConstants.fontBody,
@@ -41,16 +43,16 @@ class QuranModeSelectScreen extends ConsumerWidget {
             const SizedBox(height: 24),
             _ModeCard(
               icon: Icons.menu_book_rounded,
-              title: 'হাফিজী কুরআন শরীফ',
-              subtitle: 'তেলাওয়াত · পৃষ্ঠা উল্টানো · পারা ভিত্তিক',
+              title: l10n.quranHafeziTitle,
+              subtitle: l10n.quranHafeziSubtitle,
               colors: colors,
               onTap: () => context.push('/quran/mushaf'),
             ),
             const SizedBox(height: 16),
             _ModeCard(
               icon: Icons.translate_rounded,
-              title: 'সাধারণ কুরআন শরীফ',
-              subtitle: 'অনুবাদ · সূরা ভিত্তিক · বাংলা / ইংরেজি / আরবি',
+              title: l10n.quranRegularTitle,
+              subtitle: l10n.quranRegularSubtitle,
               colors: colors,
               onTap: () => context.push('/quran/regular'),
             ),
