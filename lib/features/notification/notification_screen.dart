@@ -348,6 +348,7 @@ class _NotificationTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final localeCode = Localizations.localeOf(context).languageCode;
 
     return Dismissible(
       key: ValueKey('notif-${item.id}'),
@@ -433,7 +434,7 @@ class _NotificationTile extends ConsumerWidget {
                       ),
                     const SizedBox(height: 2),
                     Text(
-                      item.daysLabel,
+                      item.daysLabel(locale: localeCode),
                       style: TextStyle(
                         color: colors.textFaint,
                         fontSize: AppConstants.fontMicro,
