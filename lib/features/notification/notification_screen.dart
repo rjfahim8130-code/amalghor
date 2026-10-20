@@ -3,13 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/constants.dart';
-import '../../l10n/generated/app_localizations.dart';
 import '../../providers/custom_notification_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../services/custom_notification_service.dart';
 
-/// Notification Hub — tabbed screen.
 class NotificationScreen extends ConsumerStatefulWidget {
   const NotificationScreen({super.key});
 
@@ -37,35 +35,35 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: colors.pageBackground,
       appBar: AppBar(
         backgroundColor: colors.pageBackground,
-        title: Text(
-          l10n.notifications,
-          style: TextStyle(
-            color: colors.textPrimary,
-            fontWeight: FontWeight.w700,
-          ),
+        title: Row(
+          children: [
+            Icon(Icons.notifications_active_outlined,
+                color: colors.emerald, size: 22),
+            const SizedBox(width: 8),
+            Text(
+              'নোটিফিকেশন',
+              style: TextStyle(
+                  color: colors.textPrimary, fontWeight: FontWeight.w700),
+            ),
+          ],
         ),
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: colors.emerald,
           labelColor: colors.emerald,
           unselectedLabelColor: colors.textMuted,
-          labelStyle: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-          tabs: [
-            Tab(text: l10n.prayerRemindersTab),
-            Tab(text: l10n.customTab),
+          labelStyle:
+              const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          unselectedLabelStyle:
+              const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+          tabs: const [
+            Tab(text: 'নামাযের রিমাইন্ডার'),
+            Tab(text: 'কাস্টম'),
           ],
         ),
       ),
@@ -90,7 +88,6 @@ class _PrayerRemindersTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
-    final l10n = AppLocalizations.of(context);
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
 
@@ -105,65 +102,64 @@ class _PrayerRemindersTab extends ConsumerWidget {
         const _NotificationPermissionBanner(),
         const SizedBox(height: AppConstants.spaceMd),
         Text(
-          l10n.notifPrayerHelp,
+          'প্রতিটি নামাযের জন্য নোটিফিকেশন চালু/বন্ধ করুন এবং কত মিনিট আগে রিমাইন্ডার চান সেটা সেট করুন।',
           style: TextStyle(
-            color: colors.textMuted,
-            fontSize: AppConstants.fontCaption,
-            height: 1.5,
-          ),
+              color: colors.textMuted,
+              fontSize: AppConstants.fontCaption,
+              height: 1.5),
         ),
         const SizedBox(height: AppConstants.spaceLg),
         _PrayerNotifTile(
-          title: l10n.fajr,
+          title: '🌅 ফজর',
           enabled: settings.notifFajr,
           offset: settings.offsetFajr,
           onToggle: (v) => update(() => notifier.setNotifFajr(v)),
           onOffset: (v) => update(() => notifier.setOffset('fajr', v)),
         ),
         _PrayerNotifTile(
-          title: l10n.dhuhr,
+          title: '☀️ যোহর',
           enabled: settings.notifDhuhr,
           offset: settings.offsetDhuhr,
           onToggle: (v) => update(() => notifier.setNotifDhuhr(v)),
           onOffset: (v) => update(() => notifier.setOffset('dhuhr', v)),
         ),
         _PrayerNotifTile(
-          title: l10n.asr,
+          title: '🌤️ আসর',
           enabled: settings.notifAsr,
           offset: settings.offsetAsr,
           onToggle: (v) => update(() => notifier.setNotifAsr(v)),
           onOffset: (v) => update(() => notifier.setOffset('asr', v)),
         ),
         _PrayerNotifTile(
-          title: l10n.maghrib,
+          title: '🌇 মাগরিব',
           enabled: settings.notifMaghrib,
           offset: settings.offsetMaghrib,
           onToggle: (v) => update(() => notifier.setNotifMaghrib(v)),
           onOffset: (v) => update(() => notifier.setOffset('maghrib', v)),
         ),
         _PrayerNotifTile(
-          title: l10n.isha,
+          title: '🌙 এশা',
           enabled: settings.notifIsha,
           offset: settings.offsetIsha,
           onToggle: (v) => update(() => notifier.setNotifIsha(v)),
           onOffset: (v) => update(() => notifier.setOffset('isha', v)),
         ),
         _PrayerNotifTile(
-          title: l10n.sehriEnds,
+          title: '🥣 সেহরি শেষ',
           enabled: settings.notifSehri,
           offset: settings.offsetSehri,
           onToggle: (v) => update(() => notifier.setNotifSehri(v)),
           onOffset: (v) => update(() => notifier.setOffset('sehri', v)),
         ),
         _PrayerNotifTile(
-          title: l10n.iftar,
+          title: '🌙 ইফতার',
           enabled: settings.notifIftar,
           offset: settings.offsetIftar,
           onToggle: (v) => update(() => notifier.setNotifIftar(v)),
           onOffset: (v) => update(() => notifier.setOffset('iftar', v)),
         ),
         _PrayerNotifTile(
-          title: l10n.tahajjudLabel,
+          title: '🌌 তাহাজ্জুদ',
           enabled: settings.notifTahajjud,
           offset: settings.offsetTahajjud,
           onToggle: (v) => update(() => notifier.setNotifTahajjud(v)),
@@ -185,24 +181,23 @@ class _CustomNotificationsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
-    final l10n = AppLocalizations.of(context);
     final items = ref.watch(customNotificationProvider);
 
     return Stack(
       children: [
         if (items.isEmpty)
-          const _EmptyCustomState()
+          _EmptyState(
+            icon: Icons.notifications_none_rounded,
+            title: 'কোনো কাস্টম নোটিফিকেশন নেই',
+            subtitle: 'নিচের বাটনে ট্যাপ করে প্রথম নোটিফিকেশন যোগ করুন',
+            accent: colors.emerald,
+          )
         else
           ListView.separated(
             padding: const EdgeInsets.fromLTRB(
-              AppConstants.spaceLg,
-              AppConstants.spaceLg,
-              AppConstants.spaceLg,
-              100,
-            ),
+                AppConstants.spaceLg, AppConstants.spaceLg, AppConstants.spaceLg, 100),
             itemCount: items.length,
-            separatorBuilder: (_, __) =>
-                const SizedBox(height: AppConstants.spaceMd),
+            separatorBuilder: (_, __) => const SizedBox(height: AppConstants.spaceMd),
             itemBuilder: (_, i) => _NotificationTile(
               item: items[i],
               onTap: () => _showEditor(context, ref, items[i]),
@@ -215,7 +210,7 @@ class _CustomNotificationsTab extends ConsumerWidget {
             backgroundColor: colors.emerald,
             foregroundColor: colors.textOnEmerald,
             icon: const Icon(Icons.add),
-            label: Text(l10n.newAlarm),
+            label: const Text('নতুন'),
             onPressed: () => _showEditor(context, ref, null),
           ),
         ),
@@ -223,17 +218,13 @@ class _CustomNotificationsTab extends ConsumerWidget {
     );
   }
 
-  Future<void> _showEditor(
-    BuildContext context,
-    WidgetRef ref,
-    UserNotification? existing,
-  ) async {
+  Future<void> _showEditor(BuildContext context, WidgetRef ref,
+      UserNotification? existing) async {
     final result = await showDialog<UserNotification>(
       context: context,
       builder: (ctx) => _NotificationEditorDialog(existing: existing),
     );
     if (result == null) return;
-
     if (existing == null) {
       await ref.read(customNotificationProvider.notifier).add(result);
     } else {
@@ -243,7 +234,7 @@ class _CustomNotificationsTab extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────
-// PRAYER NOTIFICATION TILE — with offset slider
+// PRAYER NOTIFICATION TILE
 // ─────────────────────────────────────────────
 
 class _PrayerNotifTile extends StatelessWidget {
@@ -264,7 +255,6 @@ class _PrayerNotifTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    final l10n = AppLocalizations.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -293,14 +283,18 @@ class _PrayerNotifTile extends StatelessWidget {
                     ),
                   ),
                 ),
-                Switch(value: enabled, onChanged: onToggle),
+                Switch(
+                  value: enabled,
+                  activeColor: colors.emerald,
+                  onChanged: onToggle,
+                ),
               ],
             ),
             if (enabled)
               Row(
                 children: [
                   Text(
-                    '$offset ${l10n.remaining}',
+                    '${offset}মি',
                     style: TextStyle(
                       color: colors.emerald,
                       fontSize: AppConstants.fontCaption,
@@ -320,7 +314,7 @@ class _PrayerNotifTile extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    l10n.remaining,
+                    'আগে',
                     style: TextStyle(
                       color: colors.textMuted,
                       fontSize: AppConstants.fontMicro,
@@ -348,7 +342,6 @@ class _NotificationTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
-    final localeCode = Localizations.localeOf(context).languageCode;
 
     return Dismissible(
       key: ValueKey('notif-${item.id}'),
@@ -362,9 +355,8 @@ class _NotificationTile extends ConsumerWidget {
         ),
         child: const Icon(Icons.delete_outline, color: Color(0xFFEF4444)),
       ),
-      onDismissed: (_) {
-        ref.read(customNotificationProvider.notifier).delete(item.id);
-      },
+      onDismissed: (_) =>
+          ref.read(customNotificationProvider.notifier).delete(item.id),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppConstants.radiusXl),
@@ -381,36 +373,42 @@ class _NotificationTile extends ConsumerWidget {
           ),
           child: Row(
             children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: colors.emerald
+                      .withValues(alpha: item.enabled ? 0.15 : 0.05),
+                  borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+                  border: Border.all(
+                    color: item.enabled
+                        ? colors.emerald.withValues(alpha: 0.4)
+                        : colors.border,
+                  ),
+                ),
+                child: Icon(
+                  Icons.notifications_none_rounded,
+                  color: item.enabled ? colors.emerald : colors.textFaint,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: AppConstants.spaceMd),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.notifications_none_rounded,
-                          color: item.enabled
-                              ? colors.emerald
-                              : colors.textFaint,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          item.timeLabel,
-                          style: TextStyle(
-                            color: item.enabled
-                                ? colors.emerald
-                                : colors.textFaint,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            fontFeatures:
-                                const [FontFeature.tabularFigures()],
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      item.timeLabel,
+                      style: TextStyle(
+                        color: item.enabled
+                            ? colors.emerald
+                            : colors.textFaint,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                        letterSpacing: 1.2,
+                      ),
                     ),
-                    const SizedBox(height: 4),
                     Text(
                       item.title,
                       style: TextStyle(
@@ -418,25 +416,13 @@ class _NotificationTile extends ConsumerWidget {
                         fontSize: AppConstants.fontBody,
                         fontWeight: FontWeight.w600,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    if (item.body.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          item.body,
-                          style: TextStyle(
-                            color: colors.textMuted,
-                            fontSize: AppConstants.fontCaption,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    const SizedBox(height: 2),
                     Text(
-                      item.daysLabel(locale: localeCode),
+                      item.daysLabel,
                       style: TextStyle(
-                        color: colors.textFaint,
+                        color: colors.textMuted,
                         fontSize: AppConstants.fontMicro,
                       ),
                     ),
@@ -445,6 +431,7 @@ class _NotificationTile extends ConsumerWidget {
               ),
               Switch(
                 value: item.enabled,
+                activeColor: colors.emerald,
                 onChanged: (v) => ref
                     .read(customNotificationProvider.notifier)
                     .toggle(item, v),
@@ -457,12 +444,11 @@ class _NotificationTile extends ConsumerWidget {
   }
 }
 // ─────────────────────────────────────────────
-// EDITOR DIALOG
+// NOTIFICATION EDITOR DIALOG
 // ─────────────────────────────────────────────
 
 class _NotificationEditorDialog extends StatefulWidget {
   final UserNotification? existing;
-
   const _NotificationEditorDialog({this.existing});
 
   @override
@@ -482,10 +468,10 @@ class _NotificationEditorDialogState
     super.initState();
     final e = widget.existing;
     _titleController = TextEditingController(
-      text: e?.title ?? '',
+      text: e?.title ?? '📖 কুরআন পড়ার সময়',
     );
     _bodyController = TextEditingController(
-      text: e?.body ?? '',
+      text: e?.body ?? 'আজকের তিলাওয়াতের লক্ষ্য পূরণ করুন। ✨',
     );
     _time = e != null
         ? TimeOfDay(hour: e.hour, minute: e.minute)
@@ -501,15 +487,17 @@ class _NotificationEditorDialogState
   }
 
   Future<void> _pickTime() async {
-    final picked = await showTimePicker(
+    final colors = AppColors.of(context);
+    final result = await showModalBottomSheet<TimeOfDay>(
       context: context,
-      initialTime: _time,
-      builder: (ctx, child) => MediaQuery(
-        data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
-        child: child ?? const SizedBox.shrink(),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => _TimePickerSheet(
+        initial: _time,
+        accent: colors.emerald,
       ),
     );
-    if (picked != null) setState(() => _time = picked);
+    if (result != null) setState(() => _time = result);
   }
 
   void _save() {
@@ -531,54 +519,40 @@ class _NotificationEditorDialogState
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    final l10n = AppLocalizations.of(context);
-    final isBn = Localizations.localeOf(context).languageCode == 'bn';
-    const bnDays = ['সো', 'ম', 'বু', 'বৃ', 'শু', 'শ', 'র'];
-    const enDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final dayNames = isBn ? bnDays : enDays;
 
     return AlertDialog(
       backgroundColor: colors.cardBackground,
-      title: Text(
-        widget.existing == null ? l10n.newAlarm : l10n.editAlarm,
-        style: TextStyle(color: colors.textPrimary),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppConstants.radiusXl),
+        side: BorderSide(color: colors.border),
+      ),
+      title: Row(
+        children: [
+          Icon(Icons.notifications_active_outlined,
+              color: colors.emerald, size: 22),
+          const SizedBox(width: 8),
+          Text(
+            widget.existing == null ? 'নতুন নোটিফিকেশন' : 'সম্পাদনা',
+            style: TextStyle(color: colors.textPrimary),
+          ),
+        ],
       ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            GestureDetector(
+            _TimeDisplayChip(
+              time: _time,
+              accent: colors.emerald,
               onTap: _pickTime,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: AppConstants.spaceLg,
-                ),
-                decoration: BoxDecoration(
-                  color: colors.emerald.withValues(alpha: 0.10),
-                  borderRadius:
-                      BorderRadius.circular(AppConstants.radiusMd),
-                  border: Border.all(color: colors.border),
-                ),
-                child: Text(
-                  '${_time.hour.toString().padLeft(2, '0')}:'
-                  '${_time.minute.toString().padLeft(2, '0')}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: colors.emerald,
-                    fontSize: 40,
-                    fontWeight: FontWeight.w700,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-              ),
             ),
             const SizedBox(height: AppConstants.spaceMd),
             TextField(
               controller: _titleController,
               style: TextStyle(color: colors.textPrimary),
-              decoration: InputDecoration(
-                hintText: l10n.alarmTitleHint,
+              decoration: const InputDecoration(
+                hintText: 'শিরোনাম (যেমন: 📖 কুরআন পড়ার সময়)',
               ),
             ),
             const SizedBox(height: AppConstants.spaceSm),
@@ -586,68 +560,37 @@ class _NotificationEditorDialogState
               controller: _bodyController,
               style: TextStyle(color: colors.textPrimary),
               maxLines: 3,
-              decoration: InputDecoration(
-                hintText: l10n.alarmBodyHint,
+              decoration: const InputDecoration(
+                hintText: 'বার্তা (ঐচ্ছিক)',
               ),
             ),
             const SizedBox(height: AppConstants.spaceMd),
             Text(
-              l10n.whichDays,
+              'কোন দিনগুলোতে?',
               style: TextStyle(
                 color: colors.textMuted,
                 fontSize: AppConstants.fontCaption,
               ),
             ),
             const SizedBox(height: AppConstants.spaceSm),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: List.generate(7, (i) {
-                final day = i + 1;
-                final selected = _days.contains(day);
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      if (selected) {
-                        _days.remove(day);
-                      } else {
-                        _days.add(day);
-                      }
-                    });
-                  },
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color:
-                          selected ? colors.emerald : colors.surfaceInset,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color:
-                            selected ? colors.emerald : colors.border,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        dayNames[i],
-                        style: TextStyle(
-                          color: selected
-                              ? colors.textOnEmerald
-                              : colors.textMuted,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
+            _DaysSelector(
+              selected: _days,
+              accent: colors.emerald,
+              onToggle: (day) {
+                setState(() {
+                  if (_days.contains(day)) {
+                    _days.remove(day);
+                  } else {
+                    _days.add(day);
+                  }
+                });
+              },
             ),
             if (_days.isEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
-                  l10n.noDayMeansEveryday,
+                  'কোনো দিন সিলেক্ট না করলে প্রতিদিন আসবে',
                   style: TextStyle(
                     color: colors.textFaint,
                     fontSize: AppConstants.fontMicro,
@@ -661,12 +604,11 @@ class _NotificationEditorDialogState
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.cancel,
-              style: TextStyle(color: colors.textMuted)),
+          child: Text('বাতিল', style: TextStyle(color: colors.textMuted)),
         ),
         TextButton(
           onPressed: _save,
-          child: Text(l10n.save,
+          child: Text('সংরক্ষণ',
               style: TextStyle(color: colors.emerald)),
         ),
       ],
@@ -675,30 +617,401 @@ class _NotificationEditorDialogState
 }
 
 // ─────────────────────────────────────────────
-// EMPTY STATE
+// TIME PICKER SHEET
 // ─────────────────────────────────────────────
 
-class _EmptyCustomState extends StatelessWidget {
-  const _EmptyCustomState();
+class _TimePickerSheet extends StatefulWidget {
+  final TimeOfDay initial;
+  final Color accent;
+  const _TimePickerSheet({required this.initial, required this.accent});
+
+  @override
+  State<_TimePickerSheet> createState() => _TimePickerSheetState();
+}
+
+class _TimePickerSheetState extends State<_TimePickerSheet> {
+  late FixedExtentScrollController _hourCtrl;
+  late FixedExtentScrollController _minuteCtrl;
+  late FixedExtentScrollController _periodCtrl;
+
+  late int _hour12;
+  late int _minute;
+  late int _periodIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    final h = widget.initial.hour;
+    _periodIndex = h < 12 ? 0 : 1;
+    _hour12 = h % 12 == 0 ? 12 : h % 12;
+    _minute = widget.initial.minute;
+    _hourCtrl = FixedExtentScrollController(initialItem: _hour12 - 1);
+    _minuteCtrl = FixedExtentScrollController(initialItem: _minute);
+    _periodCtrl = FixedExtentScrollController(initialItem: _periodIndex);
+  }
+
+  @override
+  void dispose() {
+    _hourCtrl.dispose();
+    _minuteCtrl.dispose();
+    _periodCtrl.dispose();
+    super.dispose();
+  }
+
+  void _confirm() {
+    var h = _hour12 % 12;
+    if (_periodIndex == 1) h += 12;
+    Navigator.of(context).pop(TimeOfDay(hour: h, minute: _minute));
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    final l10n = AppLocalizations.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.cardBackground,
+        borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppConstants.radiusXl)),
+      ),
+      padding: const EdgeInsets.fromLTRB(AppConstants.spaceLg,
+          AppConstants.spaceLg, AppConstants.spaceLg, AppConstants.spaceXl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: colors.textFaint,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: AppConstants.spaceLg),
+          Text(
+            'সময় নির্বাচন করুন',
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: AppConstants.fontSubtitle,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AppConstants.spaceLg),
+          SizedBox(
+            height: 180,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  height: 56,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: widget.accent.withValues(alpha: 0.10),
+                    borderRadius:
+                        BorderRadius.circular(AppConstants.radiusFull),
+                    border: Border.all(
+                      color: widget.accent.withValues(alpha: 0.25),
+                    ),
+                  ),
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: _Wheel(
+                        controller: _hourCtrl,
+                        itemCount: 12,
+                        itemBuilder: (index) => '${index + 1}',
+                        selectedColor: widget.accent,
+                        unselectedColor: colors.textFaint,
+                        onChanged: (v) =>
+                            setState(() => _hour12 = v + 1),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Text('h',
+                          style: TextStyle(
+                              color: colors.textMuted, fontSize: 14)),
+                    ),
+                    Expanded(
+                      flex: 3,
+                      child: _Wheel(
+                        controller: _minuteCtrl,
+                        itemCount: 60,
+                        itemBuilder: (index) =>
+                            index.toString().padLeft(2, '0'),
+                        selectedColor: widget.accent,
+                        unselectedColor: colors.textFaint,
+                        onChanged: (v) =>
+                            setState(() => _minute = v),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Text('min',
+                          style: TextStyle(
+                              color: colors.textMuted, fontSize: 14)),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: _Wheel(
+                        controller: _periodCtrl,
+                        itemCount: 2,
+                        itemBuilder: (index) =>
+                            index == 0 ? 'AM' : 'PM',
+                        selectedColor: widget.accent,
+                        unselectedColor: colors.textFaint,
+                        onChanged: (v) =>
+                            setState(() => _periodIndex = v),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppConstants.spaceLg),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: colors.textMuted,
+                    side: BorderSide(color: colors.border),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: AppConstants.spaceMd),
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(AppConstants.radiusMd),
+                    ),
+                  ),
+                  child: const Text('বাতিল'),
+                ),
+              ),
+              const SizedBox(width: AppConstants.spaceMd),
+              Expanded(
+                flex: 2,
+                child: ElevatedButton(
+                  onPressed: _confirm,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: widget.accent,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(
+                        vertical: AppConstants.spaceMd),
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(AppConstants.radiusMd),
+                    ),
+                  ),
+                  child: const Text(
+                    'নিশ্চিত করুন',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Wheel extends StatelessWidget {
+  final FixedExtentScrollController controller;
+  final int itemCount;
+  final String Function(int) itemBuilder;
+  final Color selectedColor;
+  final Color unselectedColor;
+  final ValueChanged<int> onChanged;
+
+  const _Wheel({
+    required this.controller,
+    required this.itemCount,
+    required this.itemBuilder,
+    required this.selectedColor,
+    required this.unselectedColor,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListWheelScrollView.useDelegate(
+      controller: controller,
+      itemExtent: 46,
+      physics: const FixedExtentScrollPhysics(),
+      diameterRatio: 1.5,
+      perspective: 0.003,
+      onSelectedItemChanged: onChanged,
+      childDelegate: ListWheelChildBuilderDelegate(
+        childCount: itemCount,
+        builder: (context, index) {
+          final centered = controller.hasClients &&
+              (controller.offset / 46).round() == index;
+          return Center(
+            child: Text(
+              itemBuilder(index),
+              style: TextStyle(
+                color: centered ? selectedColor : unselectedColor,
+                fontSize: centered ? 26 : 18,
+                fontWeight:
+                    centered ? FontWeight.w700 : FontWeight.w500,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _TimeDisplayChip extends StatelessWidget {
+  final TimeOfDay time;
+  final Color accent;
+  final VoidCallback onTap;
+
+  const _TimeDisplayChip({
+    required this.time,
+    required this.accent,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+            vertical: AppConstants.spaceLg, horizontal: AppConstants.spaceMd),
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+          border: Border.all(color: accent.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '${time.hour.toString().padLeft(2, '0')}:'
+              '${time.minute.toString().padLeft(2, '0')}',
+              style: TextStyle(
+                color: accent,
+                fontSize: 40,
+                fontWeight: FontWeight.w700,
+                fontFeatures: const [FontFeature.tabularFigures()],
+                letterSpacing: 2,
+              ),
+            ),
+            const SizedBox(width: AppConstants.spaceMd),
+            Icon(Icons.edit, color: accent, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DaysSelector extends StatelessWidget {
+  final Set<int> selected;
+  final Color accent;
+  final ValueChanged<int> onToggle;
+
+  const _DaysSelector({
+    required this.selected,
+    required this.accent,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    const names = ['সো', 'ম', 'বু', 'বৃ', 'শু', 'শ', 'র'];
+
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: List.generate(7, (i) {
+        final day = i + 1;
+        final isSelected = selected.contains(day);
+        return GestureDetector(
+          onTap: () => onToggle(day),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: isSelected ? accent : colors.surfaceInset,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: isSelected ? accent : colors.border),
+            ),
+            child: Center(
+              child: Text(
+                names[i],
+                style: TextStyle(
+                  color: isSelected ? Colors.black : colors.textMuted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// EMPTY STATE
+// ─────────────────────────────────────────────
+
+class _EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color accent;
+
+  const _EmptyState({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppConstants.spaceXl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.notifications_none_rounded,
-              color: colors.textFaint,
-              size: 48,
+            Container(
+              width: 90,
+              height: 90,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.10),
+                shape: BoxShape.circle,
+                border: Border.all(color: accent.withValues(alpha: 0.3)),
+              ),
+              child: Icon(icon, color: accent, size: 44),
             ),
-            const SizedBox(height: AppConstants.spaceMd),
+            const SizedBox(height: AppConstants.spaceLg),
             Text(
-              l10n.noAlarms,
+              title,
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: AppConstants.fontSubtitle,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: AppConstants.spaceSm),
+            Text(
+              subtitle,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.textMuted,
@@ -722,7 +1035,6 @@ class _NotificationPermissionBanner extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
-    final l10n = AppLocalizations.of(context);
     final status = ref.watch(notificationProvider);
 
     if (status == NotificationPermissionStatus.granted) {
@@ -746,24 +1058,19 @@ class _NotificationPermissionBanner extends ConsumerWidget {
           decoration: BoxDecoration(
             color: colors.gold.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-            border: Border.all(
-              color: colors.gold.withValues(alpha: 0.45),
-            ),
+            border: Border.all(color: colors.gold.withValues(alpha: 0.45)),
           ),
           child: Row(
             children: [
-              Icon(
-                Icons.notifications_active_outlined,
-                color: colors.gold,
-                size: 22,
-              ),
+              Icon(Icons.notifications_active_outlined,
+                  color: colors.gold, size: 22),
               const SizedBox(width: AppConstants.spaceMd),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      l10n.notifications,
+                      'নোটিফিকেশন চালু করুন',
                       style: TextStyle(
                         color: colors.textPrimary,
                         fontSize: AppConstants.fontBody,
@@ -771,7 +1078,7 @@ class _NotificationPermissionBanner extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      l10n.retry,
+                      'ট্যাপ করে অনুমতি দিন',
                       style: TextStyle(
                         color: colors.textMuted,
                         fontSize: AppConstants.fontCaption,
@@ -780,11 +1087,7 @@ class _NotificationPermissionBanner extends ConsumerWidget {
                   ],
                 ),
               ),
-              Icon(
-                Icons.chevron_right,
-                color: colors.gold,
-                size: 20,
-              ),
+              Icon(Icons.chevron_right, color: colors.gold, size: 20),
             ],
           ),
         ),
