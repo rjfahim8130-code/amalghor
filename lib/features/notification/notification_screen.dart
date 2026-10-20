@@ -174,6 +174,10 @@ class _PrayerRemindersTab extends ConsumerWidget {
   }
 }
 
+// ─────────────────────────────────────────────
+// PRAYER NOTIFICATION TILE
+// ─────────────────────────────────────────────
+
 class _PrayerNotifTile extends StatelessWidget {
   final String title;
   final bool enabled;
@@ -1063,10 +1067,6 @@ class _EmptyState extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────
-// PERMISSION BANNER
-// ─────────────────────────────────────────────
 
 class _NotificationPermissionBanner extends ConsumerWidget {
   const _NotificationPermissionBanner();
