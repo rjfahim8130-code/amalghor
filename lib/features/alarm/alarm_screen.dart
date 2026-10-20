@@ -3,34 +3,39 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/constants.dart';
-import '../../l10n/generated/app_localizations.dart';
 import '../../providers/alarm_provider.dart';
 import '../../services/alarm_service.dart';
 
-/// Full-screen manual alarm management.
 class AlarmScreen extends ConsumerWidget {
   const AlarmScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
-    final l10n = AppLocalizations.of(context);
     final alarms = ref.watch(alarmProvider);
 
     return Scaffold(
       backgroundColor: colors.pageBackground,
       appBar: AppBar(
         backgroundColor: colors.pageBackground,
-        title: Text(
-          l10n.alarms,
-          style: TextStyle(
-            color: colors.textPrimary,
-            fontWeight: FontWeight.w700,
-          ),
+        title: Row(
+          children: [
+            Icon(Icons.alarm_rounded, color: colors.gold, size: 22),
+            const SizedBox(width: 8),
+            Text(
+              'অ্যালার্ম',
+              style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.w700),
+            ),
+          ],
         ),
       ),
       body: alarms.isEmpty
-          ? const _EmptyState()
+          ? _EmptyState(
+              icon: Icons.alarm_rounded,
+              title: 'কোনো অ্যালার্ম নেই',
+              subtitle: 'নিচের বাটনে ট্যাপ করে প্রথম অ্যালার্ম যোগ করুন',
+              accent: colors.gold,
+            )
           : ListView.separated(
               padding: const EdgeInsets.fromLTRB(
                 AppConstants.spaceLg,
@@ -39,31 +44,25 @@ class AlarmScreen extends ConsumerWidget {
                 100,
               ),
               itemCount: alarms.length,
-              separatorBuilder: (_, __) =>
-                  const SizedBox(height: AppConstants.spaceMd),
+              separatorBuilder: (_, __) => const SizedBox(height: AppConstants.spaceMd),
               itemBuilder: (_, i) => _AlarmTile(alarm: alarms[i]),
             ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: colors.emerald,
-        foregroundColor: colors.textOnEmerald,
+        backgroundColor: colors.gold,
+        foregroundColor: Colors.black,
         icon: const Icon(Icons.add),
-        label: Text(l10n.newAlarm),
+        label: const Text('নতুন অ্যালার্ম'),
         onPressed: () => _showEditor(context, ref, null),
       ),
     );
   }
 
-  Future<void> _showEditor(
-    BuildContext context,
-    WidgetRef ref,
-    UserAlarm? existing,
-  ) async {
+  Future<void> _showEditor(BuildContext context, WidgetRef ref, UserAlarm? existing) async {
     final result = await showDialog<UserAlarm>(
       context: context,
       builder: (ctx) => _AlarmEditorDialog(existing: existing),
     );
     if (result == null) return;
-
     if (existing == null) {
       await ref.read(alarmProvider.notifier).add(result);
     } else {
@@ -72,19 +71,13 @@ class AlarmScreen extends ConsumerWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// ALARM TILE
-// ─────────────────────────────────────────────
-
 class _AlarmTile extends ConsumerWidget {
   final UserAlarm alarm;
-
   const _AlarmTile({required this.alarm});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
-    final localeCode = Localizations.localeOf(context).languageCode;
 
     return Dismissible(
       key: ValueKey('alarm-${alarm.id}'),
@@ -98,9 +91,7 @@ class _AlarmTile extends ConsumerWidget {
         ),
         child: const Icon(Icons.delete_outline, color: Color(0xFFEF4444)),
       ),
-      onDismissed: (_) {
-        ref.read(alarmProvider.notifier).delete(alarm.id);
-      },
+      onDismissed: (_) => ref.read(alarmProvider.notifier).delete(alarm.id),
       child: InkWell(
         onTap: () async {
           final result = await showDialog<UserAlarm>(
@@ -117,43 +108,44 @@ class _AlarmTile extends ConsumerWidget {
             color: colors.cardBackground,
             borderRadius: BorderRadius.circular(AppConstants.radiusXl),
             border: Border.all(
-              color: alarm.enabled ? colors.borderStrong : colors.border,
+              color: alarm.enabled ? colors.gold : colors.border,
               width: alarm.enabled ? 1.4 : 1.0,
             ),
             boxShadow: colors.cardShadow,
           ),
           child: Row(
             children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: colors.gold.withValues(alpha: alarm.enabled ? 0.15 : 0.05),
+                  borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+                  border: Border.all(
+                    color: alarm.enabled ? colors.gold.withValues(alpha: 0.4) : colors.border,
+                  ),
+                ),
+                child: Icon(
+                  Icons.alarm_rounded,
+                  color: alarm.enabled ? colors.gold : colors.textFaint,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: AppConstants.spaceMd),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.alarm_rounded,
-                          color: alarm.enabled
-                              ? colors.emerald
-                              : colors.textFaint,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          alarm.timeLabel,
-                          style: TextStyle(
-                            color: alarm.enabled
-                                ? colors.emerald
-                                : colors.textFaint,
-                            fontSize: 28,
-                            fontWeight: FontWeight.w700,
-                            fontFeatures:
-                                const [FontFeature.tabularFigures()],
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      alarm.timeLabel,
+                      style: TextStyle(
+                        color: alarm.enabled ? colors.gold : colors.textFaint,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                        letterSpacing: 1.2,
+                      ),
                     ),
-                    const SizedBox(height: 4),
                     Text(
                       alarm.title,
                       style: TextStyle(
@@ -161,35 +153,20 @@ class _AlarmTile extends ConsumerWidget {
                         fontSize: AppConstants.fontBody,
                         fontWeight: FontWeight.w600,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    if (alarm.body.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          alarm.body,
-                          style: TextStyle(
-                            color: colors.textMuted,
-                            fontSize: AppConstants.fontCaption,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    const SizedBox(height: 2),
                     Text(
-                      alarm.daysLabel(locale: localeCode),
-                      style: TextStyle(
-                        color: colors.textFaint,
-                        fontSize: AppConstants.fontMicro,
-                      ),
+                      alarm.daysLabel,
+                      style: TextStyle(color: colors.textMuted, fontSize: AppConstants.fontMicro),
                     ),
                   ],
                 ),
               ),
               Switch(
                 value: alarm.enabled,
-                onChanged: (v) =>
-                    ref.read(alarmProvider.notifier).toggle(alarm, v),
+                activeColor: colors.gold,
+                onChanged: (v) => ref.read(alarmProvider.notifier).toggle(alarm, v),
               ),
             ],
           ),
@@ -200,12 +177,11 @@ class _AlarmTile extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────
-// EDITOR DIALOG
+// ALARM EDITOR
 // ─────────────────────────────────────────────
 
 class _AlarmEditorDialog extends StatefulWidget {
   final UserAlarm? existing;
-
   const _AlarmEditorDialog({this.existing});
 
   @override
@@ -222,15 +198,9 @@ class _AlarmEditorDialogState extends State<_AlarmEditorDialog> {
   void initState() {
     super.initState();
     final e = widget.existing;
-    _titleController = TextEditingController(
-      text: e?.title ?? '',
-    );
-    _bodyController = TextEditingController(
-      text: e?.body ?? '',
-    );
-    _time = e != null
-        ? TimeOfDay(hour: e.hour, minute: e.minute)
-        : const TimeOfDay(hour: 4, minute: 0);
+    _titleController = TextEditingController(text: e?.title ?? '🌌 তাহাজ্জুদ');
+    _bodyController = TextEditingController(text: e?.body ?? 'তাহাজ্জুদ আদায় ও দুআর জন্য প্রস্তুত হোন। 🌙');
+    _time = e != null ? TimeOfDay(hour: e.hour, minute: e.minute) : const TimeOfDay(hour: 4, minute: 0);
     _days = Set.from(e?.daysOfWeek ?? {});
   }
 
@@ -242,23 +212,24 @@ class _AlarmEditorDialogState extends State<_AlarmEditorDialog> {
   }
 
   Future<void> _pickTime() async {
-    final picked = await showTimePicker(
+    final colors = AppColors.of(context);
+    final result = await showModalBottomSheet<TimeOfDay>(
       context: context,
-      initialTime: _time,
-      builder: (ctx, child) => MediaQuery(
-        data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
-        child: child ?? const SizedBox.shrink(),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => _TimePickerSheet(
+        initial: _time,
+        accent: colors.gold,
       ),
     );
-    if (picked != null) setState(() => _time = picked);
+    if (result != null) setState(() => _time = result);
   }
 
   void _save() {
     final title = _titleController.text.trim();
     if (title.isEmpty) return;
     final alarm = UserAlarm(
-      id: widget.existing?.id ??
-          DateTime.now().microsecondsSinceEpoch.toString(),
+      id: widget.existing?.id ?? DateTime.now().microsecondsSinceEpoch.toString(),
       title: title,
       body: _bodyController.text.trim(),
       hour: _time.hour,
@@ -272,160 +243,369 @@ class _AlarmEditorDialogState extends State<_AlarmEditorDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    final l10n = AppLocalizations.of(context);
-    final isBn = Localizations.localeOf(context).languageCode == 'bn';
-    const bnDays = ['সো', 'ম', 'বু', 'বৃ', 'শু', 'শ', 'র'];
-    const enDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final dayNames = isBn ? bnDays : enDays;
 
     return AlertDialog(
       backgroundColor: colors.cardBackground,
-      title: Text(
-        widget.existing == null ? l10n.newAlarm : l10n.editAlarm,
-        style: TextStyle(color: colors.textPrimary),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppConstants.radiusXl),
+        side: BorderSide(color: colors.border),
+      ),
+      title: Row(
+        children: [
+          Icon(Icons.alarm_rounded, color: colors.gold, size: 22),
+          const SizedBox(width: 8),
+          Text(widget.existing == null ? 'নতুন অ্যালার্ম' : 'সম্পাদনা', style: TextStyle(color: colors.textPrimary)),
+        ],
       ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            GestureDetector(
-              onTap: _pickTime,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: AppConstants.spaceLg,
-                ),
-                decoration: BoxDecoration(
-                  color: colors.emerald.withValues(alpha: 0.10),
-                  borderRadius:
-                      BorderRadius.circular(AppConstants.radiusMd),
-                  border: Border.all(color: colors.border),
-                ),
-                child: Text(
-                  '${_time.hour.toString().padLeft(2, '0')}:'
-                  '${_time.minute.toString().padLeft(2, '0')}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: colors.emerald,
-                    fontSize: 40,
-                    fontWeight: FontWeight.w700,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-              ),
-            ),
+            _TimeDisplayChip(time: _time, accent: colors.gold, onTap: _pickTime),
             const SizedBox(height: AppConstants.spaceMd),
             TextField(
               controller: _titleController,
               style: TextStyle(color: colors.textPrimary),
-              decoration: InputDecoration(
-                hintText: l10n.alarmTitleHint,
-              ),
+              decoration: const InputDecoration(hintText: 'শিরোনাম (যেমন: 🌌 তাহাজ্জুদ)'),
             ),
             const SizedBox(height: AppConstants.spaceSm),
             TextField(
               controller: _bodyController,
               style: TextStyle(color: colors.textPrimary),
               maxLines: 3,
-              decoration: InputDecoration(
-                hintText: l10n.alarmBodyHint,
-              ),
+              decoration: const InputDecoration(hintText: 'বার্তা (ঐচ্ছিক)'),
             ),
             const SizedBox(height: AppConstants.spaceMd),
-            Text(
-              l10n.whichDays,
-              style: TextStyle(
-                color: colors.textMuted,
-                fontSize: AppConstants.fontCaption,
-              ),
-            ),
+            Text('কোন দিনগুলোতে?', style: TextStyle(color: colors.textMuted, fontSize: AppConstants.fontCaption)),
             const SizedBox(height: AppConstants.spaceSm),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: List.generate(7, (i) {
-                final day = i + 1;
-                final selected = _days.contains(day);
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      if (selected) {
-                        _days.remove(day);
-                      } else {
-                        _days.add(day);
-                      }
-                    });
-                  },
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color:
-                          selected ? colors.emerald : colors.surfaceInset,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color:
-                            selected ? colors.emerald : colors.border,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        dayNames[i],
-                        style: TextStyle(
-                          color: selected
-                              ? colors.textOnEmerald
-                              : colors.textMuted,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
+            _DaysSelector(
+              selected: _days,
+              accent: colors.gold,
+              onToggle: (day) {
+                setState(() {
+                  if (_days.contains(day)) { _days.remove(day); } else { _days.add(day); }
+                });
+              },
             ),
             if (_days.isEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
-                child: Text(
-                  l10n.noDayMeansEveryday,
-                  style: TextStyle(
-                    color: colors.textFaint,
-                    fontSize: AppConstants.fontMicro,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
+                child: Text('কোনো দিন সিলেক্ট না করলে প্রতিদিন বাজবে', style: TextStyle(color: colors.textFaint, fontSize: AppConstants.fontMicro, fontStyle: FontStyle.italic)),
               ),
           ],
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.cancel,
-              style: TextStyle(color: colors.textMuted)),
-        ),
-        TextButton(
-          onPressed: _save,
-          child: Text(l10n.save,
-              style: TextStyle(color: colors.emerald)),
-        ),
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text('বাতিল', style: TextStyle(color: colors.textMuted))),
+        TextButton(onPressed: _save, child: Text('সংরক্ষণ', style: TextStyle(color: colors.gold))),
       ],
     );
   }
 }
 
 // ─────────────────────────────────────────────
-// EMPTY STATE
+// TIME PICKER SHEET (Custom Wheel Style)
 // ─────────────────────────────────────────────
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
+class _TimePickerSheet extends StatefulWidget {
+  final TimeOfDay initial;
+  final Color accent;
+  const _TimePickerSheet({required this.initial, required this.accent});
+
+  @override
+  State<_TimePickerSheet> createState() => _TimePickerSheetState();
+}
+
+class _TimePickerSheetState extends State<_TimePickerSheet> {
+  late FixedExtentScrollController _hourCtrl;
+  late FixedExtentScrollController _minuteCtrl;
+  late FixedExtentScrollController _periodCtrl;
+
+  late int _hour12;
+  late int _minute;
+  late int _periodIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    final h = widget.initial.hour;
+    _periodIndex = h < 12 ? 0 : 1;
+    _hour12 = h % 12 == 0 ? 12 : h % 12;
+    _minute = widget.initial.minute;
+    _hourCtrl = FixedExtentScrollController(initialItem: _hour12 - 1);
+    _minuteCtrl = FixedExtentScrollController(initialItem: _minute);
+    _periodCtrl = FixedExtentScrollController(initialItem: _periodIndex);
+  }
+
+  @override
+  void dispose() {
+    _hourCtrl.dispose();
+    _minuteCtrl.dispose();
+    _periodCtrl.dispose();
+    super.dispose();
+  }
+
+  void _confirm() {
+    var h = _hour12 % 12;
+    if (_periodIndex == 1) h += 12;
+    Navigator.of(context).pop(TimeOfDay(hour: h, minute: _minute));
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    final l10n = AppLocalizations.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.cardBackground,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppConstants.radiusXl)),
+      ),
+      padding: const EdgeInsets.fromLTRB(AppConstants.spaceLg, AppConstants.spaceLg, AppConstants.spaceLg, AppConstants.spaceXl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(width: 40, height: 4, decoration: BoxDecoration(color: colors.textFaint, borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: AppConstants.spaceLg),
+          Text('সময় নির্বাচন করুন', style: TextStyle(color: colors.textPrimary, fontSize: AppConstants.fontSubtitle, fontWeight: FontWeight.w700)),
+          const SizedBox(height: AppConstants.spaceLg),
+          SizedBox(
+            height: 180,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  height: 56,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: widget.accent.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(AppConstants.radiusFull),
+                    border: Border.all(color: widget.accent.withValues(alpha: 0.25)),
+                  ),
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: _Wheel(
+                        controller: _hourCtrl,
+                        itemCount: 12,
+                        itemBuilder: (index) => '${index + 1}',
+                        selectedColor: widget.accent,
+                        unselectedColor: colors.textFaint,
+                        onChanged: (v) => setState(() => _hour12 = v + 1),
+                      ),
+                    ),
+                    Padding(padding: const EdgeInsets.only(right: 8), child: Text('h', style: TextStyle(color: colors.textMuted, fontSize: 14))),
+                    Expanded(
+                      flex: 3,
+                      child: _Wheel(
+                        controller: _minuteCtrl,
+                        itemCount: 60,
+                        itemBuilder: (index) => index.toString().padLeft(2, '0'),
+                        selectedColor: widget.accent,
+                        unselectedColor: colors.textFaint,
+                        onChanged: (v) => setState(() => _minute = v),
+                      ),
+                    ),
+                    Padding(padding: const EdgeInsets.only(right: 8), child: Text('min', style: TextStyle(color: colors.textMuted, fontSize: 14))),
+                    Expanded(
+                      flex: 2,
+                      child: _Wheel(
+                        controller: _periodCtrl,
+                        itemCount: 2,
+                        itemBuilder: (index) => index == 0 ? 'AM' : 'PM',
+                        selectedColor: widget.accent,
+                        unselectedColor: colors.textFaint,
+                        onChanged: (v) => setState(() => _periodIndex = v),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppConstants.spaceLg),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: colors.textMuted,
+                    side: BorderSide(color: colors.border),
+                    padding: const EdgeInsets.symmetric(vertical: AppConstants.spaceMd),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMd)),
+                  ),
+                  child: const Text('বাতিল'),
+                ),
+              ),
+              const SizedBox(width: AppConstants.spaceMd),
+              Expanded(
+                flex: 2,
+                child: ElevatedButton(
+                  onPressed: _confirm,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: widget.accent,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: AppConstants.spaceMd),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMd)),
+                  ),
+                  child: const Text('নিশ্চিত করুন', style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Wheel extends StatelessWidget {
+  final FixedExtentScrollController controller;
+  final int itemCount;
+  final String Function(int) itemBuilder;
+  final Color selectedColor;
+  final Color unselectedColor;
+  final ValueChanged<int> onChanged;
+
+  const _Wheel({
+    required this.controller,
+    required this.itemCount,
+    required this.itemBuilder,
+    required this.selectedColor,
+    required this.unselectedColor,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListWheelScrollView.useDelegate(
+      controller: controller,
+      itemExtent: 46,
+      physics: const FixedExtentScrollPhysics(),
+      diameterRatio: 1.5,
+      perspective: 0.003,
+      onSelectedItemChanged: onChanged,
+      childDelegate: ListWheelChildBuilderDelegate(
+        childCount: itemCount,
+        builder: (context, index) {
+          final centered = controller.hasClients && (controller.offset / 46).round() == index;
+          return Center(
+            child: Text(
+              itemBuilder(index),
+              style: TextStyle(
+                color: centered ? selectedColor : unselectedColor,
+                fontSize: centered ? 26 : 18,
+                fontWeight: centered ? FontWeight.w700 : FontWeight.w500,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _TimeDisplayChip extends StatelessWidget {
+  final TimeOfDay time;
+  final Color accent;
+  final VoidCallback onTap;
+
+  const _TimeDisplayChip({required this.time, required this.accent, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: AppConstants.spaceLg, horizontal: AppConstants.spaceMd),
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+          border: Border.all(color: accent.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
+              style: TextStyle(
+                color: accent,
+                fontSize: 40,
+                fontWeight: FontWeight.w700,
+                fontFeatures: const [FontFeature.tabularFigures()],
+                letterSpacing: 2,
+              ),
+            ),
+            const SizedBox(width: AppConstants.spaceMd),
+            Icon(Icons.edit, color: accent, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DaysSelector extends StatelessWidget {
+  final Set<int> selected;
+  final Color accent;
+  final ValueChanged<int> onToggle;
+
+  const _DaysSelector({required this.selected, required this.accent, required this.onToggle});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    const names = ['সো', 'ম', 'বু', 'বৃ', 'শু', 'শ', 'র'];
+
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: List.generate(7, (i) {
+        final day = i + 1;
+        final isSelected = selected.contains(day);
+        return GestureDetector(
+          onTap: () => onToggle(day),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: isSelected ? accent : colors.surfaceInset,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: isSelected ? accent : colors.border),
+            ),
+            child: Center(
+              child: Text(
+                names[i],
+                style: TextStyle(
+                  color: isSelected ? Colors.black : colors.textMuted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color accent;
+
+  const _EmptyState({required this.icon, required this.title, required this.subtitle, required this.accent});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppConstants.spaceXl),
@@ -436,33 +616,16 @@ class _EmptyState extends StatelessWidget {
               width: 90,
               height: 90,
               decoration: BoxDecoration(
-                color: colors.emerald.withValues(alpha: 0.10),
+                color: accent.withValues(alpha: 0.10),
                 shape: BoxShape.circle,
+                border: Border.all(color: accent.withValues(alpha: 0.3)),
               ),
-              child: Icon(
-                Icons.alarm_rounded,
-                color: colors.emerald,
-                size: 44,
-              ),
+              child: Icon(icon, color: accent, size: 44),
             ),
             const SizedBox(height: AppConstants.spaceLg),
-            Text(
-              l10n.noAlarms,
-              style: TextStyle(
-                color: colors.textPrimary,
-                fontSize: AppConstants.fontSubtitle,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+            Text(title, style: TextStyle(color: colors.textPrimary, fontSize: AppConstants.fontSubtitle, fontWeight: FontWeight.w700)),
             const SizedBox(height: AppConstants.spaceSm),
-            Text(
-              l10n.addFirstAlarm,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: colors.textMuted,
-                fontSize: AppConstants.fontBody,
-              ),
-            ),
+            Text(subtitle, textAlign: TextAlign.center, style: TextStyle(color: colors.textMuted, fontSize: AppConstants.fontBody)),
           ],
         ),
       ),
