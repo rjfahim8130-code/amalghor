@@ -48,7 +48,9 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
             Text(
               'নোটিফিকেশন',
               style: TextStyle(
-                  color: colors.textPrimary, fontWeight: FontWeight.w700),
+                color: colors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
         ),
@@ -104,9 +106,10 @@ class _PrayerRemindersTab extends ConsumerWidget {
         Text(
           'প্রতিটি নামাযের জন্য নোটিফিকেশন চালু/বন্ধ করুন এবং কত মিনিট আগে রিমাইন্ডার চান সেটা সেট করুন।',
           style: TextStyle(
-              color: colors.textMuted,
-              fontSize: AppConstants.fontCaption,
-              height: 1.5),
+            color: colors.textMuted,
+            fontSize: AppConstants.fontCaption,
+            height: 1.5,
+          ),
         ),
         const SizedBox(height: AppConstants.spaceLg),
         _PrayerNotifTile(
@@ -170,72 +173,6 @@ class _PrayerRemindersTab extends ConsumerWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────
-// TAB 2 — CUSTOM NOTIFICATIONS
-// ─────────────────────────────────────────────
-
-class _CustomNotificationsTab extends ConsumerWidget {
-  const _CustomNotificationsTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = AppColors.of(context);
-    final items = ref.watch(customNotificationProvider);
-
-    return Stack(
-      children: [
-        if (items.isEmpty)
-          _EmptyState(
-            icon: Icons.notifications_none_rounded,
-            title: 'কোনো কাস্টম নোটিফিকেশন নেই',
-            subtitle: 'নিচের বাটনে ট্যাপ করে প্রথম নোটিফিকেশন যোগ করুন',
-            accent: colors.emerald,
-          )
-        else
-          ListView.separated(
-            padding: const EdgeInsets.fromLTRB(
-                AppConstants.spaceLg, AppConstants.spaceLg, AppConstants.spaceLg, 100),
-            itemCount: items.length,
-            separatorBuilder: (_, __) => const SizedBox(height: AppConstants.spaceMd),
-            itemBuilder: (_, i) => _NotificationTile(
-              item: items[i],
-              onTap: () => _showEditor(context, ref, items[i]),
-            ),
-          ),
-        Positioned(
-          right: 16,
-          bottom: 16,
-          child: FloatingActionButton.extended(
-            backgroundColor: colors.emerald,
-            foregroundColor: colors.textOnEmerald,
-            icon: const Icon(Icons.add),
-            label: const Text('নতুন'),
-            onPressed: () => _showEditor(context, ref, null),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _showEditor(BuildContext context, WidgetRef ref,
-      UserNotification? existing) async {
-    final result = await showDialog<UserNotification>(
-      context: context,
-      builder: (ctx) => _NotificationEditorDialog(existing: existing),
-    );
-    if (result == null) return;
-    if (existing == null) {
-      await ref.read(customNotificationProvider.notifier).add(result);
-    } else {
-      await ref.read(customNotificationProvider.notifier).update(result);
-    }
-  }
-}
-
-// ─────────────────────────────────────────────
-// PRAYER NOTIFICATION TILE
-// ─────────────────────────────────────────────
 
 class _PrayerNotifTile extends StatelessWidget {
   final String title;
@@ -330,6 +267,76 @@ class _PrayerNotifTile extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
+// TAB 2 — CUSTOM NOTIFICATIONS
+// ─────────────────────────────────────────────
+
+class _CustomNotificationsTab extends ConsumerWidget {
+  const _CustomNotificationsTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
+    final items = ref.watch(customNotificationProvider);
+
+    return Stack(
+      children: [
+        if (items.isEmpty)
+          _EmptyState(
+            icon: Icons.notifications_none_rounded,
+            title: 'কোনো কাস্টম নোটিফিকেশন নেই',
+            subtitle: 'নিচের বাটনে ট্যাপ করে প্রথম নোটিফিকেশন যোগ করুন',
+            accent: colors.emerald,
+          )
+        else
+          ListView.separated(
+            padding: const EdgeInsets.fromLTRB(
+              AppConstants.spaceLg,
+              AppConstants.spaceLg,
+              AppConstants.spaceLg,
+              100,
+            ),
+            itemCount: items.length,
+            separatorBuilder: (_, __) =>
+                const SizedBox(height: AppConstants.spaceMd),
+            itemBuilder: (_, i) => _NotificationTile(
+              item: items[i],
+              onTap: () => _showEditor(context, ref, items[i]),
+            ),
+          ),
+        Positioned(
+          right: 16,
+          bottom: 16,
+          child: FloatingActionButton.extended(
+            backgroundColor: colors.emerald,
+            foregroundColor: colors.textOnEmerald,
+            icon: const Icon(Icons.add),
+            label: const Text('নতুন'),
+            onPressed: () => _showEditor(context, ref, null),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showEditor(
+    BuildContext context,
+    WidgetRef ref,
+    UserNotification? existing,
+  ) async {
+    final result = await showDialog<UserNotification>(
+      context: context,
+      builder: (ctx) => _NotificationEditorDialog(existing: existing),
+    );
+    if (result == null) return;
+    if (existing == null) {
+      await ref.read(customNotificationProvider.notifier).add(result);
+    } else {
+      await ref.read(customNotificationProvider.notifier).update(result);
+    }
+  }
+}
+
+// ─────────────────────────────────────────────
 // CUSTOM NOTIFICATION TILE
 // ─────────────────────────────────────────────
 
@@ -379,7 +386,8 @@ class _NotificationTile extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: colors.emerald
                       .withValues(alpha: item.enabled ? 0.15 : 0.05),
-                  borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+                  borderRadius:
+                      BorderRadius.circular(AppConstants.radiusMd),
                   border: Border.all(
                     color: item.enabled
                         ? colors.emerald.withValues(alpha: 0.4)
@@ -388,7 +396,9 @@ class _NotificationTile extends ConsumerWidget {
                 ),
                 child: Icon(
                   Icons.notifications_none_rounded,
-                  color: item.enabled ? colors.emerald : colors.textFaint,
+                  color: item.enabled
+                      ? colors.emerald
+                      : colors.textFaint,
                   size: 22,
                 ),
               ),
@@ -405,7 +415,8 @@ class _NotificationTile extends ConsumerWidget {
                             : colors.textFaint,
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
-                        fontFeatures: const [FontFeature.tabularFigures()],
+                        fontFeatures:
+                            const [FontFeature.tabularFigures()],
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -443,8 +454,9 @@ class _NotificationTile extends ConsumerWidget {
     );
   }
 }
+
 // ─────────────────────────────────────────────
-// NOTIFICATION EDITOR DIALOG
+// EDITOR DIALOG
 // ─────────────────────────────────────────────
 
 class _NotificationEditorDialog extends StatefulWidget {
@@ -528,8 +540,11 @@ class _NotificationEditorDialogState
       ),
       title: Row(
         children: [
-          Icon(Icons.notifications_active_outlined,
-              color: colors.emerald, size: 22),
+          Icon(
+            Icons.notifications_active_outlined,
+            color: colors.emerald,
+            size: 22,
+          ),
           const SizedBox(width: 8),
           Text(
             widget.existing == null ? 'নতুন নোটিফিকেশন' : 'সম্পাদনা',
@@ -604,12 +619,17 @@ class _NotificationEditorDialogState
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text('বাতিল', style: TextStyle(color: colors.textMuted)),
+          child: Text(
+            'বাতিল',
+            style: TextStyle(color: colors.textMuted),
+          ),
         ),
         TextButton(
           onPressed: _save,
-          child: Text('সংরক্ষণ',
-              style: TextStyle(color: colors.emerald)),
+          child: Text(
+            'সংরক্ষণ',
+            style: TextStyle(color: colors.emerald),
+          ),
         ),
       ],
     );
@@ -672,10 +692,15 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
       decoration: BoxDecoration(
         color: colors.cardBackground,
         borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(AppConstants.radiusXl)),
+          top: Radius.circular(AppConstants.radiusXl),
+        ),
       ),
-      padding: const EdgeInsets.fromLTRB(AppConstants.spaceLg,
-          AppConstants.spaceLg, AppConstants.spaceLg, AppConstants.spaceXl),
+      padding: const EdgeInsets.fromLTRB(
+        AppConstants.spaceLg,
+        AppConstants.spaceLg,
+        AppConstants.spaceLg,
+        AppConstants.spaceXl,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -730,9 +755,13 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                     ),
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: Text('h',
-                          style: TextStyle(
-                              color: colors.textMuted, fontSize: 14)),
+                      child: Text(
+                        'h',
+                        style: TextStyle(
+                          color: colors.textMuted,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
                     Expanded(
                       flex: 3,
@@ -749,9 +778,13 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                     ),
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: Text('min',
-                          style: TextStyle(
-                              color: colors.textMuted, fontSize: 14)),
+                      child: Text(
+                        'min',
+                        style: TextStyle(
+                          color: colors.textMuted,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
                     Expanded(
                       flex: 2,
@@ -781,7 +814,8 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                     foregroundColor: colors.textMuted,
                     side: BorderSide(color: colors.border),
                     padding: const EdgeInsets.symmetric(
-                        vertical: AppConstants.spaceMd),
+                      vertical: AppConstants.spaceMd,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius:
                           BorderRadius.circular(AppConstants.radiusMd),
@@ -799,7 +833,8 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                     backgroundColor: widget.accent,
                     foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(
-                        vertical: AppConstants.spaceMd),
+                      vertical: AppConstants.spaceMd,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius:
                           BorderRadius.circular(AppConstants.radiusMd),
@@ -885,7 +920,9 @@ class _TimeDisplayChip extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(
-            vertical: AppConstants.spaceLg, horizontal: AppConstants.spaceMd),
+          vertical: AppConstants.spaceLg,
+          horizontal: AppConstants.spaceMd,
+        ),
         decoration: BoxDecoration(
           color: accent.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(AppConstants.radiusMd),
@@ -945,13 +982,17 @@ class _DaysSelector extends StatelessWidget {
             decoration: BoxDecoration(
               color: isSelected ? accent : colors.surfaceInset,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: isSelected ? accent : colors.border),
+              border: Border.all(
+                color: isSelected ? accent : colors.border,
+              ),
             ),
             child: Center(
               child: Text(
                 names[i],
                 style: TextStyle(
-                  color: isSelected ? Colors.black : colors.textMuted,
+                  color: isSelected
+                      ? Colors.black
+                      : colors.textMuted,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
@@ -963,10 +1004,6 @@ class _DaysSelector extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────
-// EMPTY STATE
-// ─────────────────────────────────────────────
 
 class _EmptyState extends StatelessWidget {
   final IconData icon;
@@ -996,7 +1033,9 @@ class _EmptyState extends StatelessWidget {
               decoration: BoxDecoration(
                 color: accent.withValues(alpha: 0.10),
                 shape: BoxShape.circle,
-                border: Border.all(color: accent.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: accent.withValues(alpha: 0.3),
+                ),
               ),
               child: Icon(icon, color: accent, size: 44),
             ),
@@ -1058,12 +1097,17 @@ class _NotificationPermissionBanner extends ConsumerWidget {
           decoration: BoxDecoration(
             color: colors.gold.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-            border: Border.all(color: colors.gold.withValues(alpha: 0.45)),
+            border: Border.all(
+              color: colors.gold.withValues(alpha: 0.45),
+            ),
           ),
           child: Row(
             children: [
-              Icon(Icons.notifications_active_outlined,
-                  color: colors.gold, size: 22),
+              Icon(
+                Icons.notifications_active_outlined,
+                color: colors.gold,
+                size: 22,
+              ),
               const SizedBox(width: AppConstants.spaceMd),
               Expanded(
                 child: Column(
@@ -1087,7 +1131,11 @@ class _NotificationPermissionBanner extends ConsumerWidget {
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: colors.gold, size: 20),
+              Icon(
+                Icons.chevron_right,
+                color: colors.gold,
+                size: 20,
+              ),
             ],
           ),
         ),
