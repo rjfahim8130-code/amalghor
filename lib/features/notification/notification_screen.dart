@@ -42,8 +42,11 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
         backgroundColor: colors.pageBackground,
         title: Row(
           children: [
-            Icon(Icons.notifications_active_outlined,
-                color: colors.emerald, size: 22),
+            Icon(
+              Icons.notifications_active_outlined,
+              color: colors.emerald,
+              size: 22,
+            ),
             const SizedBox(width: 8),
             Text(
               'নোটিফিকেশন',
@@ -79,7 +82,6 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
     );
   }
 }
-
 // ─────────────────────────────────────────────
 // TAB 1 — PRAYER REMINDERS
 // ─────────────────────────────────────────────
@@ -269,7 +271,6 @@ class _PrayerNotifTile extends StatelessWidget {
     );
   }
 }
-
 // ─────────────────────────────────────────────
 // TAB 2 — CUSTOM NOTIFICATIONS
 // ─────────────────────────────────────────────
@@ -458,7 +459,6 @@ class _NotificationTile extends ConsumerWidget {
     );
   }
 }
-
 // ─────────────────────────────────────────────
 // EDITOR DIALOG
 // ─────────────────────────────────────────────
@@ -492,7 +492,7 @@ class _NotificationEditorDialogState
     _time = e != null
         ? TimeOfDay(hour: e.hour, minute: e.minute)
         : const TimeOfDay(hour: 20, minute: 0);
-    _days = Set.from(e?.daysOfWeek ?? {});
+    _days = Set<int>.from(e?.daysOfWeek ?? {});
   }
 
   @override
@@ -639,7 +639,6 @@ class _NotificationEditorDialogState
     );
   }
 }
-
 // ─────────────────────────────────────────────
 // TIME PICKER SHEET
 // ─────────────────────────────────────────────
@@ -906,7 +905,6 @@ class _Wheel extends StatelessWidget {
     );
   }
 }
-
 class _TimeDisplayChip extends StatelessWidget {
   final TimeOfDay time;
   final Color accent;
