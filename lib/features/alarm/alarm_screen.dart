@@ -24,7 +24,8 @@ class AlarmScreen extends ConsumerWidget {
             const SizedBox(width: 8),
             Text(
               'অ্যালার্ম',
-              style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                  color: colors.textPrimary, fontWeight: FontWeight.w700),
             ),
           ],
         ),
@@ -44,7 +45,8 @@ class AlarmScreen extends ConsumerWidget {
                 100,
               ),
               itemCount: alarms.length,
-              separatorBuilder: (_, __) => const SizedBox(height: AppConstants.spaceMd),
+              separatorBuilder: (_, __) =>
+                  const SizedBox(height: AppConstants.spaceMd),
               itemBuilder: (_, i) => _AlarmTile(alarm: alarms[i]),
             ),
       floatingActionButton: FloatingActionButton.extended(
@@ -57,7 +59,11 @@ class AlarmScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _showEditor(BuildContext context, WidgetRef ref, UserAlarm? existing) async {
+  Future<void> _showEditor(
+    BuildContext context,
+    WidgetRef ref,
+    UserAlarm? existing,
+  ) async {
     final result = await showDialog<UserAlarm>(
       context: context,
       builder: (ctx) => _AlarmEditorDialog(existing: existing),
@@ -70,6 +76,10 @@ class AlarmScreen extends ConsumerWidget {
     }
   }
 }
+
+// ─────────────────────────────────────────────
+// ALARM TILE
+// ─────────────────────────────────────────────
 
 class _AlarmTile extends ConsumerWidget {
   final UserAlarm alarm;
@@ -91,7 +101,8 @@ class _AlarmTile extends ConsumerWidget {
         ),
         child: const Icon(Icons.delete_outline, color: Color(0xFFEF4444)),
       ),
-      onDismissed: (_) => ref.read(alarmProvider.notifier).delete(alarm.id),
+      onDismissed: (_) =>
+          ref.read(alarmProvider.notifier).delete(alarm.id),
       child: InkWell(
         onTap: () async {
           final result = await showDialog<UserAlarm>(
@@ -119,10 +130,14 @@ class _AlarmTile extends ConsumerWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: colors.gold.withValues(alpha: alarm.enabled ? 0.15 : 0.05),
-                  borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+                  color: colors.gold
+                      .withValues(alpha: alarm.enabled ? 0.15 : 0.05),
+                  borderRadius:
+                      BorderRadius.circular(AppConstants.radiusMd),
                   border: Border.all(
-                    color: alarm.enabled ? colors.gold.withValues(alpha: 0.4) : colors.border,
+                    color: alarm.enabled
+                        ? colors.gold.withValues(alpha: 0.4)
+                        : colors.border,
                   ),
                 ),
                 child: Icon(
@@ -139,10 +154,13 @@ class _AlarmTile extends ConsumerWidget {
                     Text(
                       alarm.timeLabel,
                       style: TextStyle(
-                        color: alarm.enabled ? colors.gold : colors.textFaint,
+                        color: alarm.enabled
+                            ? colors.gold
+                            : colors.textFaint,
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
-                        fontFeatures: const [FontFeature.tabularFigures()],
+                        fontFeatures:
+                            const [FontFeature.tabularFigures()],
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -158,7 +176,10 @@ class _AlarmTile extends ConsumerWidget {
                     ),
                     Text(
                       alarm.daysLabel,
-                      style: TextStyle(color: colors.textMuted, fontSize: AppConstants.fontMicro),
+                      style: TextStyle(
+                        color: colors.textMuted,
+                        fontSize: AppConstants.fontMicro,
+                      ),
                     ),
                   ],
                 ),
@@ -166,7 +187,8 @@ class _AlarmTile extends ConsumerWidget {
               Switch(
                 value: alarm.enabled,
                 activeColor: colors.gold,
-                onChanged: (v) => ref.read(alarmProvider.notifier).toggle(alarm, v),
+                onChanged: (v) =>
+                    ref.read(alarmProvider.notifier).toggle(alarm, v),
               ),
             ],
           ),
@@ -177,7 +199,7 @@ class _AlarmTile extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────
-// ALARM EDITOR
+// EDITOR DIALOG
 // ─────────────────────────────────────────────
 
 class _AlarmEditorDialog extends StatefulWidget {
@@ -185,7 +207,8 @@ class _AlarmEditorDialog extends StatefulWidget {
   const _AlarmEditorDialog({this.existing});
 
   @override
-  State<_AlarmEditorDialog> createState() => _AlarmEditorDialogState();
+  State<_AlarmEditorDialog> createState() =>
+      _AlarmEditorDialogState();
 }
 
 class _AlarmEditorDialogState extends State<_AlarmEditorDialog> {
@@ -198,9 +221,15 @@ class _AlarmEditorDialogState extends State<_AlarmEditorDialog> {
   void initState() {
     super.initState();
     final e = widget.existing;
-    _titleController = TextEditingController(text: e?.title ?? '🌌 তাহাজ্জুদ');
-    _bodyController = TextEditingController(text: e?.body ?? 'তাহাজ্জুদ আদায় ও দুআর জন্য প্রস্তুত হোন। 🌙');
-    _time = e != null ? TimeOfDay(hour: e.hour, minute: e.minute) : const TimeOfDay(hour: 4, minute: 0);
+    _titleController = TextEditingController(
+      text: e?.title ?? '🌌 তাহাজ্জুদ',
+    );
+    _bodyController = TextEditingController(
+      text: e?.body ?? 'তাহাজ্জুদ আদায় ও দুআর জন্য প্রস্তুত হোন। 🌙',
+    );
+    _time = e != null
+        ? TimeOfDay(hour: e.hour, minute: e.minute)
+        : const TimeOfDay(hour: 4, minute: 0);
     _days = Set.from(e?.daysOfWeek ?? {});
   }
 
@@ -229,7 +258,8 @@ class _AlarmEditorDialogState extends State<_AlarmEditorDialog> {
     final title = _titleController.text.trim();
     if (title.isEmpty) return;
     final alarm = UserAlarm(
-      id: widget.existing?.id ?? DateTime.now().microsecondsSinceEpoch.toString(),
+      id: widget.existing?.id ??
+          DateTime.now().microsecondsSinceEpoch.toString(),
       title: title,
       body: _bodyController.text.trim(),
       hour: _time.hour,
@@ -254,7 +284,10 @@ class _AlarmEditorDialogState extends State<_AlarmEditorDialog> {
         children: [
           Icon(Icons.alarm_rounded, color: colors.gold, size: 22),
           const SizedBox(width: 8),
-          Text(widget.existing == null ? 'নতুন অ্যালার্ম' : 'সম্পাদনা', style: TextStyle(color: colors.textPrimary)),
+          Text(
+            widget.existing == null ? 'নতুন অ্যালার্ম' : 'সম্পাদনা',
+            style: TextStyle(color: colors.textPrimary),
+          ),
         ],
       ),
       content: SingleChildScrollView(
@@ -262,50 +295,87 @@ class _AlarmEditorDialogState extends State<_AlarmEditorDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _TimeDisplayChip(time: _time, accent: colors.gold, onTap: _pickTime),
+            _TimeDisplayChip(
+              time: _time,
+              accent: colors.gold,
+              onTap: _pickTime,
+            ),
             const SizedBox(height: AppConstants.spaceMd),
             TextField(
               controller: _titleController,
               style: TextStyle(color: colors.textPrimary),
-              decoration: const InputDecoration(hintText: 'শিরোনাম (যেমন: 🌌 তাহাজ্জুদ)'),
+              decoration: const InputDecoration(
+                hintText: 'শিরোনাম (যেমন: 🌌 তাহাজ্জুদ)',
+              ),
             ),
             const SizedBox(height: AppConstants.spaceSm),
             TextField(
               controller: _bodyController,
               style: TextStyle(color: colors.textPrimary),
               maxLines: 3,
-              decoration: const InputDecoration(hintText: 'বার্তা (ঐচ্ছিক)'),
+              decoration: const InputDecoration(
+                hintText: 'বার্তা (ঐচ্ছিক)',
+              ),
             ),
             const SizedBox(height: AppConstants.spaceMd),
-            Text('কোন দিনগুলোতে?', style: TextStyle(color: colors.textMuted, fontSize: AppConstants.fontCaption)),
+            Text(
+              'কোন দিনগুলোতে?',
+              style: TextStyle(
+                color: colors.textMuted,
+                fontSize: AppConstants.fontCaption,
+              ),
+            ),
             const SizedBox(height: AppConstants.spaceSm),
             _DaysSelector(
               selected: _days,
               accent: colors.gold,
               onToggle: (day) {
                 setState(() {
-                  if (_days.contains(day)) { _days.remove(day); } else { _days.add(day); }
+                  if (_days.contains(day)) {
+                    _days.remove(day);
+                  } else {
+                    _days.add(day);
+                  }
                 });
               },
             ),
             if (_days.isEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
-                child: Text('কোনো দিন সিলেক্ট না করলে প্রতিদিন বাজবে', style: TextStyle(color: colors.textFaint, fontSize: AppConstants.fontMicro, fontStyle: FontStyle.italic)),
+                child: Text(
+                  'কোনো দিন সিলেক্ট না করলে প্রতিদিন বাজবে',
+                  style: TextStyle(
+                    color: colors.textFaint,
+                    fontSize: AppConstants.fontMicro,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
               ),
           ],
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text('বাতিল', style: TextStyle(color: colors.textMuted))),
-        TextButton(onPressed: _save, child: Text('সংরক্ষণ', style: TextStyle(color: colors.gold))),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(
+            'বাতিল',
+            style: TextStyle(color: colors.textMuted),
+          ),
+        ),
+        TextButton(
+          onPressed: _save,
+          child: Text(
+            'সংরক্ষণ',
+            style: TextStyle(color: colors.gold),
+          ),
+        ),
       ],
     );
   }
 }
 
 // ─────────────────────────────────────────────
-// TIME PICKER SHEET (Custom Wheel Style)
+// TIME PICKER SHEET
 // ─────────────────────────────────────────────
 
 class _TimePickerSheet extends StatefulWidget {
@@ -333,9 +403,12 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
     _periodIndex = h < 12 ? 0 : 1;
     _hour12 = h % 12 == 0 ? 12 : h % 12;
     _minute = widget.initial.minute;
-    _hourCtrl = FixedExtentScrollController(initialItem: _hour12 - 1);
-    _minuteCtrl = FixedExtentScrollController(initialItem: _minute);
-    _periodCtrl = FixedExtentScrollController(initialItem: _periodIndex);
+    _hourCtrl =
+        FixedExtentScrollController(initialItem: _hour12 - 1);
+    _minuteCtrl =
+        FixedExtentScrollController(initialItem: _minute);
+    _periodCtrl =
+        FixedExtentScrollController(initialItem: _periodIndex);
   }
 
   @override
@@ -359,15 +432,36 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
     return Container(
       decoration: BoxDecoration(
         color: colors.cardBackground,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppConstants.radiusXl)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppConstants.radiusXl),
+        ),
       ),
-      padding: const EdgeInsets.fromLTRB(AppConstants.spaceLg, AppConstants.spaceLg, AppConstants.spaceLg, AppConstants.spaceXl),
+      padding: const EdgeInsets.fromLTRB(
+        AppConstants.spaceLg,
+        AppConstants.spaceLg,
+        AppConstants.spaceLg,
+        AppConstants.spaceXl,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(width: 40, height: 4, decoration: BoxDecoration(color: colors.textFaint, borderRadius: BorderRadius.circular(2))),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: colors.textFaint,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
           const SizedBox(height: AppConstants.spaceLg),
-          Text('সময় নির্বাচন করুন', style: TextStyle(color: colors.textPrimary, fontSize: AppConstants.fontSubtitle, fontWeight: FontWeight.w700)),
+          Text(
+            'সময় নির্বাচন করুন',
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: AppConstants.fontSubtitle,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: AppConstants.spaceLg),
           SizedBox(
             height: 180,
@@ -379,8 +473,11 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
                     color: widget.accent.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(AppConstants.radiusFull),
-                    border: Border.all(color: widget.accent.withValues(alpha: 0.25)),
+                    borderRadius:
+                        BorderRadius.circular(AppConstants.radiusFull),
+                    border: Border.all(
+                      color: widget.accent.withValues(alpha: 0.25),
+                    ),
                   ),
                 ),
                 Row(
@@ -393,31 +490,54 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                         itemBuilder: (index) => '${index + 1}',
                         selectedColor: widget.accent,
                         unselectedColor: colors.textFaint,
-                        onChanged: (v) => setState(() => _hour12 = v + 1),
+                        onChanged: (v) =>
+                            setState(() => _hour12 = v + 1),
                       ),
                     ),
-                    Padding(padding: const EdgeInsets.only(right: 8), child: Text('h', style: TextStyle(color: colors.textMuted, fontSize: 14))),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Text(
+                        'h',
+                        style: TextStyle(
+                          color: colors.textMuted,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
                     Expanded(
                       flex: 3,
                       child: _Wheel(
                         controller: _minuteCtrl,
                         itemCount: 60,
-                        itemBuilder: (index) => index.toString().padLeft(2, '0'),
+                        itemBuilder: (index) =>
+                            index.toString().padLeft(2, '0'),
                         selectedColor: widget.accent,
                         unselectedColor: colors.textFaint,
-                        onChanged: (v) => setState(() => _minute = v),
+                        onChanged: (v) =>
+                            setState(() => _minute = v),
                       ),
                     ),
-                    Padding(padding: const EdgeInsets.only(right: 8), child: Text('min', style: TextStyle(color: colors.textMuted, fontSize: 14))),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Text(
+                        'min',
+                        style: TextStyle(
+                          color: colors.textMuted,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
                     Expanded(
                       flex: 2,
                       child: _Wheel(
                         controller: _periodCtrl,
                         itemCount: 2,
-                        itemBuilder: (index) => index == 0 ? 'AM' : 'PM',
+                        itemBuilder: (index) =>
+                            index == 0 ? 'AM' : 'PM',
                         selectedColor: widget.accent,
                         unselectedColor: colors.textFaint,
-                        onChanged: (v) => setState(() => _periodIndex = v),
+                        onChanged: (v) =>
+                            setState(() => _periodIndex = v),
                       ),
                     ),
                   ],
@@ -434,8 +554,13 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: colors.textMuted,
                     side: BorderSide(color: colors.border),
-                    padding: const EdgeInsets.symmetric(vertical: AppConstants.spaceMd),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMd)),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppConstants.spaceMd,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(AppConstants.radiusMd),
+                    ),
                   ),
                   child: const Text('বাতিল'),
                 ),
@@ -448,10 +573,18 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: widget.accent,
                     foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: AppConstants.spaceMd),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusMd)),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppConstants.spaceMd,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(AppConstants.radiusMd),
+                    ),
                   ),
-                  child: const Text('নিশ্চিত করুন', style: TextStyle(fontWeight: FontWeight.w700)),
+                  child: const Text(
+                    'নিশ্চিত করুন',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
             ],
@@ -491,14 +624,16 @@ class _Wheel extends StatelessWidget {
       childDelegate: ListWheelChildBuilderDelegate(
         childCount: itemCount,
         builder: (context, index) {
-          final centered = controller.hasClients && (controller.offset / 46).round() == index;
+          final centered = controller.hasClients &&
+              (controller.offset / 46).round() == index;
           return Center(
             child: Text(
               itemBuilder(index),
               style: TextStyle(
                 color: centered ? selectedColor : unselectedColor,
                 fontSize: centered ? 26 : 18,
-                fontWeight: centered ? FontWeight.w700 : FontWeight.w500,
+                fontWeight:
+                    centered ? FontWeight.w700 : FontWeight.w500,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
@@ -509,19 +644,30 @@ class _Wheel extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────
+// TIME DISPLAY CHIP
+// ─────────────────────────────────────────────
+
 class _TimeDisplayChip extends StatelessWidget {
   final TimeOfDay time;
   final Color accent;
   final VoidCallback onTap;
 
-  const _TimeDisplayChip({required this.time, required this.accent, required this.onTap});
+  const _TimeDisplayChip({
+    required this.time,
+    required this.accent,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: AppConstants.spaceLg, horizontal: AppConstants.spaceMd),
+        padding: const EdgeInsets.symmetric(
+          vertical: AppConstants.spaceLg,
+          horizontal: AppConstants.spaceMd,
+        ),
         decoration: BoxDecoration(
           color: accent.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(AppConstants.radiusMd),
@@ -531,7 +677,8 @@ class _TimeDisplayChip extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
+              '${time.hour.toString().padLeft(2, '0')}:'
+              '${time.minute.toString().padLeft(2, '0')}',
               style: TextStyle(
                 color: accent,
                 fontSize: 40,
@@ -549,12 +696,20 @@ class _TimeDisplayChip extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────
+// DAYS SELECTOR
+// ─────────────────────────────────────────────
+
 class _DaysSelector extends StatelessWidget {
   final Set<int> selected;
   final Color accent;
   final ValueChanged<int> onToggle;
 
-  const _DaysSelector({required this.selected, required this.accent, required this.onToggle});
+  const _DaysSelector({
+    required this.selected,
+    required this.accent,
+    required this.onToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -576,13 +731,17 @@ class _DaysSelector extends StatelessWidget {
             decoration: BoxDecoration(
               color: isSelected ? accent : colors.surfaceInset,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: isSelected ? accent : colors.border),
+              border: Border.all(
+                color: isSelected ? accent : colors.border,
+              ),
             ),
             child: Center(
               child: Text(
                 names[i],
                 style: TextStyle(
-                  color: isSelected ? Colors.black : colors.textMuted,
+                  color: isSelected
+                      ? Colors.black
+                      : colors.textMuted,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
@@ -595,13 +754,22 @@ class _DaysSelector extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────
+// EMPTY STATE
+// ─────────────────────────────────────────────
+
 class _EmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
   final Color accent;
 
-  const _EmptyState({required this.icon, required this.title, required this.subtitle, required this.accent});
+  const _EmptyState({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.accent,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -618,14 +786,30 @@ class _EmptyState extends StatelessWidget {
               decoration: BoxDecoration(
                 color: accent.withValues(alpha: 0.10),
                 shape: BoxShape.circle,
-                border: Border.all(color: accent.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: accent.withValues(alpha: 0.3),
+                ),
               ),
               child: Icon(icon, color: accent, size: 44),
             ),
             const SizedBox(height: AppConstants.spaceLg),
-            Text(title, style: TextStyle(color: colors.textPrimary, fontSize: AppConstants.fontSubtitle, fontWeight: FontWeight.w700)),
+            Text(
+              title,
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: AppConstants.fontSubtitle,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             const SizedBox(height: AppConstants.spaceSm),
-            Text(subtitle, textAlign: TextAlign.center, style: TextStyle(color: colors.textMuted, fontSize: AppConstants.fontBody)),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: colors.textMuted,
+                fontSize: AppConstants.fontBody,
+              ),
+            ),
           ],
         ),
       ),
