@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timezone/data/latest_all.dart' as tz_data; // ← নতুন
+import 'package:timezone/timezone.dart' as tz;
 
 import 'app.dart';
 import 'core/constants.dart';
@@ -31,6 +33,15 @@ Future<void> main() async {
   );
 
   await initializeDateFormatting();
+
+  // ─── TimeZone Initialize (Must before any tz.local) ───
+  tz_data.initializeTimeZones();
+  try {
+    final localName = await FlutterTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(localName.identifier));
+  } catch (_) {
+    // Fallback to UTC if detection fails
+  }
 
   final prefs = await SharedPreferences.getInstance();
 
