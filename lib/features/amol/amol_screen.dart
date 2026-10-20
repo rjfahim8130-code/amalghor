@@ -6,7 +6,6 @@ import '../../core/constants.dart';
 import '../../data/models/amol_models.dart';
 import '../../l10n/generated/app_localizations.dart';
 
-/// Daily Amol tracker with progress bar and per-item tapping.
 class AmolScreen extends ConsumerStatefulWidget {
   const AmolScreen({super.key});
 
@@ -16,6 +15,30 @@ class AmolScreen extends ConsumerStatefulWidget {
 
 class _AmolScreenState extends ConsumerState<AmolScreen> {
   final Map<String, int> _counts = {};
+  final Set<String> _done = {};
+
+  bool _isDone(Amol amol) {
+    if (amol.targetCount != null) {
+      return (_counts[amol.id] ?? 0) >= amol.targetCount!;
+    }
+    return _done.contains(amol.id);
+  }
+
+  void _onTap(Amol amol) {
+    setState(() {
+      if (amol.targetCount != null) {
+        final target = amol.targetCount!;
+        final current = _counts[amol.id] ?? 0;
+        _counts[amol.id] = current >= target ? 0 : current + 1;
+      } else {
+        if (_done.contains(amol.id)) {
+          _done.remove(amol.id);
+        } else {
+          _done.add(amol.id);
+        }
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,10 +47,7 @@ class _AmolScreenState extends ConsumerState<AmolScreen> {
     final localeCode = Localizations.localeOf(context).languageCode;
     final amols = DefaultAmols.all;
 
-    final done = amols.where((a) {
-      final c = _counts[a.id] ?? 0;
-      return a.targetCount != null && c >= a.targetCount!;
-    }).length;
+    final done = amols.where(_isDone).length;
 
     return Scaffold(
       backgroundColor: colors.pageBackground,
@@ -35,19 +55,12 @@ class _AmolScreenState extends ConsumerState<AmolScreen> {
         backgroundColor: colors.pageBackground,
         title: Text(
           l10n.amolTitle,
-          style: TextStyle(
-            color: colors.textPrimary,
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.w700),
         ),
       ),
       body: Column(
         children: [
-          _ProgressHeader(
-            done: done,
-            total: amols.length,
-            l10n: l10n,
-          ),
+          _ProgressHeader(done: done, total: amols.length, l10n: l10n),
           Expanded(
             child: ListView.separated(
               padding: const EdgeInsets.fromLTRB(
@@ -57,22 +70,15 @@ class _AmolScreenState extends ConsumerState<AmolScreen> {
                 AppConstants.space2xl,
               ),
               itemCount: amols.length,
-              separatorBuilder: (_, __) =>
-                  const SizedBox(height: AppConstants.spaceMd),
+              separatorBuilder: (_, __) => const SizedBox(height: AppConstants.spaceMd),
               itemBuilder: (context, i) {
                 final amol = amols[i];
                 return _AmolTile(
                   amol: amol,
                   localeCode: localeCode,
+                  isDone: _isDone(amol),
                   count: _counts[amol.id] ?? 0,
-                  onIncrement: () {
-                    setState(() {
-                      final target = amol.targetCount ?? 1;
-                      final current = _counts[amol.id] ?? 0;
-                      _counts[amol.id] =
-                          current >= target ? 0 : current + 1;
-                    });
-                  },
+                  onTap: () => _onTap(amol),
                 );
               },
             ),
@@ -88,11 +94,7 @@ class _ProgressHeader extends StatelessWidget {
   final int total;
   final AppLocalizations l10n;
 
-  const _ProgressHeader({
-    required this.done,
-    required this.total,
-    required this.l10n,
-  });
+  const _ProgressHeader({required this.done, required this.total, required this.l10n});
 
   @override
   Widget build(BuildContext context) {
@@ -118,11 +120,7 @@ class _ProgressHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.check_circle_outline,
-                color: colors.emerald,
-                size: 20,
-              ),
+              Icon(Icons.check_circle_outline, color: colors.emerald, size: 20),
               const SizedBox(width: AppConstants.spaceSm),
               Text(
                 l10n.amolTracker,
@@ -163,33 +161,34 @@ class _ProgressHeader extends StatelessWidget {
 class _AmolTile extends StatelessWidget {
   final Amol amol;
   final String localeCode;
+  final bool isDone;
   final int count;
-  final VoidCallback onIncrement;
+  final VoidCallback onTap;
 
   const _AmolTile({
     required this.amol,
     required this.localeCode,
+    required this.isDone,
     required this.count,
-    required this.onIncrement,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    final target = amol.targetCount ?? 1;
-    final isDone = count >= target;
+    final target = amol.targetCount;
 
     return InkWell(
-      onTap: onIncrement,
-      borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+      onTap: onTap, // <--- Now fixed
+      borderRadius: BorderRadius.circular(AppConstants.radiusXl),
       child: Container(
         padding: const EdgeInsets.all(AppConstants.spaceLg),
         decoration: BoxDecoration(
           color: colors.cardBackground,
-          borderRadius: BorderRadius.circular(AppConstants.radiusLg),
+          borderRadius: BorderRadius.circular(AppConstants.radiusXl),
           border: Border.all(
             color: isDone ? colors.borderStrong : colors.border,
-            width: 1.2,
+            width: isDone ? 1.4 : 1.0,
           ),
           boxShadow: colors.cardShadow,
         ),
@@ -199,13 +198,9 @@ class _AmolTile extends StatelessWidget {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: isDone
-                    ? colors.emerald.withValues(alpha: 0.15)
-                    : colors.iconBackground,
+                color: isDone ? colors.emerald.withValues(alpha: 0.15) : colors.iconBackground,
                 borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-                border: isDone
-                    ? Border.all(color: colors.iconBorder)
-                    : null,
+                border: isDone ? Border.all(color: colors.iconBorder) : null,
               ),
               child: Icon(
                 _iconFor(amol.category),
@@ -241,28 +236,21 @@ class _AmolTile extends StatelessWidget {
                 ],
               ),
             ),
-            if (amol.targetCount != null)
+            if (target != null)
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppConstants.spaceMd,
                   vertical: AppConstants.spaceXs,
                 ),
                 decoration: BoxDecoration(
-                  color: isDone
-                      ? colors.emerald
-                      : colors.iconBackground,
-                  borderRadius:
-                      BorderRadius.circular(AppConstants.radiusFull),
-                  border: isDone
-                      ? null
-                      : Border.all(color: colors.iconBorder),
+                  color: isDone ? colors.emerald : colors.iconBackground,
+                  borderRadius: BorderRadius.circular(AppConstants.radiusFull),
+                  border: isDone ? null : Border.all(color: colors.iconBorder),
                 ),
                 child: Text(
                   '$count/$target',
                   style: TextStyle(
-                    color: isDone
-                        ? colors.textOnEmerald
-                        : colors.textPrimary,
+                    color: isDone ? colors.textOnEmerald : colors.textPrimary,
                     fontSize: AppConstants.fontCaption,
                     fontWeight: FontWeight.w700,
                     fontFeatures: const [FontFeature.tabularFigures()],
@@ -270,9 +258,20 @@ class _AmolTile extends StatelessWidget {
                 ),
               )
             else
-              Icon(
-                isDone ? Icons.check_circle : Icons.radio_button_unchecked,
-                color: isDone ? colors.emerald : colors.textFaint,
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: isDone ? colors.emerald : Colors.transparent,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isDone ? colors.emerald : colors.textFaint,
+                    width: 2,
+                  ),
+                ),
+                child: isDone
+                    ? Icon(Icons.check, size: 14, color: colors.textOnEmerald)
+                    : null,
               ),
           ],
         ),
@@ -282,18 +281,12 @@ class _AmolTile extends StatelessWidget {
 
   IconData _iconFor(AmolCategory c) {
     switch (c) {
-      case AmolCategory.tasbih:
-        return Icons.radio_button_checked;
-      case AmolCategory.dua:
-        return Icons.pan_tool_outlined;
-      case AmolCategory.dhikr:
-        return Icons.spa_outlined;
-      case AmolCategory.quranReading:
-        return Icons.menu_book_outlined;
-      case AmolCategory.salat:
-        return Icons.mosque_outlined;
-      case AmolCategory.custom:
-        return Icons.star_outline;
+      case AmolCategory.tasbih: return Icons.radio_button_checked;
+      case AmolCategory.dua: return Icons.pan_tool_outlined;
+      case AmolCategory.dhikr: return Icons.spa_outlined;
+      case AmolCategory.quranReading: return Icons.menu_book_outlined;
+      case AmolCategory.salat: return Icons.mosque_outlined;
+      case AmolCategory.custom: return Icons.star_outline;
     }
   }
 }
