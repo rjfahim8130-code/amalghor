@@ -53,19 +53,15 @@ class HomeScreen extends ConsumerWidget {
                 children: [
                   const HomeHeader(),
                   const SizedBox(height: AppConstants.spaceXl),
-
                   prayerAsync.when(
                     loading: () => const _HomeLoading(),
                     error: (e, _) => _HomeError(
                       message: e.toString(),
-                      onRetry: () =>
-                          ref.invalidate(currentDayPrayerProvider),
+                      onRetry: () => ref.invalidate(currentDayPrayerProvider),
                     ),
                     data: (prayer) => _HomeBody(prayer: prayer),
                   ),
-
                   const SizedBox(height: AppConstants.spaceXl),
-
                   const _ToolsGrid(),
                 ],
               ),
@@ -96,68 +92,31 @@ class _HomeBody extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-// TOOLS GRID — HORIZONTAL SCROLL, 2 ROWS
+// TOOLS GRID — HORIZONTAL SCROLL, EXACT 2 ROWS
 // ─────────────────────────────────────────────
 
-class _ToolsGrid extends ConsumerWidget {
+class _ToolsGrid extends StatelessWidget {
   const _ToolsGrid();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    final l10n = AppLocalizations.of(context);
-
     final tools = <_ToolItem>[
-      _ToolItem(
-        icon: Icons.explore_outlined,
-        label: l10n.qibla,
-        route: Routes.qibla,
-      ),
-      _ToolItem(
-        icon: Icons.picture_as_pdf_outlined,
-        label: 'PDF',
-        route: Routes.pdfSettings,
-      ),
-      _ToolItem(
-        icon: Icons.radio_button_checked,
-        label: l10n.tasbih,
-        route: Routes.tasbih,
-      ),
-      _ToolItem(
-        icon: Icons.auto_awesome_outlined,
-        label: l10n.asmaUlHusna,
-        route: Routes.asma,
-      ),
-      _ToolItem(
-        icon: Icons.calendar_month_outlined,
-        label: l10n.calendar,
-        route: Routes.calendar,
-      ),
-      _ToolItem(
-        icon: Icons.volunteer_activism_outlined,
-        label: l10n.dua,
-        route: Routes.dua,
-      ),
-      _ToolItem(
-        icon: Icons.notifications_active_outlined,
-        label: l10n.notifications,
-        route: Routes.notifications,
-      ),
-      _ToolItem(
-        icon: Icons.alarm_rounded,
-        label: l10n.alarms,
-        route: Routes.alarms,
-      ),
+      _ToolItem(icon: Icons.explore_outlined, label: 'কিবলা', route: Routes.qibla),
+      _ToolItem(icon: Icons.picture_as_pdf_outlined, label: 'PDF', route: Routes.pdfSettings),
+      _ToolItem(icon: Icons.radio_button_checked, label: 'তাসবীহ', route: Routes.tasbih),
+      _ToolItem(icon: Icons.auto_awesome_outlined, label: '৯৯ নাম', route: Routes.asma),
+      _ToolItem(icon: Icons.calendar_month_outlined, label: 'ক্যালেন্ডার', route: Routes.calendar),
+      _ToolItem(icon: Icons.volunteer_activism_outlined, label: 'দুআ', route: Routes.dua),
+      _ToolItem(icon: Icons.notifications_active_outlined, label: 'নোটিফিকেশন', route: Routes.notifications),
+      _ToolItem(icon: Icons.alarm_rounded, label: 'অ্যালার্ম', route: Routes.alarms),
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(
-            left: AppConstants.spaceXs,
-            bottom: AppConstants.spaceMd,
-          ),
+          padding: const EdgeInsets.only(left: AppConstants.spaceXs, bottom: AppConstants.spaceMd),
           child: Row(
             children: [
               _dot(colors, 1.0),
@@ -167,49 +126,46 @@ class _ToolsGrid extends ConsumerWidget {
               _dot(colors, 0.5),
               const SizedBox(width: AppConstants.spaceMd),
               Text(
-                l10n.tools,
+                'টুলস',
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontSize: AppConstants.fontSubtitle,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 0.3,
                 ),
               ),
               const SizedBox(width: AppConstants.spaceMd),
               Expanded(
-                child: Container(
-                  height: 1,
-                  color: colors.border.withValues(alpha: 0.35),
-                ),
+                child: Container(height: 1, color: colors.border.withValues(alpha: 0.35)),
               ),
             ],
           ),
         ),
+        
+        // Horizontal scrollable — fixed 110 width columns, 2 rows
         SizedBox(
-          height: 220,
-          child: GridView.builder(
+          height: 210,
+          child: ListView.separated(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: AppConstants.spaceMd,
-              crossAxisSpacing: AppConstants.spaceMd,
-              childAspectRatio: 1.0,
-            ),
+            padding: const EdgeInsets.symmetric(vertical: 2),
             itemCount: (tools.length / 2).ceil(),
+            separatorBuilder: (_, __) => const SizedBox(width: AppConstants.spaceMd),
             itemBuilder: (context, colIndex) {
               final topIndex = colIndex * 2;
               final bottomIndex = topIndex + 1;
-              return Column(
-                children: [
-                  Expanded(child: _ToolTile(item: tools[topIndex])),
-                  const SizedBox(height: AppConstants.spaceMd),
-                  Expanded(
-                    child: bottomIndex < tools.length
-                        ? _ToolTile(item: tools[bottomIndex])
-                        : const SizedBox.shrink(),
-                  ),
-                ],
+              return SizedBox(
+                width: 100,
+                child: Column(
+                  children: [
+                    Expanded(child: _ToolTile(item: tools[topIndex])),
+                    const SizedBox(height: AppConstants.spaceMd),
+                    Expanded(
+                      child: bottomIndex < tools.length
+                          ? _ToolTile(item: tools[bottomIndex])
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
+                ),
               );
             },
           ),
@@ -235,11 +191,7 @@ class _ToolItem {
   final String label;
   final String route;
 
-  const _ToolItem({
-    required this.icon,
-    required this.label,
-    required this.route,
-  });
+  const _ToolItem({required this.icon, required this.label, required this.route});
 }
 
 class _ToolTile extends StatelessWidget {
@@ -267,8 +219,8 @@ class _ToolTile extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
                   color: colors.iconBackground,
                   borderRadius: BorderRadius.circular(AppConstants.radiusMd),
@@ -278,14 +230,13 @@ class _ToolTile extends StatelessWidget {
               ),
               const SizedBox(height: AppConstants.spaceSm),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 2),
                 child: Text(
                   item.label,
                   style: TextStyle(
                     color: colors.textPrimary,
                     fontSize: AppConstants.fontCaption,
                     fontWeight: FontWeight.w600,
-                    letterSpacing: 0.2,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 1,
@@ -308,9 +259,7 @@ class _HomeLoading extends StatelessWidget {
     final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 64),
-      child: Center(
-        child: CircularProgressIndicator(color: colors.emerald),
-      ),
+      child: Center(child: CircularProgressIndicator(color: colors.emerald)),
     );
   }
 }
@@ -319,10 +268,7 @@ class _HomeError extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
 
-  const _HomeError({
-    required this.message,
-    required this.onRetry,
-  });
+  const _HomeError({required this.message, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -337,11 +283,7 @@ class _HomeError extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Icon(
-            Icons.error_outline,
-            color: Color(0xFFEF4444),
-            size: 40,
-          ),
+          const Icon(Icons.error_outline, color: Color(0xFFEF4444), size: 40),
           const SizedBox(height: AppConstants.spaceMd),
           Text(
             l10n.error,
@@ -355,10 +297,7 @@ class _HomeError extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: colors.textMuted,
-              fontSize: AppConstants.fontCaption,
-            ),
+            style: TextStyle(color: colors.textMuted, fontSize: AppConstants.fontCaption),
           ),
           const SizedBox(height: AppConstants.spaceLg),
           ElevatedButton.icon(
