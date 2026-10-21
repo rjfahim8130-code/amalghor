@@ -56,11 +56,15 @@ class _QuranScreenState extends ConsumerState<QuranScreen> {
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontSize: AppConstants.fontBody,
+                  fontFamily: 'NotoSansBengali',
                 ),
                 decoration: InputDecoration(
                   hintText: 'Search the Quran...',
                   border: InputBorder.none,
-                  hintStyle: TextStyle(color: colors.textFaint),
+                  hintStyle: TextStyle(
+                    color: colors.textFaint,
+                    fontFamily: 'NotoSansBengali',
+                  ),
                 ),
                 onChanged: (_) => setState(() {}),
               )
