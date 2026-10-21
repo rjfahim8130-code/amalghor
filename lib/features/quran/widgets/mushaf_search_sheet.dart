@@ -172,8 +172,7 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
     }
     return null;
   }
-
-  Future<void> _searchByText() async {
+    Future<void> _searchByText() async {
     final l10n = AppLocalizations.of(context);
     final q = _textCtrl.text.trim();
     if (q.length < 2) {
@@ -350,6 +349,7 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
     String? hint,
     void Function(String)? onChanged,
     bool expand = true,
+    bool isArabic = false,
   }) {
     final field = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,7 +366,11 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
         TextField(
           controller: controller,
           keyboardType: keyboard,
-          style: const TextStyle(color: Colors.white, fontSize: 16),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontFamily: isArabic ? 'NotoNaskhArabic' : 'NotoSansBengali',
+          ),
           onChanged: onChanged,
           inputFormatters: keyboard == TextInputType.number
               ? [FilteringTextInputFormatter.digitsOnly]
@@ -485,7 +489,11 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
                   dense: true,
                   title: Text(
                     '${s.value}. ${s.key}',
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontFamily: 'NotoSansBengali',
+                    ),
                   ),
                   onTap: () {
                     _surahCtrl.text = s.key;
@@ -498,13 +506,14 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
 
             const SizedBox(height: 16),
 
-            // Ayah text search
+            // Ayah text search (Arabic font enabled)
             _field(
               label: l10n.quranAyahText,
               controller: _textCtrl,
               keyboard: TextInputType.text,
               hint: l10n.quranAyahTextHint,
               expand: false,
+              isArabic: true,
             ),
 
             if (_error != null) ...[
@@ -543,24 +552,28 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
                     return ListTile(
                       dense: true,
                       title: Text(
-                        '${h.surahName} \\( {h.surah}: \\){h.ayah}',
+                        '${h.surahName} (${h.surah}:${h.ayah})',
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
+                          fontFamily: 'NotoSansBengali',
                         ),
                       ),
                       subtitle: Text(
                         h.snippet,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white60,
-                          fontSize: 12,
+                          fontSize: h.language == QuranLanguage.arabic ? 16 : 13,
+                          fontFamily: h.language == QuranLanguage.arabic
+                              ? 'NotoNaskhArabic'
+                              : 'NotoSansBengali',
                         ),
                       ),
                       trailing: Text(
-                        '${l10n.quranPage}. ${h.page}',
+                        '${l10n.quranPage} ${h.page}',
                         style: const TextStyle(
                           color: Color(0xFF34D399),
                           fontSize: 12,
@@ -596,7 +609,7 @@ class _MushafSearchSheetState extends ConsumerState<MushafSearchSheet> {
               ),
             ),
             const SizedBox(height: 8),
-          ]
+          ],
         ),
       ),
     );
