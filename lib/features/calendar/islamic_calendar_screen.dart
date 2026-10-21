@@ -1,24 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/constants.dart';
-import '../../l10n/generated/app_localizations.dart';
 import '../../providers/islamic_calendar_provider.dart';
 import '../../services/bangla_date_service.dart';
-import '../../services/hijri_service.dart';
 
-/// Islamic calendar view with three simultaneous calendars.
 class IslamicCalendarScreen extends ConsumerWidget {
   const IslamicCalendarScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
-    final l10n = AppLocalizations.of(context);
     final month = ref.watch(islamicCalendarProvider);
-    final primary = ref.watch(primaryDisplayProvider);
     final days = ref.watch(calendarDaysProvider);
 
     return Scaffold(
@@ -26,7 +22,7 @@ class IslamicCalendarScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: colors.pageBackground,
         title: Text(
-          l10n.calendar,
+          'ইসলামিক ক্যালেন্ডার',
           style: TextStyle(
             color: colors.textPrimary,
             fontWeight: FontWeight.w700,
@@ -34,7 +30,7 @@ class IslamicCalendarScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            tooltip: l10n.today,
+            tooltip: 'আজকে যান',
             icon: Icon(Icons.today, color: colors.textPrimary),
             onPressed: () =>
                 ref.read(islamicCalendarProvider.notifier).goToToday(),
@@ -44,13 +40,13 @@ class IslamicCalendarScreen extends ConsumerWidget {
       body: Column(
         children: [
           _MonthHeader(month: month),
-          _PrimarySelector(current: primary),
-          const _WeekdayHeader(),
+          _PrimarySelector(current: month.primary),
+          _WeekdayHeader(firstDay: days.first.gregorian),
           Expanded(
             child: _DayGrid(
-              month: month,
+              firstDay: days.first.gregorian,
               days: days,
-              primary: primary,
+              primary: month.primary,
             ),
           ),
         ],
@@ -73,21 +69,26 @@ class _MonthHeader extends ConsumerWidget {
     final colors = AppColors.of(context);
     final notifier = ref.read(islamicCalendarProvider.notifier);
     final bangla = const BanglaDateService();
-    final hijri = const HijriService();
 
-    final enLabel = DateFormat('MMMM y').format(month.firstDay);
-
-    final bn1 = bangla.convert(month.firstDay).monthIndex;
-    final bn2 = bangla.convert(month.lastDay).monthIndex;
-    final bnLabel = bn1 == bn2
-        ? bangla.monthName(bn1)
-        : '${bangla.monthName(bn1)} — ${bangla.monthName(bn2)}';
-
-    final h1 = hijri.monthOfYear(month.firstDay);
-    final h2 = hijri.monthOfYear(month.lastDay);
-    final hLabel = h1 == h2
-        ? hijri.monthName(h1, 'bn')
-        : '${hijri.monthName(h1, 'bn')} — ${hijri.monthName(h2, 'bn')}';
+    // We display the currently selected calendar as the main title.
+    String mainTitle;
+    Color mainColor;
+    
+    if (month.primary == CalendarPrimaryDisplay.english) {
+      mainTitle = DateFormat('MMMM y').format(DateTime(month.year, month.month));
+      mainColor = colors.emerald;
+    } else if (month.primary == CalendarPrimaryDisplay.hijri) {
+      final hijri = HijriCalendar();
+      hijri.hYear = month.year;
+      hijri.hMonth = month.month;
+      // Get name for the month
+      mainTitle = '${hijri.longMonthName} ${month.year} هـ';
+      mainColor = colors.cyan;
+    } else {
+      // Bangla
+      mainTitle = '${bangla.monthName(month.month - 1)} ${month.year}';
+      mainColor = colors.gold;
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -106,36 +107,14 @@ class _MonthHeader extends ConsumerWidget {
             onPressed: notifier.previousMonth,
           ),
           Expanded(
-            child: Column(
-              children: [
-                Text(
-                  enLabel,
-                  style: TextStyle(
-                    color: colors.emerald,
-                    fontSize: AppConstants.fontHeading,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  bnLabel,
-                  style: TextStyle(
-                    color: colors.gold,
-                    fontSize: AppConstants.fontCaption,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  hLabel,
-                  style: TextStyle(
-                    color: colors.cyan,
-                    fontSize: AppConstants.fontCaption,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+            child: Text(
+              mainTitle,
+              style: TextStyle(
+                color: mainColor,
+                fontSize: AppConstants.fontHeading,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
           IconButton(
@@ -149,7 +128,7 @@ class _MonthHeader extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────
-// PRIMARY DISPLAY SELECTOR
+// PRIMARY SELECTOR
 // ─────────────────────────────────────────────
 
 class _PrimarySelector extends ConsumerWidget {
@@ -159,8 +138,7 @@ class _PrimarySelector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final notifier = ref.read(primaryDisplayProvider.notifier);
+    final notifier = ref.read(islamicCalendarProvider.notifier);
     final colors = AppColors.of(context);
 
     return Container(
@@ -171,24 +149,24 @@ class _PrimarySelector extends ConsumerWidget {
       child: Row(
         children: [
           _PrimaryChip(
-            label: l10n.labelEnglish,
+            label: 'ইংরেজি',
             color: colors.emerald,
             selected: current == CalendarPrimaryDisplay.english,
-            onTap: () => notifier.set(CalendarPrimaryDisplay.english),
+            onTap: () => notifier.setPrimary(CalendarPrimaryDisplay.english),
           ),
           const SizedBox(width: AppConstants.spaceSm),
           _PrimaryChip(
-            label: l10n.labelBangla,
+            label: 'বাংলা',
             color: colors.gold,
             selected: current == CalendarPrimaryDisplay.bangla,
-            onTap: () => notifier.set(CalendarPrimaryDisplay.bangla),
+            onTap: () => notifier.setPrimary(CalendarPrimaryDisplay.bangla),
           ),
           const SizedBox(width: AppConstants.spaceSm),
           _PrimaryChip(
-            label: l10n.labelHijri,
+            label: 'হিজরি',
             color: colors.cyan,
             selected: current == CalendarPrimaryDisplay.hijri,
-            onTap: () => notifier.set(CalendarPrimaryDisplay.hijri),
+            onTap: () => notifier.setPrimary(CalendarPrimaryDisplay.hijri),
           ),
         ],
       ),
@@ -252,15 +230,14 @@ class _PrimaryChip extends StatelessWidget {
 // ─────────────────────────────────────────────
 
 class _WeekdayHeader extends StatelessWidget {
-  const _WeekdayHeader();
+  final DateTime firstDay;
+  const _WeekdayHeader({required this.firstDay});
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    final isBn = Localizations.localeOf(context).languageCode == 'bn';
-    final days = isBn
-        ? const ['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহ', 'শুক্র', 'শনি']
-        : const ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    // Adjust names to start from Sunday (0)
+    const days = ['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহ', 'শুক্র', 'শনি'];
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -294,19 +271,20 @@ class _WeekdayHeader extends StatelessWidget {
 // ─────────────────────────────────────────────
 
 class _DayGrid extends StatelessWidget {
-  final CalendarMonth month;
+  final DateTime firstDay;
   final List<CalendarDay> days;
   final CalendarPrimaryDisplay primary;
 
   const _DayGrid({
-    required this.month,
+    required this.firstDay,
     required this.days,
     required this.primary,
   });
 
   @override
   Widget build(BuildContext context) {
-    final leadingBlanks = month.leadingBlanks;
+    // Blank cells for days before the first of the month.
+    final leadingBlanks = firstDay.weekday % 7;
     final cells = <Widget>[];
 
     for (int i = 0; i < leadingBlanks; i++) {
@@ -315,6 +293,7 @@ class _DayGrid extends StatelessWidget {
     for (final d in days) {
       cells.add(_DayCell(day: d, primary: primary));
     }
+    // Fill the last row
     while (cells.length % 7 != 0) {
       cells.add(const SizedBox.shrink());
     }
@@ -355,13 +334,12 @@ class _DayCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    final en = day.gregorian.day;
-    final bn = day.banglaDay;
-    final hi = day.hijriDay;
-
+    
+    // Friday check
     final isFriday = day.gregorian.weekday == DateTime.friday;
     final isToday = day.isToday;
 
+    // Determine which number is big and which is small
     late final int primaryValue;
     late final int sec1Value;
     late final int sec2Value;
@@ -369,21 +347,21 @@ class _DayCell extends StatelessWidget {
 
     switch (primary) {
       case CalendarPrimaryDisplay.english:
-        primaryValue = en;
-        sec1Value = bn;
-        sec2Value = hi;
+        primaryValue = day.gregorian.day;
+        sec1Value = day.banglaDay;
+        sec2Value = day.hijriDay;
         primaryColor = colors.emerald;
         break;
       case CalendarPrimaryDisplay.bangla:
-        primaryValue = bn;
-        sec1Value = en;
-        sec2Value = hi;
+        primaryValue = day.banglaDay;
+        sec1Value = day.gregorian.day;
+        sec2Value = day.hijriDay;
         primaryColor = colors.gold;
         break;
       case CalendarPrimaryDisplay.hijri:
-        primaryValue = hi;
-        sec1Value = en;
-        sec2Value = bn;
+        primaryValue = day.hijriDay;
+        sec1Value = day.gregorian.day;
+        sec2Value = day.banglaDay;
         primaryColor = colors.cyan;
         break;
     }
@@ -409,6 +387,7 @@ class _DayCell extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Primary (Big) Number
             Text(
               '$primaryValue',
               style: TextStyle(
@@ -420,6 +399,8 @@ class _DayCell extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 3),
+            
+            // Secondary (Small) Numbers
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -430,7 +411,6 @@ class _DayCell extends StatelessWidget {
                     fontSize: 9,
                     fontWeight: FontWeight.w600,
                     height: 1.0,
-                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -450,11 +430,12 @@ class _DayCell extends StatelessWidget {
                     fontSize: 9,
                     fontWeight: FontWeight.w600,
                     height: 1.0,
-                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
               ],
             ),
+            
+            // Friday Dot
             if (isFriday) ...[
               const SizedBox(height: 3),
               Container(
