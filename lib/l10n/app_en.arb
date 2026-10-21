@@ -244,5 +244,9 @@
   "pdfBuilding": "Building PDF…",
   "pdfComplete": "Complete",
   "pdfFailedStage": "Failed",
-  "pdfTagline": "Prayer timetable"
+  "pdfTagline": "Prayer timetable",
+  "quranPageTranslation": "Page translation",
+  "quranShowArabic": "Arabic",
+  "quranShowBangla": "Bangla",
+  "quranShowEnglish": "English"
 }
