@@ -223,5 +223,9 @@
   "pdfBuilding": "PDF তৈরি করছি...",
   "pdfComplete": "সম্পূর্ণ",
   "pdfFailedStage": "ব্যর্থ",
-  "pdfTagline": "নামাযের সময়সূচি"
+  "pdfTagline": "নামাযের সময়সূচি",
+  "quranPageTranslation": "পৃষ্ঠার অনুবাদ",
+  "quranShowArabic": "আরবি",
+  "quranShowBangla": "বাংলা",
+  "quranShowEnglish": "ইংরেজি"
 }
