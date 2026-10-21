@@ -34,7 +34,7 @@ class PdfOptions {
     required this.columns,
     this.appName = 'AmalGhor',
     this.appTagline = 'Prayer timetable',
-    this.locale = 'bn',
+    this.locale = 'en',
   });
 }
 
@@ -95,7 +95,6 @@ class PdfBuilder {
   pw.Widget _header(int month, ClusterResult result) {
     final monthEn =
         DateFormat('MMMM y').format(DateTime(result.year, month));
-    final banglaMonths = _banglaMonthsFor(result.year, month);
     final hijriMonths = _hijriMonthsFor(result.year, month);
 
     return pw.Column(
@@ -116,7 +115,7 @@ class PdfBuilder {
                   ),
                   child: pw.Center(
                     child: pw.Text(
-                      _isEn ? 'A' : 'আ',
+                      'A',
                       style: pw.TextStyle(
                         color: PdfColors.white,
                         fontSize: 12,
@@ -181,14 +180,6 @@ class PdfBuilder {
         ),
         pw.SizedBox(height: 2),
         pw.Text(
-          banglaMonths,
-          style: pw.TextStyle(
-            fontSize: 10,
-            color: PdfColor.fromHex('#D4A24A'),
-          ),
-        ),
-        pw.SizedBox(height: 2),
-        pw.Text(
           hijriMonths,
           style: pw.TextStyle(
             fontSize: 10,
@@ -197,8 +188,7 @@ class PdfBuilder {
         ),
         pw.SizedBox(height: 3),
         pw.Text(
-          '${_madhhabLabel(options.madhhab)} '
-          '${_isEn ? 'Madhhab' : 'মাযহাব'}  •  '
+          '${_madhhabLabel(options.madhhab)} Madhhab  •  '
           '${result.granularity.labelFor(locale: options.locale)}',
           style: pw.TextStyle(
             fontSize: 7,
@@ -211,29 +201,20 @@ class PdfBuilder {
     );
   }
 
-  String _banglaMonthsFor(int year, int month) {
-    final first = DateTime(year, month, 1);
-    final last = DateTime(year, month + 1, 0);
-    final b1 = bangla.convert(first).monthIndex;
-    final b2 = bangla.convert(last).monthIndex;
-    if (b1 == b2) return bangla.monthName(b1);
-    return '${bangla.monthName(b1)} — ${bangla.monthName(b2)}';
-  }
-
   String _hijriMonthsFor(int year, int month) {
     final first = DateTime(year, month, 1);
     final last = DateTime(year, month + 1, 0);
     final h1 = hijri.monthOfYear(first);
     final h2 = hijri.monthOfYear(last);
-    if (h1 == h2) return hijri.monthName(h1, 'bn');
-    return '${hijri.monthName(h1, 'bn')} — ${hijri.monthName(h2, 'bn')}';
+    if (h1 == h2) return hijri.monthName(h1, 'en');
+    return '${hijri.monthName(h1, 'en')} — ${hijri.monthName(h2, 'en')}';
   }
 
   String _madhhabLabel(MadhhabType m) {
     if (m == MadhhabType.hanafi) {
-      return _isEn ? 'Hanafi' : 'হানাফী';
+      return 'Hanafi';
     }
-    return _isEn ? "Shafi'i" : 'শাফেঈ';
+    return "Shafi'i";
   }
 
   pw.Widget _footer(pw.Context ctx, ClusterResult result) {
@@ -250,21 +231,15 @@ class PdfBuilder {
         children: [
           pw.Text(
             options.showSafetyTimes
-                ? (_isEn
-                    ? 'Sehri: 7 min before  •  Iftar: 3 min after'
-                    : 'সেহরি: ৭ মিনিট আগে  •  ইফতার: ৩ মিনিট পরে')
-                : (_isEn
-                    ? 'Sehri / Iftar: actual time'
-                    : 'সেহরি / ইফতার: মূল সময়'),
+                ? 'Sehri: 7 min before  •  Iftar: 3 min after'
+                : 'Sehri / Iftar: actual time',
             style: pw.TextStyle(
               fontSize: 6.5,
               color: PdfColors.grey600,
             ),
           ),
           pw.Text(
-            '${options.appName}  •  '
-            '${_isEn ? 'Page' : 'পৃষ্ঠা'} '
-            '${ctx.pageNumber} / ${ctx.pagesCount}',
+            '${options.appName}  •  Page ${ctx.pageNumber} / ${ctx.pagesCount}',
             style: pw.TextStyle(
               fontSize: 6.5,
               color: PdfColors.grey600,
@@ -369,39 +344,34 @@ class PdfBuilder {
     );
   }
 
-  /// Locale-aware header label for the given column.
-  ///
-  /// Uses the ACTUAL enum values from `pdf_cluster.dart`
-  /// (no `midnight`, no `solarNoon` — those don't exist).
   String _columnLabel(PdfColumn c) {
-    final isEn = _isEn;
     switch (c) {
       case PdfColumn.date:
-        return isEn ? 'Date' : 'তারিখ';
+        return 'Date';
       case PdfColumn.tahajjud:
-        return isEn ? 'Tahajjud' : 'তাহাজ্জুদ';
+        return 'Tahajjud';
       case PdfColumn.sehri:
-        return isEn ? 'Sehri' : 'সেহরি';
+        return 'Sehri';
       case PdfColumn.fajr:
-        return isEn ? 'Fajr' : 'ফজর';
+        return 'Fajr';
       case PdfColumn.sunrise:
-        return isEn ? 'Sunrise' : 'সূর্যোদয়';
+        return 'Sunrise';
       case PdfColumn.ishraq:
-        return isEn ? 'Ishraq' : 'ইশরাক';
+        return 'Ishraq';
       case PdfColumn.dhuhr:
-        return isEn ? 'Dhuhr' : 'যোহর';
+        return 'Dhuhr';
       case PdfColumn.asr:
-        return isEn ? 'Asr' : 'আসর';
+        return 'Asr';
       case PdfColumn.sunset:
-        return isEn ? 'Sunset' : 'সূর্যাস্ত';
+        return 'Sunset';
       case PdfColumn.iftar:
-        return isEn ? 'Iftar' : 'ইফতার';
+        return 'Iftar';
       case PdfColumn.maghrib:
-        return isEn ? 'Maghrib' : 'মাগরিব';
+        return 'Maghrib';
       case PdfColumn.isha:
-        return isEn ? 'Isha' : 'এশা';
+        return 'Isha';
       case PdfColumn.ishaMustahab:
-        return isEn ? 'Mustahabb Isha' : 'মুস্তাহাব এশা';
+        return 'Mustahabb Isha';
     }
   }
 
@@ -450,16 +420,11 @@ class PdfBuilder {
         ? '${start.day}'
         : '${start.day}–${end.day}';
 
-    final bn = bangla.convert(start);
     final hn = hijri.toHijri(start);
 
-    return '$enLabel\n'
-        '${bangla.toBanglaDigits(bn.day)} / '
-        '${bangla.toBanglaDigits(hn.hDay)}';
+    return '$enLabel\nH ${hn.hDay}';
   }
 
-  /// Sehri/Iftar cell — single time only. If safety is enabled,
-  /// use the safety time; otherwise the actual time. No label.
   String _sehriIftarCell({
     required DateTime actual,
     required DateTime safety,
