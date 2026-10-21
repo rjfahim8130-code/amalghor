@@ -17,6 +17,7 @@ import '../features/pdf/pdf_settings_screen.dart';
 import '../features/prayer/prayer_screen.dart';
 import '../features/qibla/qibla_screen.dart';
 import '../features/quran/bookmark_feature.dart';
+import '../features/quran/mushaf_page_translation_screen.dart'; // নতুন import
 import '../features/quran/mushaf_reader_screen.dart';
 import '../features/quran/quran_mode_select_screen.dart';
 import '../features/quran/quran_screen.dart';
@@ -34,6 +35,7 @@ class Routes {
   static const String quran = '/quran';
   static const String quranRegular = '/quran/regular';
   static const String quranMushaf = '/quran/mushaf';
+  static const String quranMushafTranslation = '/quran/mushaf/translation'; // নতুন রুট কনস্ট্যান্ট
   static const String ramadan = '/ramadan';
   static const String amol = '/amol';
   static const String settings = '/settings';
@@ -93,7 +95,18 @@ final routerProvider = Provider<GoRouter>((ref) {
                   return MushafReaderScreen(initialPage: page);
                 },
               ),
-              // :surahNumber must come after regular/mushaf/bookmarks
+              // নতুন অনুবাদ পেজ রুট (mushaf-এর পরে এবং :surahNumber-এর আগে)
+              GoRoute(
+                path: 'mushaf/translation',
+                builder: (context, state) {
+                  final page = int.tryParse(
+                        state.uri.queryParameters['page'] ?? '',
+                      ) ??
+                      502;
+                  return MushafPageTranslationScreen(page: page);
+                },
+              ),
+              // :surahNumber must come after regular/mushaf/bookmarks/mushaf/translation
               GoRoute(
                 path: ':surahNumber',
                 builder: (context, state) {
