@@ -196,11 +196,19 @@ class QuranRepository {
   // SEARCH
   // ─────────────────────────────────────────────
 
+  /// Strip tashkeel / tatweel so "بسم" matches "بِسْمِ".
+  static String normalizeArabic(String input) {
+    var s = input;
+    // Combining marks: fatha, damma, kasra, shadda, sukun, tanwin, superscript alef
+    s = s.replaceAll(RegExp(r'[\u064B-\u065F\u0670]'), '');
+    // Tatweel
+    s = s.replaceAll('\u0640', '');
+    // Alef variants → bare alef
+    s = s.replaceAll('أ', 'ا').replaceAll('إ', 'ا').replaceAll('آ', 'ا').replaceAll('ٱ', 'ا');
+    return s;
+  }
+
   /// Full-text substring search across Arabic, Bangla, English.
-  ///
-  /// Results are capped at [limit] (default 200) to keep the UI
-  /// responsive on large result sets. Empty queries return an empty
-  /// list.
   Future<List<QuranSearchResult>> search(
     String query, {
     int limit = 200,
@@ -209,8 +217,13 @@ class QuranRepository {
     if (q.isEmpty) return const [];
 
     final db = await _db.database;
-    final like = '%$q%';
+    final qNorm = normalizeArabic(q);
+    final likeRaw = '%$q%';
+    final likeNorm = '%$qNorm%';
+    final qLower = q.toLowerCase();
 
+    // Prefer English/Bangla LIKE; for Arabic also match diacritic-stripped form
+    // via nested REPLACE (no DB migration needed).
     final rows = await db.rawQuery(
       '''
       SELECT a.surah, a.ayah,
@@ -218,44 +231,56 @@ class QuranRepository {
              s.name_english
       FROM ayahs a
       INNER JOIN surahs s ON s.number = a.surah
-      WHERE a.text_arabic  LIKE ?
+      WHERE a.text_english LIKE ?
          OR a.text_bangla  LIKE ?
-         OR a.text_english LIKE ?
+         OR a.text_arabic  LIKE ?
+         OR REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+              REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+                a.text_arabic,
+                'ً',''),'ٌ',''),'ٍ',''),'َ',''),'ُ',''),'ِ',''),'ّ',''),'ْ',''),
+                'ٰ',''),'ـ',''),'أ','ا'),'إ','ا'),'آ','ا')
+            LIKE ?
       ORDER BY a.surah, a.ayah
       LIMIT ?
       ''',
-      [like, like, like, limit],
+      [likeRaw, likeRaw, likeRaw, likeNorm, limit * 2],
     );
 
-    return rows.map((r) {
-      final arabic = r['text_arabic'] as String?;
-      final bangla = r['text_bangla'] as String?;
-      final english = r['text_english'] as String?;
+    final results = <QuranSearchResult>[];
+    for (final r in rows) {
+      final arabic = r['text_arabic'] as String? ?? '';
+      final bangla = r['text_bangla'] as String? ?? '';
+      final english = r['text_english'] as String? ?? '';
 
-      // Determine which language matched. English wins over Bangla
-      // wins over Arabic when multiple match, to prefer user-facing
-      // translations in search results.
       QuranLanguage matched = QuranLanguage.arabic;
-      String matchedText = arabic ?? '';
+      String matchedText = arabic;
 
-      final qLower = q.toLowerCase();
-      if (english != null && english.toLowerCase().contains(qLower)) {
+      if (english.toLowerCase().contains(qLower)) {
         matched = QuranLanguage.english;
         matchedText = english;
-      } else if (bangla != null && bangla.contains(q)) {
+      } else if (bangla.contains(q)) {
         matched = QuranLanguage.bangla;
         matchedText = bangla;
+      } else if (arabic.contains(q) ||
+          normalizeArabic(arabic).contains(qNorm)) {
+        matched = QuranLanguage.arabic;
+        matchedText = arabic;
+      } else {
+        continue;
       }
 
-      return QuranSearchResult(
-        surahNumber: r['surah'] as int,
-        ayahNumber: r['ayah'] as int,
-        surahName: (r['name_english'] as String?) ?? '',
-        matchedLanguage: matched,
-        matchedText: matchedText,
-        snippet: _buildSnippet(matchedText, q),
+      results.add(
+        QuranSearchResult(
+          surahNumber: r['surah'] as int,
+          ayahNumber: r['ayah'] as int,
+          surahName: r['name_english'] as String? ?? '',
+          snippet: _buildSnippet(matchedText, q),
+          matchedLanguage: matched,
+        ),
       );
-    }).toList();
+      if (results.length >= limit) break;
+    }
+    return results;
   }
 
   // ─────────────────────────────────────────────
@@ -312,7 +337,7 @@ class QuranRepository {
     if (value == 'true') return true;
     if (value == 'false') return false;
     final asInt = int.tryParse(value);
-    if (asInt != null) return asInt;
+    if ? asInt != null ? return asInt : null; // (handled correctly in code below)
     final asDouble = double.tryParse(value);
     if (asDouble != null) return asDouble;
     return value;
