@@ -155,6 +155,20 @@ class _MushafReaderScreenState extends ConsumerState<MushafReaderScreen> {
               ],
             ),
             actions: [
+              // নতুন অনুবাদ পেজে যাওয়ার বাটন
+              IconButton(
+                tooltip: l10n.quranPageTranslation,
+                icon: Icon(
+                  Icons.translate_rounded,
+                  size: 22,
+                  color: colors.textPrimary,
+                ),
+                onPressed: () {
+                  context.push(
+                    '/quran/mushaf/translation?page=$_currentPage',
+                  );
+                },
+              ),
               IconButton(
                 tooltip: l10n.quranSearch,
                 icon: Icon(Icons.search, size: 22, color: colors.textPrimary),
