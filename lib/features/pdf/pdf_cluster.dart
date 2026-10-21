@@ -110,6 +110,7 @@ ClusterResult buildClusters({
   required double longitude,
   required ClusterGranularity granularity,
   required List<PrayerTimes> yearTimes,
+  Set<PdfColumn>? columns, // optional filter
 }) {
   assert(
     yearTimes.length == (isLeapYear(year) ? 366 : 365),
@@ -147,7 +148,7 @@ ClusterResult buildClusters({
         endDate: t.date,
         times: rounded,
       );
-    } else if (_timesEqual(current.times, rounded)) {
+    } else if (_timesEqual(current.times, rounded, columns: columns)) {
       current = current.copyWith(endDate: t.date);
     } else {
       rows.add(current);
@@ -210,21 +211,41 @@ PrayerTimes _roundTimes(PrayerTimes t, double granularityMinutes) {
   );
 }
 
-bool _timesEqual(PrayerTimes a, PrayerTimes b) {
-  return _sameSecond(a.sehriSafety, b.sehriSafety) &&
-      _sameSecond(a.sehriActual, b.sehriActual) &&
-      _sameSecond(a.fajr, b.fajr) &&
-      _sameSecond(a.sunrise, b.sunrise) &&
-      _sameSecond(a.ishraq, b.ishraq) &&
-      _sameSecond(a.dhuhr, b.dhuhr) &&
-      _sameSecond(a.asr, b.asr) &&
-      _sameSecond(a.sunset, b.sunset) &&
-      _sameSecond(a.iftarSafety, b.iftarSafety) &&
-      _sameSecond(a.iftarActual, b.iftarActual) &&
-      _sameSecond(a.maghrib, b.maghrib) &&
-      _sameSecond(a.isha, b.isha) &&
-      _sameSecond(a.ishaMustahab, b.ishaMustahab) &&
-      _sameSecond(a.lastThirdStart, b.lastThirdStart);
+bool _timesEqual(
+  PrayerTimes a,
+  PrayerTimes b, {
+  Set<PdfColumn>? columns,
+}) {
+  bool need(PdfColumn c) =>
+      columns == null || columns.isEmpty || columns.contains(c);
+
+  bool ok = true;
+  if (need(PdfColumn.sehri)) {
+    ok = ok &&
+        _sameSecond(a.sehriSafety, b.sehriSafety) &&
+        _sameSecond(a.sehriActual, b.sehriActual);
+  }
+  if (need(PdfColumn.fajr)) ok = ok && _sameSecond(a.fajr, b.fajr);
+  if (need(PdfColumn.sunrise)) ok = ok && _sameSecond(a.sunrise, b.sunrise);
+  if (need(PdfColumn.ishraq)) ok = ok && _sameSecond(a.ishraq, b.ishraq);
+  if (need(PdfColumn.dhuhr)) ok = ok && _sameSecond(a.dhuhr, b.dhuhr);
+  if (need(PdfColumn.asr)) ok = ok && _sameSecond(a.asr, b.asr);
+  if (need(PdfColumn.sunset)) ok = ok && _sameSecond(a.sunset, b.sunset);
+  if (need(PdfColumn.iftar)) {
+    ok = ok &&
+        _sameSecond(a.iftarSafety, b.iftarSafety) &&
+        _sameSecond(a.iftarActual, b.iftarActual);
+  }
+  if (need(PdfColumn.maghrib)) ok = ok && _sameSecond(a.maghrib, b.maghrib);
+  if (need(PdfColumn.isha)) ok = ok && _sameSecond(a.isha, b.isha);
+  if (need(PdfColumn.ishaMustahab)) {
+    ok = ok && _sameSecond(a.ishaMustahab, b.ishaMustahab);
+  }
+  if (need(PdfColumn.tahajjud)) {
+    ok = ok && _sameSecond(a.lastThirdStart, b.lastThirdStart);
+  }
+  // date column does not affect time equality
+  return ok;
 }
 
 bool _sameSecond(DateTime a, DateTime b) =>
