@@ -196,7 +196,6 @@ class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
       final options = _ref.read(pdfOptionsProvider);
       final loc = _ref.read(currentLocationProvider);
       final settings = _ref.read(settingsProvider);
-      final isEn = settings.locale.languageCode == 'en';
 
       state = state.copyWith(
         stage: 'pdfCalculating',
@@ -235,9 +234,10 @@ class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
         progress: 0.7,
       );
 
-      // App name / tagline localized
-      final appName = isEn ? 'AmalGhor' : AppConstants.appNameBn;
-      final tagline = isEn ? 'Prayer timetable' : 'নামাযের সময়সূচি';
+      // PDF content is always English (Bangla glyphs break in many PDF viewers).
+      // Settings UI stays localized via AppLocalizations.
+      const appName = 'AmalGhor';
+      const tagline = 'Prayer timetable';
 
       final builder = PdfBuilder(
         fonts: fonts,
@@ -251,6 +251,7 @@ class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
           columns: options.columns,
           appName: appName,
           appTagline: tagline,
+          locale: 'en', // force English inside PDF
         ),
       );
 
