@@ -1,5 +1,13 @@
 /// Service for converting Gregorian dates to the Bangladeshi
-/// revised Bangla calendar.
+/// revised Bangla calendar (2019 reform).
+///
+/// Month lengths:
+///   Boishakh–Bhadro  : 31 days each
+///   Ashwin–Magh      : 30 days each
+///   Falgun           : 29 days (30 in Gregorian leap years)
+///   Choitro          : 30 days (31 in Gregorian leap years)
+///
+/// The Bangla year always begins on 14 April (Gregorian).
 class BanglaDateService {
   const BanglaDateService();
 
@@ -33,8 +41,14 @@ class BanglaDateService {
     'Choitro',
   ];
 
+  /// Convert a Gregorian date to Bangla calendar components.
+  ///
+  /// Returns a record with:
+  ///   - day: 1..31
+  ///   - monthIndex: 0..11 (0 = Boishakh)
+  ///   - year: e.g. 1432
   ({int day, int monthIndex, int year}) convert(DateTime g) {
-    const newYearMonth = 4;
+    const newYearMonth = 4; // April 14
     const newYearDay = 14;
 
     int banglaYear = g.year - 593;
@@ -48,11 +62,16 @@ class BanglaDateService {
     final daysSince = g.difference(newYear).inDays;
     final leap = _isGregorianLeap(g.year);
 
+    // Month lengths for the current Bangla year
+    // Boishakh..Bhadro = 31 days each (5 × 31 = 155)
+    // Ashwin..Magh = 30 days each (5 × 30 = 150)
+    // Falgun = 29 (30 in leap)
+    // Choitro = 30 (31 in leap)
     final monthLengths = <int>[
-      31, 31, 31, 31, 31,
-      30, 30, 30, 30, 30,
-      leap ? 30 : 29,
-      leap ? 31 : 30,
+      31, 31, 31, 31, 31,   // Boishakh..Bhadro
+      30, 30, 30, 30, 30,   // Ashwin..Magh
+      leap ? 30 : 29,       // Falgun
+      leap ? 31 : 30,       // Choitro
     ];
 
     int remaining = daysSince;
@@ -69,21 +88,29 @@ class BanglaDateService {
     );
   }
 
+  /// Bangla month name from a 0-based index.
   String monthName(int monthIndex) => _months[monthIndex.clamp(0, 11)];
 
+  /// English transliteration of a Bangla month name.
   String monthNameEn(int monthIndex) => _monthsEn[monthIndex.clamp(0, 11)];
 
+  /// Fully-formatted Bangla date string.
+  /// e.g. "১৪ বৈশাখ ১৪৩০"
   String format(DateTime date) {
     final c = convert(date);
-    return '${toBanglaDigits(c.day)} ${monthName(c.monthIndex)} '
+    return '${toBanglaDigits(c.day)} '
+        '${monthName(c.monthIndex)} '
         '${toBanglaDigits(c.year)}';
   }
 
+  /// Fully-formatted Bangla date in English transliteration.
+  /// e.g. "14 Boishakh 1430"
   String formatEn(DateTime date) {
     final c = convert(date);
     return '${c.day} ${monthNameEn(c.monthIndex)} ${c.year}';
   }
 
+  /// Convert western digits to Bangla digits.
   String toBanglaDigits(int number) {
     const en = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
     const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
