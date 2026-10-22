@@ -274,8 +274,9 @@ class QuranRepository {
           surahNumber: r['surah'] as int,
           ayahNumber: r['ayah'] as int,
           surahName: r['name_english'] as String? ?? '',
-          snippet: _buildSnippet(matchedText, q),
           matchedLanguage: matched,
+          matchedText: matchedText,
+          snippet: _buildSnippet(matchedText, q),
         ),
       );
       if (results.length >= limit) break;
@@ -337,7 +338,7 @@ class QuranRepository {
     if (value == 'true') return true;
     if (value == 'false') return false;
     final asInt = int.tryParse(value);
-    if ? asInt != null ? return asInt : null; // (handled correctly in code below)
+    if (asInt != null) return asInt;
     final asDouble = double.tryParse(value);
     if (asDouble != null) return asDouble;
     return value;
