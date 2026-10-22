@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:timezone/data/latest_all.dart' as tz_data; // ← নতুন
+import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import 'app.dart';
@@ -34,24 +35,28 @@ Future<void> main() async {
 
   await initializeDateFormatting();
 
-  // ─── TimeZone Initialize (Must before any tz.local) ───
+  // TimeZone — must run before any tz.local use
   tz_data.initializeTimeZones();
   try {
-    final localName = await FlutterTimezone.getLocalTimezone();
-    tz.setLocalLocation(tz.getLocation(localName.identifier));
+    final dynamic tzInfo = await FlutterTimezone.getLocalTimezone();
+    final String name = tzInfo is String
+        ? tzInfo
+        : (tzInfo.identifier as String? ??
+            tzInfo.name as String? ??
+            'UTC');
+    tz.setLocalLocation(tz.getLocation(name));
   } catch (_) {
-    // Fallback to UTC if detection fails
+    // Fallback: leave default / UTC
   }
 
   final prefs = await SharedPreferences.getInstance();
 
-  // Initialize all three notification channels.
   try {
     await NotificationService.instance.initialize();
     await AlarmService.instance.initialize(prefs);
     await CustomNotificationService.instance.initialize(prefs);
   } catch (_) {
-    // Non-fatal.
+    // Non-fatal
   }
 
   final container = ProviderContainer(
@@ -81,6 +86,6 @@ Future<void> _bootstrapPrayerNotifications(
     await container.read(currentDayPrayerProvider.future);
     await container.read(notificationProvider.notifier).reschedule();
   } catch (_) {
-    // Never block the app.
+    // Never block the app
   }
 }
