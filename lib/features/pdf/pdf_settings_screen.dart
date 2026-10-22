@@ -32,20 +32,33 @@ class PdfSettingsScreen extends ConsumerWidget {
               horizontal: AppConstants.spaceLg,
               vertical: AppConstants.spaceSm,
             ),
-            child: Wrap(
-              spacing: AppConstants.spaceSm,
-              runSpacing: AppConstants.spaceSm,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                for (final y in [
-                  currentYear - 1,
-                  currentYear,
-                  currentYear + 1,
-                ])
-                  _Chip(
-                    label: '$y',
-                    selected: opts.year == y,
-                    onTap: () => notifier.setYear(y),
-                  ),
+                Wrap(
+                  spacing: AppConstants.spaceSm,
+                  runSpacing: AppConstants.spaceSm,
+                  children: [
+                    for (final y in [
+                      currentYear - 2,
+                      currentYear - 1,
+                      currentYear,
+                      currentYear + 1,
+                      currentYear + 2,
+                    ])
+                      _Chip(
+                        label: '$y',
+                        selected: opts.year == y,
+                        onTap: () => notifier.setYear(y),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _YearInput(
+                  year: opts.year,
+                  label: l10n.pdfYear,
+                  onSubmit: (y) => notifier.setYear(y),
+                ),
               ],
             ),
           ),
@@ -472,6 +485,82 @@ class _Chip extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Custom year entry — UI label stays localized.
+class _YearInput extends StatefulWidget {
+  final int year;
+  final String label;
+  final ValueChanged<int> onSubmit;
+
+  const _YearInput({
+    required this.year,
+    required this.label,
+    required this.onSubmit,
+  });
+
+  @override
+  State<_YearInput> createState() => _YearInputState();
+}
+
+class _YearInputState extends State<_YearInput> {
+  late final TextEditingController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(text: '${widget.year}');
+  }
+
+  @override
+  void didUpdateWidget(covariant _YearInput oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.year != widget.year && _ctrl.text != '${widget.year}') {
+      _ctrl.text = '${widget.year}';
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _apply() {
+    final y = int.tryParse(_ctrl.text.trim());
+    if (y != null && y >= 1900 && y <= 2100) {
+      widget.onSubmit(y);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: _ctrl,
+            keyboardType: TextInputType.number,
+            style: const TextStyle(color: AppConstants.textPrimary),
+            decoration: InputDecoration(
+              labelText: widget.label,
+              hintText: '1900 – 2100',
+              isDense: true,
+              border: const OutlineInputBorder(),
+            ),
+            onSubmitted: (_) => _apply(),
+          ),
+        ),
+        const SizedBox(width: 8),
+        IconButton(
+          onPressed: _apply,
+          icon: const Icon(Icons.check_circle_outline),
+          color: AppConstants.emeraldPrimary,
+          tooltip: 'OK',
+        ),
+      ],
     );
   }
 }
