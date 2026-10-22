@@ -436,7 +436,9 @@ class _NotificationTile extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      item.daysLabel,
+                      item.daysLabel(
+                        locale: Localizations.localeOf(context).languageCode,
+                      ),
                       style: TextStyle(
                         color: colors.textMuted,
                         fontSize: AppConstants.fontMicro,
