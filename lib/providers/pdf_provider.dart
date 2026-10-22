@@ -221,7 +221,7 @@ class PdfGeneratorNotifier extends StateNotifier<PdfProgress> {
         longitude: loc.longitude,
         granularity: options.granularity,
         yearTimes: times,
-        columns: options.columns, // Updated with selected columns filter
+        columns: options.columns,
       );
 
       state = state.copyWith(
